@@ -11,35 +11,9 @@ vi.stubGlobal(
 import {
   ACTIVE_LINE_OVERLAY_CLASS,
   computeOverlayGradient,
-  computeOverlayMetrics,
   computeOverlayWidth,
   computeSnappedLineMetrics,
 } from './activeLinePlugin';
-
-describe('computeOverlayMetrics', () => {
-  it('上下边沿落在相邻两行文字的正中间', () => {
-    const metrics = computeOverlayMetrics(
-      { top: 120, bottom: 148 },
-      { top: 100 },
-      28,
-    );
-
-    // 行中心 134，半行高 14 → 相对 block top=100 为 20
-    expect(metrics.top).toBe(20);
-    expect(metrics.height).toBe(28);
-  });
-
-  it('总高度等于一行 line-height', () => {
-    const metrics = computeOverlayMetrics(
-      { top: 50, bottom: 70 },
-      { top: 40 },
-      24,
-    );
-
-    expect(metrics.height).toBe(24);
-    expect(metrics.top).toBe(8);
-  });
-});
 
 describe('computeSnappedLineMetrics', () => {
   it('对齐到块内行网格，overlay 与 caret 分别相对 host/editor 定位', () => {

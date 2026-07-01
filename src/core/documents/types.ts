@@ -32,13 +32,3 @@ export function normalizeDocument(doc: DocumentData & { summary?: string }): Doc
     updatedAt: doc.updatedAt,
   };
 }
-
-export function deriveTitleFromContent(content: string, fallback = '未命名文稿'): string {
-  const firstLine = content
-    .split('\n')
-    .map((line) => line.trim())
-    .find((line) => line.length > 0);
-  if (!firstLine) return fallback;
-  const heading = firstLine.replace(/^#+\s*/, '');
-  return heading.slice(0, 48) || fallback;
-}

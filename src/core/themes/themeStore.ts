@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import type { StorageProvider } from '@/services/storage';
 import type { ThemeDefinition, ThemeTokens } from './types';
 import {
   BUILTIN_THEMES,
@@ -35,8 +34,6 @@ export interface ThemeStoreState {
   addCustomTheme: (name: string, baseThemeId: string, settings: ThemeCustomSettings) => ThemeDefinition;
   updateCustomThemeColors: (id: string, settings: ThemeCustomSettings, name?: string) => void;
   deleteCustomTheme: (id: string) => void;
-  loadPersisted: (storage: StorageProvider) => Promise<void>;
-  persist: (storage: StorageProvider) => Promise<void>;
 }
 
 function normalizeThemeId(id: string): string {
@@ -161,19 +158,6 @@ export const useThemeStore = create<ThemeStoreState>((set, get) => {
       }
 
       set({ themes, previewTokens: null });
-    },
-
-    loadPersisted: async () => {
-      const custom = loadCustomThemesFromLocal();
-      const allThemesList = [...BUILTIN_THEMES, ...custom];
-      const savedId = localStorage.getItem(THEME_STORAGE_KEY) ?? DEFAULT_THEME_ID;
-      const theme = resolveTheme(savedId, custom);
-      set({ themes: allThemesList, activeThemeId: theme.id, activeTheme: theme });
-    },
-
-    persist: async () => {
-      localStorage.setItem(THEME_STORAGE_KEY, get().activeThemeId);
-      saveCustomThemesToLocal(get().themes);
     },
   };
 });

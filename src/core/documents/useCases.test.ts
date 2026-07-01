@@ -1,16 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { deriveTitleFromContent, createDocument } from './types';
+import { createDocument } from './types';
 import { updateDocumentContent, updateDocumentTitle } from './useCases';
-
-describe('deriveTitleFromContent', () => {
-  it('从首行标题提取文稿名', () => {
-    expect(deriveTitleFromContent('# 我的故事\n\n正文')).toBe('我的故事');
-  });
-
-  it('空内容返回 fallback', () => {
-    expect(deriveTitleFromContent('', '默认名')).toBe('默认名');
-  });
-});
 
 describe('updateDocumentContent', () => {
   it('仅更新正文，不改标题', () => {

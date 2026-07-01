@@ -12,7 +12,6 @@ export {
   getBuiltinTheme,
   serializeTheme,
   deserializeTheme,
-  createCustomTheme,
 } from './builtinThemes';
 export {
   THEME_COLOR_ROLE_DEFINITIONS,
@@ -33,7 +32,7 @@ export {
   type ThemeShadowRoles,
   type ThemeCustomSettings,
 } from './shadowRoles';
-export { tokensToCssVariables, previewTokensFromBase } from './applyTokens';
+export { tokensToCssVariables } from './applyTokens';
 export {
   animateThemeColors,
   applyCssVariables,

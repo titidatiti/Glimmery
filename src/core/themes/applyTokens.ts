@@ -70,12 +70,3 @@ export function tokensToCssVariables(tokens: ThemeTokens): Record<string, string
   return result;
 }
 
-export function previewTokensFromBase(
-  base: ThemeTokens,
-  colorOverrides: Partial<ThemeTokens['colors']>,
-): ThemeTokens {
-  return {
-    ...base,
-    colors: { ...base.colors, ...colorOverrides },
-  };
-}

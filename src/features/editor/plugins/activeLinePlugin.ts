@@ -15,25 +15,6 @@ export interface LineCoords {
   bottom: number;
 }
 
-export interface BlockRect {
-  top: number;
-}
-
-/** 高亮上下边沿落在相邻两行文字的正中间（总高度 = 一行 line-height） */
-export function computeOverlayMetrics(
-  coords: LineCoords,
-  blockRect: BlockRect,
-  lineHeightPx: number,
-) {
-  const center = (coords.top + coords.bottom) / 2;
-  const halfSpan = lineHeightPx / 2;
-
-  return {
-    top: center - halfSpan - blockRect.top,
-    height: lineHeightPx,
-  };
-}
-
 export interface SnappedLineMetrics {
   overlayTop: number;
   caretTop: number;

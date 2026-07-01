@@ -312,7 +312,7 @@ function pickSelectionTextForBg(
 ): string {
   if (explicitText) return explicitText;
 
-  let text = deriveSelectionText(selectionBg, candidates);
+  const text = deriveSelectionText(selectionBg, candidates);
   if ((contrastRatio(text, selectionBg) ?? 0) >= 3.2) {
     return text;
   }

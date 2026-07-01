@@ -216,12 +216,3 @@ export function applyCssVariables(root: HTMLElement, vars: Record<string, string
   }
 }
 
-export function applyThemeTokensToRoot(
-  root: HTMLElement,
-  allVars: Record<string, string>,
-  themeId: string,
-  isPreview: boolean,
-): void {
-  applyCssVariables(root, allVars);
-  root.dataset.theme = isPreview ? 'preview' : themeId;
-}

@@ -458,24 +458,3 @@ export function deserializeTheme(data: SerializedTheme): ThemeDefinition {
   };
 }
 
-export function createCustomTheme(
-  id: string,
-  name: string,
-  baseTokens: ThemeTokens,
-  colorOverrides: Partial<ThemeTokens['colors']>,
-): ThemeDefinition {
-  const merged = { ...baseTokens.colors, ...colorOverrides };
-  return {
-    id,
-    name,
-    isBuiltin: false,
-    tokens: {
-      ...baseTokens,
-      colors: {
-        ...merged,
-        headingText: merged.headingText ?? merged.textPrimary,
-        bodyText: merged.bodyText ?? merged.textPrimary,
-      },
-    },
-  };
-}
