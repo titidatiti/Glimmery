@@ -2,6 +2,8 @@ import { $prose } from '@milkdown/kit/utils';
 import { Plugin, PluginKey } from '@milkdown/kit/prose/state';
 import type { EditorView } from '@milkdown/kit/prose/view';
 
+import { resolveLineHeightPx } from './lineMetrics';
+
 export const ACTIVE_LINE_OVERLAY_CLASS = 'glimmery-active-line-overlay';
 export const ACTIVE_LINE_HOST_CLASS = 'glimmery-active-line-host';
 export const ACTIVE_LINE_REFRESH_EVENT = 'glimmery-active-line-refresh';
@@ -62,26 +64,6 @@ export function computeOverlayGradient(textWidth: number, overlayWidth: number):
   const fadeEnd = 100 - fadeStart;
 
   return `linear-gradient(90deg, transparent 0%, ${color} ${fadeStart}%, ${color} ${fadeEnd}%, transparent 100%)`;
-}
-
-export function resolveLineHeightPx(element: HTMLElement, fallbackLineHeight: number): number {
-  const computed = getComputedStyle(element);
-  const raw = computed.lineHeight;
-
-  if (raw === 'normal') {
-    const fontSize = parseFloat(computed.fontSize);
-    return Number.isFinite(fontSize) ? fontSize * 1.2 : fallbackLineHeight;
-  }
-
-  const value = parseFloat(raw);
-  if (!Number.isFinite(value)) return fallbackLineHeight;
-
-  if (raw.endsWith('em') || raw.endsWith('rem')) {
-    const fontSize = parseFloat(computed.fontSize);
-    return Number.isFinite(fontSize) ? value * fontSize : fallbackLineHeight;
-  }
-
-  return value;
 }
 
 /** 取光标所在块级元素，用于按块计算 line-height（拖拽后光标可能落在不同块） */

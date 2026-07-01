@@ -1,6 +1,6 @@
 import type { BlockProviderOptions } from '@milkdown/kit/plugin/block';
 
-import { resolveLineHeightPx } from './activeLinePlugin';
+import { resolveLineHeightPx } from './lineMetrics';
 
 type BlockHandleCrepeConfig = {
   blockHandle: Pick<BlockProviderOptions, 'getPosition' | 'getPlacement'>;
