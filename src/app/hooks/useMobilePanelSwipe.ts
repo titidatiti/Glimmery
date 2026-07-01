@@ -182,6 +182,13 @@ export function useMobilePanelSwipe({
 
       const edgeSwipe = isEdgeSwipe(zone, focusModeRef.current, touch.clientX);
 
+      // iOS Safari 会在屏幕左缘识别系统「返回」手势，与此处「编辑区左缘右滑回侧栏」
+      // 的边缘手势区域重叠；touchstart 必须非 passive 才能 preventDefault 抢先声明
+      // 该触摸由页面接管，避免系统手势吞掉后续 touchmove/touchend。
+      if (edgeSwipe && e.cancelable) {
+        e.preventDefault();
+      }
+
       dragRef.current = {
         startX: touch.clientX,
         startY: touch.clientY,
@@ -297,7 +304,7 @@ export function useMobilePanelSwipe({
       e.stopPropagation();
     };
 
-    track.addEventListener('touchstart', handleTouchStart, { passive: true });
+    track.addEventListener('touchstart', handleTouchStart, { passive: false });
     track.addEventListener('touchmove', handleTouchMove, { passive: false });
     track.addEventListener('touchend', handleTouchEnd);
     track.addEventListener('touchcancel', handleTouchCancel);

@@ -20,6 +20,10 @@ const cssRaw = readFileSync(new URL('./AppShell.module.css', import.meta.url), '
 /** 去掉注释，避免注释里出现的选择器文本干扰规则匹配 */
 const css = cssRaw.replace(/\/\*[\s\S]*?\*\//g, '');
 const tsx = readFileSync(new URL('./AppShell.tsx', import.meta.url), 'utf8');
+const swipeHookSrc = readFileSync(
+  new URL('../hooks/useMobilePanelSwipe.ts', import.meta.url),
+  'utf8',
+);
 
 /** 从 `@media (max-width: 767px)` 起，按花括号配平提取整段媒体查询内容 */
 function extractMobileMediaBlock(source: string): string {
@@ -134,5 +138,23 @@ describe('移动端横滑 DOM/接线契约（AppShell.tsx）', () => {
     expect(tsx).toContain('styles.mobileShell');
     expect(tsx).toContain('styles.mobileDragging');
     expect(tsx).toContain('styles.focusMode');
+  });
+});
+
+describe('移动端横滑与 iOS 系统边缘手势的冲突防护', () => {
+  it('touchstart 必须以非 passive 方式注册，才能在边缘手势时 preventDefault', () => {
+    expect(swipeHookSrc).toMatch(
+      /addEventListener\(['"]touchstart['"],\s*handleTouchStart,\s*\{\s*passive:\s*false\s*\}\)/,
+    );
+  });
+
+  it('边缘手势（isEdgeSwipe）触发时须 preventDefault，抢占 iOS 系统返回手势', () => {
+    const startIdx = swipeHookSrc.indexOf('const handleTouchStart');
+    const endIdx = swipeHookSrc.indexOf('const handleTouchMove');
+    expect(startIdx).toBeGreaterThan(-1);
+    expect(endIdx).toBeGreaterThan(startIdx);
+    const body = swipeHookSrc.slice(startIdx, endIdx);
+    expect(body).toContain('isEdgeSwipe(');
+    expect(body).toMatch(/if\s*\(edgeSwipe[^)]*\)\s*\{\s*\n\s*e\.preventDefault\(\);/);
   });
 });
