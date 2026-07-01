@@ -28,6 +28,10 @@ export interface ThemeColorTokens {
   selectionBg?: string;
   /** 编辑区文字选区前景；缺省时由 deriveSelectionText 推导 */
   selectionText?: string;
+  /** 强调色按钮（如保存）上的文字色 */
+  buttonOnAccent?: string;
+  /** 危险操作（如删除）文字色 */
+  danger?: string;
 }
 
 export interface ThemeSpacingTokens {

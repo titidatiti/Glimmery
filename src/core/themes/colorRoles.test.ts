@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   colorRolesToTokens,
   contrastRatio,
-  deriveOnAccentText,
   deriveSelectionText,
   FALLBACK_SELECTION_TEXT_DARK,
   finalizeSelectionPair,
@@ -27,6 +26,8 @@ describe('colorRoles', () => {
       accentSoft: '#ffcccc',
       selectionBg: '#884444',
       selectionText: '#ffffff',
+      buttonOnAccent: '#eeeeee',
+      danger: '#ff5252',
       caretColor: '#00ff00',
       border: '#555555',
       borderSubtle: '#444444',
@@ -85,11 +86,9 @@ describe('colorRoles', () => {
     expect(['#2a2a2a', '#1e1e1e']).toContain(text.toLowerCase());
   });
 
-  it('deriveOnAccentText 不选用与强调色相近的 bgBase', () => {
+  it('稻香主题保存按钮字色为显式 buttonOnAccent', () => {
     const colors = daoxiangTheme.tokens.colors;
-    const onAccent = deriveOnAccentText(colors);
-    expect(onAccent.toLowerCase()).not.toBe(colors.bgBase.toLowerCase());
-    expect(onAccent.toLowerCase()).toBe('#2a2218');
-    expect(contrastRatio(onAccent, colors.accent)).toBeGreaterThanOrEqual(2.5);
+    expect(colors.buttonOnAccent).toBe('#2a2218');
+    expect(colors.buttonOnAccent).not.toBe(colors.bgBase);
   });
 });

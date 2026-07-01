@@ -15,6 +15,8 @@ export type ThemeColorRoleId =
   | 'accentSoft'
   | 'selectionBg'
   | 'selectionText'
+  | 'buttonOnAccent'
+  | 'danger'
   | 'caretColor'
   | 'border'
   | 'borderSubtle';
@@ -121,6 +123,18 @@ export const THEME_COLOR_ROLE_DEFINITIONS: ThemeColorRoleDefinition[] = [
     id: 'selectionText',
     label: '选区文字',
     hint: '编辑区拖选文字的前景色',
+    group: 'accent',
+  },
+  {
+    id: 'buttonOnAccent',
+    label: '按钮文字',
+    hint: '强调色主按钮（如保存）上的文字颜色',
+    group: 'accent',
+  },
+  {
+    id: 'danger',
+    label: '危险操作',
+    hint: '删除等破坏性操作的文字颜色',
     group: 'accent',
   },
   {
@@ -264,85 +278,6 @@ export function resolveSelectionText(colors: ThemeColorTokens): string {
   return finalizeSelectionPair(colors).text;
 }
 
-const DANGER_CANDIDATES_DARK = ['#5c0000', '#690000', '#7f0000', '#8b0000', '#b71c1c', '#c62828', '#d32f2f'];
-const DANGER_CANDIDATES_LIGHT = ['#ff8a80', '#ff5252', '#ef5350', '#e85d5d', '#ff6b6b'];
-
-function pickHighestContrast(
-  background: string,
-  candidates: readonly string[],
-  minRatio = 3.2,
-): string {
-  const bgLum = relativeLuminance(background) ?? 0.5;
-  let best = candidates[0] ?? FALLBACK_SELECTION_TEXT_DARK;
-  let bestRatio = 0;
-
-  for (const fg of candidates) {
-    const fgLum = relativeLuminance(fg);
-    if (fgLum !== null && Math.abs(fgLum - bgLum) < 0.1) continue;
-
-    const ratio = contrastRatio(fg, background) ?? 0;
-    if (ratio > bestRatio) {
-      bestRatio = ratio;
-      best = fg;
-    }
-  }
-
-  if (bestRatio >= minRatio) return best;
-
-  const darkRatio = contrastRatio(FALLBACK_SELECTION_TEXT_DARK, background) ?? 0;
-  const lightRatio = contrastRatio(FALLBACK_SELECTION_TEXT_LIGHT, background) ?? 0;
-  const fallback =
-    darkRatio >= lightRatio ? FALLBACK_SELECTION_TEXT_DARK : FALLBACK_SELECTION_TEXT_LIGHT;
-  const fallbackRatio = contrastRatio(fallback, background) ?? 0;
-  return fallbackRatio > bestRatio ? fallback : best;
-}
-
-/** 强调色按钮上的文字色（如「保存」主按钮） */
-export function deriveOnAccentText(colors: ThemeColorTokens): string {
-  const accentLum = relativeLuminance(colors.accent) ?? 0.5;
-  const themeTexts = [
-    colors.headingText ?? colors.textPrimary,
-    colors.bodyText ?? colors.textPrimary,
-  ];
-
-  let bestThemeText = themeTexts[0];
-  let bestThemeRatio = 0;
-  for (const fg of themeTexts) {
-    if (fg.toLowerCase() === colors.bgBase.toLowerCase()) continue;
-    const fgLum = relativeLuminance(fg);
-    if (fgLum !== null && Math.abs(fgLum - accentLum) < 0.08) continue;
-
-    const ratio = contrastRatio(fg, colors.accent) ?? 0;
-    if (ratio > bestThemeRatio) {
-      bestThemeRatio = ratio;
-      bestThemeText = fg;
-    }
-  }
-
-  // 深强调色（如稻香、纸感）：沿用主题深色文字，避免误用与强调色相近的 bgBase
-  if (accentLum < 0.35 && bestThemeRatio >= 2.5) return bestThemeText;
-
-  const ordered =
-    accentLum >= 0.55
-      ? [...themeTexts, FALLBACK_SELECTION_TEXT_LIGHT, FALLBACK_SELECTION_TEXT_DARK]
-      : [...themeTexts, FALLBACK_SELECTION_TEXT_DARK, FALLBACK_SELECTION_TEXT_LIGHT];
-
-  const filtered = ordered.filter((fg) => {
-    if (fg.toLowerCase() === colors.bgBase.toLowerCase()) return false;
-    const fgLum = relativeLuminance(fg);
-    return fgLum === null || Math.abs(fgLum - accentLum) >= 0.08;
-  });
-
-  return pickHighestContrast(colors.accent, filtered.length > 0 ? filtered : ordered);
-}
-
-/** 危险操作文字色（如「删除主题」），相对面板底色保证可读 */
-export function deriveDangerColor(colors: ThemeColorTokens): string {
-  const surfaceLum = relativeLuminance(colors.bgSurface) ?? 0.5;
-  const pool = surfaceLum > 0.42 ? DANGER_CANDIDATES_DARK : DANGER_CANDIDATES_LIGHT;
-  return pickHighestContrast(colors.bgSurface, pool);
-}
-
 export function finalizeSelectionPair(
   colors: ThemeColorTokens,
 ): { bg: string; text: string } {
@@ -396,13 +331,14 @@ function pickSelectionTextForBg(
 
 export function tokensToColorRoles(colors: ThemeColorTokens): ThemeColorRoles {
   const selection = finalizeSelectionPair(colors);
+  const heading = colors.headingText ?? colors.sidebarText ?? colors.textPrimary;
   return {
     sidebarBg: colors.sidebarBg,
     editorBg: colors.editorBg,
     chromeBg: colors.bgSurface,
     elevatedBg: colors.bgElevated,
     activeLineBg: colors.activeLineBg ?? deriveActiveLineBg(colors.editorBg, colors.caretColor ?? colors.accent),
-    headingText: colors.headingText ?? colors.sidebarText ?? colors.textPrimary,
+    headingText: heading,
     bodyText: colors.bodyText ?? colors.textPrimary,
     auxiliaryText: colors.textSecondary,
     placeholderText: colors.sidebarTextMuted ?? colors.textMuted,
@@ -410,6 +346,8 @@ export function tokensToColorRoles(colors: ThemeColorTokens): ThemeColorRoles {
     accentSoft: colors.accentMuted,
     selectionBg: selection.bg,
     selectionText: selection.text,
+    buttonOnAccent: colors.buttonOnAccent ?? heading,
+    danger: colors.danger ?? colors.textSecondary,
     caretColor: colors.caretColor ?? colors.accent,
     border: colors.border,
     borderSubtle: colors.borderSubtle,
@@ -432,6 +370,8 @@ export function colorRolesToTokens(roles: ThemeColorRoles): ThemeColorTokens {
     accentMuted: roles.accentSoft,
     selectionBg: roles.selectionBg,
     selectionText: roles.selectionText,
+    buttonOnAccent: roles.buttonOnAccent,
+    danger: roles.danger,
     caretColor: roles.caretColor,
     border: roles.border,
     borderSubtle: roles.borderSubtle,
@@ -465,6 +405,7 @@ export function normalizeCustomThemeColors(colors: ThemeColorTokens): ThemeColor
     sidebarText: heading,
     textMuted: placeholder,
     sidebarTextMuted: placeholder,
+    buttonOnAccent: colors.buttonOnAccent ?? heading,
   };
 }
 
