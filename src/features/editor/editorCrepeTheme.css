@@ -1,0 +1,135 @@
+/**
+ * 将 Glimmery 主题 token 映射到 Milkdown Crepe 组件变量。
+ * common/style.css 中的块手柄、斜杠菜单、代码块语言列表等均依赖这些变量；
+ * 未映射时背景/文字色为空，下拉框与菜单会「看不见」。
+ */
+.glimmery-body-editor .milkdown {
+  --crepe-color-background: var(--color-editor-bg);
+  --crepe-color-on-background: var(--color-text-body);
+  --crepe-color-surface: var(--color-bg-surface);
+  --crepe-color-surface-low: var(--color-bg-elevated);
+  --crepe-color-on-surface: var(--color-text-body);
+  --crepe-color-on-surface-variant: var(--color-text-secondary);
+  --crepe-color-outline: var(--color-border);
+  --crepe-color-primary: var(--color-accent);
+  --crepe-color-secondary: var(--color-bg-elevated);
+  --crepe-color-on-secondary: var(--color-text-body);
+  --crepe-color-inverse: var(--color-text-heading);
+  --crepe-color-on-inverse: var(--color-bg-base);
+  --crepe-color-inline-code: var(--color-accent);
+  --crepe-color-error: #e57373;
+  --crepe-color-hover: var(--color-bg-elevated);
+  --crepe-color-selected: var(--color-selection-bg);
+  --crepe-color-inline-area: var(--color-bg-elevated);
+
+  --crepe-font-default: var(--editor-font-family, var(--font-sans));
+  --crepe-font-title: var(--editor-font-family, var(--font-sans));
+  --crepe-font-code: var(--font-mono);
+
+  --crepe-shadow-1: var(--shadow-sm);
+  --crepe-shadow-2: var(--shadow-md);
+}
+
+/*
+ * Crepe 浮层 UI（斜杠菜单、语言列表、块手柄）与编辑区正文字号隔离，
+ * 统一为 14px / 600 / 20px，与 block-edit.css 斜杠菜单一致。
+ */
+.glimmery-body-editor .milkdown-slash-menu,
+.glimmery-body-editor .milkdown-code-block .language-picker,
+.glimmery-body-editor .milkdown-code-block .list-wrapper {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.glimmery-body-editor .milkdown-code-block .language-list-item {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--color-text-body);
+}
+
+.glimmery-body-editor .milkdown-code-block .language-list-item.no-result {
+  color: var(--color-text-muted);
+}
+
+.glimmery-body-editor .milkdown-code-block .search-box input {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* 块手柄：避免继承编辑区 line-height 导致 hover 背景与图标垂直错位 */
+.glimmery-body-editor .milkdown-block-handle {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1;
+  align-items: center;
+}
+
+.glimmery-body-editor .milkdown-block-handle .operation-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  line-height: 0;
+  color: var(--color-text-body);
+}
+
+.glimmery-body-editor .milkdown-block-handle .operation-item svg {
+  fill: var(--color-text-secondary);
+}
+
+.glimmery-body-editor .milkdown-block-handle .operation-item:hover svg,
+.glimmery-body-editor .milkdown-block-handle .operation-item.active svg {
+  fill: var(--color-text-body);
+}
+
+/* 正文文字选区：背景与前景均来自主题 token */
+.glimmery-body-editor .milkdown .ProseMirror ::-moz-selection,
+.glimmery-body-editor .milkdown .ProseMirror *::-moz-selection {
+  background: var(--color-selection-bg) !important;
+  color: var(--color-selection-text) !important;
+}
+
+.glimmery-body-editor .milkdown .ProseMirror ::selection,
+.glimmery-body-editor .milkdown .ProseMirror *::selection {
+  background: var(--color-selection-bg) !important;
+  color: var(--color-selection-text) !important;
+}
+
+/*
+ * 块手柄会短暂产生 NodeSelection：仅保留拖选文字底色，不为整段铺半透明底。
+ * 图片等非文本块仍沿用 Crepe 默认描边。
+ */
+.glimmery-body-editor .milkdown .ProseMirror:not([data-dragging='true'])
+  :is(p, h1, h2, h3, h4, h5, h6, li, blockquote).ProseMirror-selectednode {
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* 多行代码块：背景与正文色随主题 token，覆盖 Crepe 默认 oneDark */
+.glimmery-body-editor .milkdown .milkdown-code-block {
+  background: var(--color-bg-elevated);
+}
+
+.glimmery-body-editor .milkdown .milkdown-code-block .cm-editor,
+.glimmery-body-editor .milkdown .milkdown-code-block .cm-gutters,
+.glimmery-body-editor .milkdown .milkdown-code-block .cm-scroller {
+  background: var(--color-bg-elevated) !important;
+}
+
+.glimmery-body-editor .milkdown .milkdown-code-block .cm-content,
+.glimmery-body-editor .milkdown .milkdown-code-block .cm-line {
+  color: var(--color-text-body) !important;
+}
+
+.glimmery-body-editor .milkdown .milkdown-code-block .cm-gutters {
+  color: var(--color-text-muted) !important;
+}
+
+.glimmery-body-editor .milkdown .milkdown-code-block .milkdown-code-block-placeholder {
+  color: var(--color-text-muted);
+}

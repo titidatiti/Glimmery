@@ -2,8 +2,12 @@ import { useEffect, useRef } from 'react';
 import { Crepe, CrepeFeature } from '@milkdown/crepe';
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react';
 import '@milkdown/crepe/theme/common/style.css';
+import { glimmeryCodeMirrorTheme } from './codeMirrorTheme';
+import './editorCrepeTheme.css';
 import './editorCrepeOverrides.css';
 import { activeLinePlugin } from './plugins/activeLinePlugin';
+import { blockDragFixPlugin } from './plugins/blockDragFixPlugin';
+import { blockHandleCrepeConfig } from './plugins/blockHandleConfig';
 import styles from './EditorAdapter.module.css';
 
 export interface EditorAdapterProps {
@@ -32,16 +36,21 @@ function BodyEditor({
         features: {
           [CrepeFeature.Toolbar]: false,
           [CrepeFeature.TopBar]: false,
-          [CrepeFeature.BlockEdit]: false,
+          [CrepeFeature.BlockEdit]: true,
         },
         featureConfigs: {
           [CrepeFeature.Placeholder]: {
             text: '正文',
           },
+          [CrepeFeature.BlockEdit]: blockHandleCrepeConfig,
+          [CrepeFeature.CodeMirror]: {
+            theme: glimmeryCodeMirrorTheme,
+          },
         },
       });
 
       crepe.editor.use(activeLinePlugin);
+      crepe.editor.use(blockDragFixPlugin);
       crepe.on((listener) => {
         listener.markdownUpdated((_ctx, markdown, prevMarkdown) => {
           if (markdown !== prevMarkdown) {

@@ -8,7 +8,7 @@
 }
 
 .glimmery-body-editor .milkdown .ProseMirror p,
-.glimmery-body-editor .milkdown .ProseMirror li {
+.glimmery-body-editor .milkdown .ProseMirror li:not(.language-list-item) {
   font-family: inherit !important;
   font-size: var(--editor-font-size-body, var(--font-size-lg)) !important;
   line-height: var(--editor-line-height-body, var(--line-height-base)) !important;
