@@ -24,6 +24,10 @@ export interface ThemeColorTokens {
   sidebarTextMuted?: string;
   /** 编辑区光标所在行背景；缺省时由 deriveActiveLineBg 推导 */
   activeLineBg?: string;
+  /** 编辑区文字选区背景；缺省时由 deriveSelectionBg 推导 */
+  selectionBg?: string;
+  /** 编辑区文字选区前景；缺省时由 deriveSelectionText 推导 */
+  selectionText?: string;
 }
 
 export interface ThemeSpacingTokens {

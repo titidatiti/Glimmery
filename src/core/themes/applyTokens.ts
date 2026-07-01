@@ -1,5 +1,9 @@
 import type { ThemeTokens } from './types';
-import { accentToFocusRing, deriveActiveLineBg } from './colorRoles';
+import {
+  accentToFocusRing,
+  deriveActiveLineBg,
+  finalizeSelectionPair,
+} from './colorRoles';
 import { resolveShadowCss } from './shadowRoles';
 function headingText(tokens: ThemeTokens): string {
   return tokens.colors.headingText ?? tokens.colors.textPrimary;
@@ -21,6 +25,8 @@ const CSS_VAR_MAP: Record<string, (tokens: ThemeTokens) => string> = {
   '--color-text-muted': (t) => t.colors.textMuted,
   '--color-accent': (t) => t.colors.accent,
   '--color-accent-muted': (t) => t.colors.accentMuted,
+  '--color-selection-bg': (t) => finalizeSelectionPair(t.colors).bg,
+  '--color-selection-text': (t) => finalizeSelectionPair(t.colors).text,
   '--color-caret': (t) => t.colors.caretColor ?? t.colors.accent,
   '--color-border': (t) => t.colors.border,
   '--color-border-subtle': (t) => t.colors.borderSubtle,

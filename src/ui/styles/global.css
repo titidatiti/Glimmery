@@ -50,6 +50,6 @@ a {
 }
 
 ::selection {
-  background: var(--color-accent);
-  color: var(--color-bg-base);
+  background: var(--color-selection-bg);
+  color: var(--color-selection-text);
 }

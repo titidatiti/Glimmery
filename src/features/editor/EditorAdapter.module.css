@@ -21,8 +21,8 @@
 }
 
 .titleInput::selection {
-  background: var(--color-accent-muted);
-  color: var(--color-text-primary);
+  background: var(--color-selection-bg);
+  color: var(--color-selection-text);
 }
 
 .bodyEditor {
@@ -81,7 +81,15 @@
 }
 
 .bodyEditor :global(.milkdown-block-handle) {
-  display: none !important;
+  z-index: 20;
+}
+
+.bodyEditor :global(.milkdown-slash-menu) {
+  z-index: 30;
+}
+
+.bodyEditor :global(.milkdown-code-block .language-picker) {
+  z-index: 40;
 }
 
 .bodyEditor :global(.milkdown .ProseMirror p) {

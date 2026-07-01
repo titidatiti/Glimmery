@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { colorRolesToTokens, mergeColorRolesWithBase, tokensToColorRoles } from './colorRoles';
+import {
+  colorRolesToTokens,
+  contrastRatio,
+  deriveSelectionText,
+  FALLBACK_SELECTION_TEXT_DARK,
+  finalizeSelectionPair,
+  mergeColorRolesWithBase,
+  tokensToColorRoles,
+} from './colorRoles';
+import { nightTheme } from './builtinThemes';
 
 describe('colorRoles', () => {
   it('round-trips between roles and tokens', () => {
@@ -15,6 +24,8 @@ describe('colorRoles', () => {
       placeholderText: '#666666',
       accent: '#ff0000',
       accentSoft: '#ffcccc',
+      selectionBg: '#884444',
+      selectionText: '#ffffff',
       caretColor: '#00ff00',
       border: '#555555',
       borderSubtle: '#444444',
@@ -57,5 +68,19 @@ describe('colorRoles', () => {
     expect(merged.sidebarText).toBe('#ddeeff');
     expect(merged.sidebarTextMuted).toBe('#aabbcc');
     expect(merged.textMuted).toBe('#aabbcc');
+  });
+
+  it('picks highest-contrast selection text; light bg prefers dark gray', () => {
+    expect(deriveSelectionText('#eeeeee', ['#ffffff', '#cccccc'])).toBe(
+      FALLBACK_SELECTION_TEXT_DARK,
+    );
+    expect(deriveSelectionText('#333333', ['#ffffff', '#111111'])).toBe('#ffffff');
+  });
+
+  it('雅黑主题选区为浅底深字', () => {
+    const { bg, text } = finalizeSelectionPair(nightTheme.tokens.colors);
+    expect(contrastRatio(text, bg)).toBeGreaterThanOrEqual(3.2);
+    expect(text.toLowerCase()).not.toBe('#cccccc');
+    expect(['#2a2a2a', '#1e1e1e']).toContain(text.toLowerCase());
   });
 });

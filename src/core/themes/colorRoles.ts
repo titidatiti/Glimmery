@@ -13,6 +13,8 @@ export type ThemeColorRoleId =
   | 'placeholderText'
   | 'accent'
   | 'accentSoft'
+  | 'selectionBg'
+  | 'selectionText'
   | 'caretColor'
   | 'border'
   | 'borderSubtle';
@@ -106,7 +108,19 @@ export const THEME_COLOR_ROLE_DEFINITIONS: ThemeColorRoleDefinition[] = [
   {
     id: 'accentSoft',
     label: '柔强调色',
-    hint: '文字选区背景、柔和高亮',
+    hint: '标题选区、侧栏柔和高亮等次要强调',
+    group: 'accent',
+  },
+  {
+    id: 'selectionBg',
+    label: '选区背景',
+    hint: '编辑区拖选文字的背景色',
+    group: 'accent',
+  },
+  {
+    id: 'selectionText',
+    label: '选区文字',
+    hint: '编辑区拖选文字的前景色',
     group: 'accent',
   },
   {
@@ -155,11 +169,65 @@ function toHexColor(r: number, g: number, b: number): string {
 
 /** 从写作区底色与强调色推导柔和的选中行背景 */
 export function deriveActiveLineBg(editorBg: string, accent: string): string {
-  const bg = parseHexColor(editorBg);
-  const accentRgb = parseHexColor(accent);
-  if (!bg || !accentRgb) return editorBg;
+  return mixHexColors(editorBg, accent, 0.14);
+}
 
-  const mix = 0.14;
+/** 从写作区底色与强调色推导文字选区背景（对比度高于选中行） */
+export function deriveSelectionBg(editorBg: string, accent: string, mix = 0.42): string {
+  return mixHexColors(editorBg, accent, mix);
+}
+
+export const FALLBACK_SELECTION_TEXT_DARK = '#2a2a2a';
+export const FALLBACK_SELECTION_TEXT_LIGHT = '#f5f5f5';
+
+function relativeLuminance(hex: string): number | null {
+  const rgb = parseHexColor(hex);
+  if (!rgb) return null;
+  return (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+}
+
+/** WCAG 对比度（简化相对亮度） */
+export function contrastRatio(foreground: string, background: string): number | null {
+  const fg = relativeLuminance(foreground);
+  const bg = relativeLuminance(background);
+  if (fg === null || bg === null) return null;
+  const lighter = Math.max(fg, bg);
+  const darker = Math.min(fg, bg);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/** 在候选色与深浅回退色中选取与选区背景对比度最高的文字色 */
+export function deriveSelectionText(selectionBg: string, candidates: string[]): string {
+  const bgLum = relativeLuminance(selectionBg);
+  if (bgLum === null) return FALLBACK_SELECTION_TEXT_DARK;
+
+  const pool = [
+    ...new Set([...candidates, FALLBACK_SELECTION_TEXT_DARK, FALLBACK_SELECTION_TEXT_LIGHT]),
+  ];
+
+  let best = bgLum > 0.52 ? FALLBACK_SELECTION_TEXT_DARK : FALLBACK_SELECTION_TEXT_LIGHT;
+  let bestRatio = 0;
+
+  for (const fg of pool) {
+    const ratio = contrastRatio(fg, selectionBg);
+    if (ratio !== null && ratio > bestRatio) {
+      bestRatio = ratio;
+      best = fg;
+    }
+  }
+
+  if (bestRatio < 3.2) {
+    return bgLum > 0.52 ? FALLBACK_SELECTION_TEXT_DARK : FALLBACK_SELECTION_TEXT_LIGHT;
+  }
+
+  return best;
+}
+
+function mixHexColors(baseHex: string, accentHex: string, mix: number): string {
+  const bg = parseHexColor(baseHex);
+  const accentRgb = parseHexColor(accentHex);
+  if (!bg || !accentRgb) return baseHex;
+
   return toHexColor(
     bg.r + (accentRgb.r - bg.r) * mix,
     bg.g + (accentRgb.g - bg.g) * mix,
@@ -167,7 +235,80 @@ export function deriveActiveLineBg(editorBg: string, accent: string): string {
   );
 }
 
+export function resolveSelectionBg(colors: ThemeColorTokens): string {
+  if (colors.selectionBg) return colors.selectionBg;
+
+  const editorLum = relativeLuminance(colors.editorBg) ?? 0.5;
+  const derived = deriveSelectionBg(colors.editorBg, colors.accent);
+
+  if (editorLum < 0.45) {
+    const mutedLum = colors.accentMuted ? relativeLuminance(colors.accentMuted) : null;
+    const derivedLum = relativeLuminance(derived);
+    if (mutedLum !== null && mutedLum >= 0.58) return colors.accentMuted;
+    if (derivedLum !== null && derivedLum >= 0.58) return derived;
+    return deriveSelectionBg(colors.editorBg, colors.accent, 0.68);
+  }
+
+  return deriveSelectionBg(colors.editorBg, colors.accent, 0.52);
+}
+
+export function resolveSelectionText(colors: ThemeColorTokens): string {
+  return finalizeSelectionPair(colors).text;
+}
+
+export function finalizeSelectionPair(
+  colors: ThemeColorTokens,
+): { bg: string; text: string } {
+  if (colors.selectionBg && colors.selectionText) {
+    return { bg: colors.selectionBg, text: colors.selectionText };
+  }
+
+  const candidates = [
+    colors.headingText ?? colors.textPrimary,
+    colors.bodyText ?? colors.textPrimary,
+    colors.textSecondary,
+    colors.textMuted,
+  ];
+
+  let bg = colors.selectionBg ?? resolveSelectionBg(colors);
+
+  for (let step = 0; step < 5; step++) {
+    const text = pickSelectionTextForBg(bg, candidates, colors.selectionText);
+    const ratio = contrastRatio(text, bg) ?? 0;
+    if (ratio >= 3.2) {
+      return { bg, text };
+    }
+
+    const lum = relativeLuminance(bg) ?? 0.5;
+    bg =
+      lum < 0.58
+        ? mixHexColors(bg, '#ffffff', 0.22)
+        : mixHexColors(bg, '#000000', 0.14);
+  }
+
+  const text = pickSelectionTextForBg(bg, candidates, colors.selectionText);
+  return { bg, text };
+}
+
+function pickSelectionTextForBg(
+  selectionBg: string,
+  candidates: string[],
+  explicitText?: string,
+): string {
+  if (explicitText) return explicitText;
+
+  let text = deriveSelectionText(selectionBg, candidates);
+  if ((contrastRatio(text, selectionBg) ?? 0) >= 3.2) {
+    return text;
+  }
+
+  const darkRatio = contrastRatio(FALLBACK_SELECTION_TEXT_DARK, selectionBg) ?? 0;
+  const lightRatio = contrastRatio(FALLBACK_SELECTION_TEXT_LIGHT, selectionBg) ?? 0;
+  return darkRatio >= lightRatio ? FALLBACK_SELECTION_TEXT_DARK : FALLBACK_SELECTION_TEXT_LIGHT;
+}
+
 export function tokensToColorRoles(colors: ThemeColorTokens): ThemeColorRoles {
+  const selection = finalizeSelectionPair(colors);
   return {
     sidebarBg: colors.sidebarBg,
     editorBg: colors.editorBg,
@@ -180,6 +321,8 @@ export function tokensToColorRoles(colors: ThemeColorTokens): ThemeColorRoles {
     placeholderText: colors.sidebarTextMuted ?? colors.textMuted,
     accent: colors.accent,
     accentSoft: colors.accentMuted,
+    selectionBg: selection.bg,
+    selectionText: selection.text,
     caretColor: colors.caretColor ?? colors.accent,
     border: colors.border,
     borderSubtle: colors.borderSubtle,
@@ -200,6 +343,8 @@ export function colorRolesToTokens(roles: ThemeColorRoles): ThemeColorTokens {
     sidebarTextMuted: roles.placeholderText,
     accent: roles.accent,
     accentMuted: roles.accentSoft,
+    selectionBg: roles.selectionBg,
+    selectionText: roles.selectionText,
     caretColor: roles.caretColor,
     border: roles.border,
     borderSubtle: roles.borderSubtle,
