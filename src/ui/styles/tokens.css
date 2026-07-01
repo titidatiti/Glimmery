@@ -5,13 +5,17 @@
   --color-bg-surface: #252526;
   --color-bg-elevated: #2d2d2d;
   --color-text-primary: #cccccc;
+  --color-text-heading: #cccccc;
+  --color-text-body: #cccccc;
   --color-text-secondary: #9d9d9d;
+  --color-text-auxiliary: #9d9d9d;
   --color-text-muted: #6e6e6e;
-  --color-accent: #cc7832;
-  --color-accent-muted: #a86b28;
+  --color-accent: #c5c5c5;
+  --color-accent-muted: #a8a8a8;
+  --color-caret: #d4d4d4;
   --color-border: #3e3e3e;
   --color-border-subtle: #333333;
-  --color-focus-ring: #cc783266;
+  --color-focus-ring: #c5c5c566;
   --color-editor-bg: #1e1e1e;
   --color-sidebar-bg: #252526;
 
@@ -38,11 +42,27 @@
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 24px rgba(232, 197, 71, 0.12);
 
-  --shell-max-width: 720px;
+  --shell-max-width: 880px;
   --sidebar-width: 300px;
   --sidebar-inset: 20px;
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
+  --toolbar-height: 56px;
+
+  /* 编辑器排版（可由 TypographyProvider 覆盖） */
+  --editor-font-family: var(--font-sans);
+  --editor-font-size-title: 32px;
+  --editor-font-size-body: 21px;
+  --editor-line-height-title: 1.45;
+  --editor-line-height-body: 1.75;
+  --editor-title-body-gap: 32px;
+
+  --color-active-line-bg: #282828;
+
+  /* 温润动效曲线 */
+  --ease-warm: cubic-bezier(0.33, 0, 0.1, 1);
+  --ease-warm-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-fast: 180ms var(--ease-warm);
+  --transition-normal: 320ms var(--ease-warm);
+  --transition-warm: 420ms var(--ease-warm-out);
+  --transition-warm-long: 520ms var(--ease-warm-out);
 }

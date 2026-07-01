@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { Crepe, CrepeFeature } from '@milkdown/crepe';
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react';
 import '@milkdown/crepe/theme/common/style.css';
+import './editorCrepeOverrides.css';
+import { activeLinePlugin } from './plugins/activeLinePlugin';
 import styles from './EditorAdapter.module.css';
 
 export interface EditorAdapterProps {
@@ -9,19 +11,14 @@ export interface EditorAdapterProps {
   initialContent: string;
   onTitleChange: (title: string) => void;
   onContentChange: (content: string) => void;
-  onBeginWriting?: () => void;
   readOnly?: boolean;
 }
 
 function BodyEditor({
   initialContent,
   onContentChange,
-  onBeginWriting,
   readOnly = false,
-}: Pick<
-  EditorAdapterProps,
-  'initialContent' | 'onContentChange' | 'onBeginWriting' | 'readOnly'
->) {
+}: Pick<EditorAdapterProps, 'initialContent' | 'onContentChange' | 'readOnly'>) {
   const onChangeRef = useRef(onContentChange);
   const crepeRef = useRef<Crepe | null>(null);
   const initialContentRef = useRef(initialContent);
@@ -35,6 +32,7 @@ function BodyEditor({
         features: {
           [CrepeFeature.Toolbar]: false,
           [CrepeFeature.TopBar]: false,
+          [CrepeFeature.BlockEdit]: false,
         },
         featureConfigs: {
           [CrepeFeature.Placeholder]: {
@@ -43,6 +41,7 @@ function BodyEditor({
         },
       });
 
+      crepe.editor.use(activeLinePlugin);
       crepe.on((listener) => {
         listener.markdownUpdated((_ctx, markdown, prevMarkdown) => {
           if (markdown !== prevMarkdown) {
@@ -63,10 +62,7 @@ function BodyEditor({
   }, [readOnly]);
 
   return (
-    <div
-      className={styles.bodyEditor}
-      onPointerDown={() => onBeginWriting?.()}
-    >
+    <div className={`glimmery-body-editor ${styles.bodyEditor}`}>
       <Milkdown />
     </div>
   );
@@ -77,29 +73,22 @@ export function EditorAdapter({
   initialContent,
   onTitleChange,
   onContentChange,
-  onBeginWriting,
   readOnly = false,
 }: EditorAdapterProps) {
   return (
-    <div
-      className={styles.editorWrapper}
-      onPointerDown={() => onBeginWriting?.()}
-    >
+    <div className="editorWritingSurface">
       <input
         type="text"
-        className={styles.titleInput}
+        className={`editorWritingTitle ${styles.titleInput}`}
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}
         placeholder="标题"
         aria-label="文稿标题"
-        onPointerDown={(e) => e.stopPropagation()}
-        onFocus={() => onBeginWriting?.()}
       />
       <MilkdownProvider>
         <BodyEditor
           initialContent={initialContent}
           onContentChange={onContentChange}
-          onBeginWriting={onBeginWriting}
           readOnly={readOnly}
         />
       </MilkdownProvider>

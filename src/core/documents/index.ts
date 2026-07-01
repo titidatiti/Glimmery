@@ -1,5 +1,5 @@
 export type { DocumentData, DocumentMeta } from './types';
-export { createDocument, deriveTitleFromContent } from './types';
+export { createDocument, deriveTitleFromContent, normalizeDocument } from './types';
 export { useDocumentStore } from './documentStore';
 export type { DocumentStoreState } from './documentStore';
 export {

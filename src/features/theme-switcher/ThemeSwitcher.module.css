@@ -38,7 +38,7 @@
 
 .themeCard.active {
   border-color: var(--color-accent);
-  box-shadow: var(--shadow-glow);
+  box-shadow: var(--shadow-sm);
 }
 
 .swatch {

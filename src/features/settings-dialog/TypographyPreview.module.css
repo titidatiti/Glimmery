@@ -1,0 +1,15 @@
+.preview {
+  flex: 1;
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-editor-bg);
+  min-height: 200px;
+}
+
+@media (min-width: 1024px) {
+  .preview {
+    min-height: 280px;
+    padding: var(--spacing-xl);
+  }
+}

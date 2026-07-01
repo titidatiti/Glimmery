@@ -51,43 +51,56 @@ export function DocumentList() {
         {filteredDocuments.length === 0 ? (
           <li className={styles.empty}>无匹配文稿</li>
         ) : (
-          filteredDocuments.map((doc) => (
-            <li key={doc.id} className={styles.item}>
-              {editingId === doc.id ? (
-                <input
-                  className={styles.renameInput}
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  onBlur={() => commitRename(doc.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') void commitRename(doc.id);
-                    if (e.key === 'Escape') setEditingId(null);
-                  }}
-                  autoFocus
-                />
-              ) : (
-                <button
-                  type="button"
-                  className={`${styles.docButton} ${doc.id === activeDocumentId ? styles.active : ''}`}
-                  onClick={() => handleSelect(doc.id)}
-                  onDoubleClick={() => startRename(doc.id, doc.title)}
+          filteredDocuments.map((doc) => {
+            const isActive = doc.id === activeDocumentId;
+            const isEditing = editingId === doc.id;
+
+            return (
+              <li key={doc.id} className={styles.item}>
+                <div
+                  className={`${styles.docRow} ${isActive ? styles.docRowActive : ''} ${isEditing ? styles.docRowEditing : ''}`}
                 >
-                  <span className={styles.docTitle}>{displayTitle(doc.title)}</span>
-                </button>
-              )}
-              <IconButton
-                label="删除文稿"
-                className={styles.deleteBtn}
-                onClick={() => {
-                  if (window.confirm(`确定删除「${displayTitle(doc.title)}」？`)) {
-                    void deleteDocument(storage, doc.id);
-                  }
-                }}
-              >
-                ×
-              </IconButton>
-            </li>
-          ))
+                  {isEditing ? (
+                    <input
+                      className={styles.renameInput}
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onBlur={() => commitRename(doc.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') void commitRename(doc.id);
+                        if (e.key === 'Escape') setEditingId(null);
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className={styles.docButton}
+                        onClick={() => handleSelect(doc.id)}
+                        onDoubleClick={() => startRename(doc.id, doc.title)}
+                        title={isActive ? undefined : displayTitle(doc.title)}
+                      >
+                        <span className={styles.docTitle}>{displayTitle(doc.title)}</span>
+                      </button>
+                      <IconButton
+                        label="删除文稿"
+                        className={styles.deleteBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`确定删除「${displayTitle(doc.title)}」？`)) {
+                            void deleteDocument(storage, doc.id);
+                          }
+                        }}
+                      >
+                        ×
+                      </IconButton>
+                    </>
+                  )}
+                </div>
+              </li>
+            );
+          })
         )}
       </ul>
     </div>

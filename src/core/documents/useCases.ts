@@ -1,6 +1,6 @@
 import type { StorageProvider } from '@/services/storage';
 import type { DocumentData, DocumentMeta } from './types';
-import { createDocument } from './types';
+import { createDocument, normalizeDocument } from './types';
 
 export async function listDocuments(storage: StorageProvider): Promise<DocumentMeta[]> {
   return storage.list();
@@ -10,7 +10,8 @@ export async function loadDocument(
   storage: StorageProvider,
   id: string,
 ): Promise<DocumentData | null> {
-  return storage.load(id);
+  const doc = await storage.load(id);
+  return doc ? normalizeDocument(doc) : null;
 }
 
 export async function saveDocument(

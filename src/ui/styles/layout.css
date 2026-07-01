@@ -1,0 +1,82 @@
+/*
+ * Glimmery 布局与滚动区排版标准（参考 Apple HIG 8pt 网格与安全区内边距）
+ * 详见 docs/MEMORY.md § UI 排版标准
+ */
+
+:root {
+  /* 8pt 基准网格 */
+  --layout-grid-unit: 8px;
+
+  /* 面板内边距（Settings、对话框内容区等） */
+  --layout-panel-padding-inline: var(--spacing-lg);
+  --layout-panel-padding-block: var(--spacing-md);
+
+  /*
+   * 滚动区水平安全区：防止 overflow:auto 裁切 focus ring / border
+   * = focus ring 宽度 + 最小视觉缓冲（1 grid unit）
+   */
+  --layout-focus-ring-width: 2px;
+  --layout-scroll-gutter-inline: calc(var(--layout-focus-ring-width) + var(--layout-grid-unit));
+
+  /* 表单控件 */
+  --layout-control-radius: var(--radius-md);
+  --layout-control-padding-block: var(--spacing-sm);
+  --layout-control-padding-inline: var(--spacing-md);
+
+  /* 设置对话框左侧 Tab 栏固定宽度（容纳「字体与排版」等最长标签） */
+  --settings-tab-nav-width: 156px;
+}
+
+/* 可滚动内容区：水平内边距含安全区，禁止裁切交互元素描边 */
+.scrollRegion {
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding-inline: var(--layout-scroll-gutter-inline);
+  padding-block: var(--spacing-xs);
+  scrollbar-gutter: stable;
+}
+
+/* 嵌在已有 panel padding 内的滚动区，仅保留安全区增量 */
+.scrollRegionInset {
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  margin-inline: calc(var(--layout-scroll-gutter-inline) * -1);
+  padding-inline: var(--layout-scroll-gutter-inline);
+  scrollbar-gutter: stable;
+}
+
+/* 表单控件：焦点环内收，避免被 scroll 容器裁切 */
+.formControl {
+  width: 100%;
+  padding: var(--layout-control-padding-block) var(--layout-control-padding-inline);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--layout-control-radius);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  transition:
+    border-color var(--transition-warm),
+    box-shadow var(--transition-warm);
+}
+
+.formControl:hover {
+  border-color: var(--color-border);
+}
+
+.formControl:focus {
+  outline: none;
+}
+
+.formControl:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+/* 滚动区内的可聚焦元素：禁用向外扩展的全局 outline */
+.scrollRegion :is(input, select, textarea, button):focus-visible,
+.scrollRegionInset :is(input, select, textarea, button):focus-visible {
+  outline: none;
+}

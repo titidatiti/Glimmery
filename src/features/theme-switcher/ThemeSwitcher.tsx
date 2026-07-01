@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useThemeStore } from '@/core/themes';
+import { tokensToColorRoles, tokensToShadowRoles, mergeColorRoles, useThemeStore } from '@/core/themes';
 import { Button } from '@/ui';
 import styles from './ThemeSwitcher.module.css';
 
@@ -15,7 +15,16 @@ export function ThemeSwitcher() {
   const [baseThemeId, setBaseThemeId] = useState(activeThemeId);
 
   const handleCreate = () => {
-    addCustomTheme(customName.trim() || '我的主题', baseThemeId, accentColor);
+    const base = themes.find((t) => t.id === baseThemeId);
+    if (!base) return;
+    const roles = mergeColorRoles(tokensToColorRoles(base.tokens.colors), {
+      accent: accentColor,
+      accentSoft: accentColor,
+    });
+    addCustomTheme(customName.trim() || '我的主题', baseThemeId, {
+      colors: roles,
+      shadows: tokensToShadowRoles(base.tokens),
+    });
     setShowEditor(false);
   };
 

@@ -1,1 +1,2 @@
-export { SettingsDialog, SettingsTrigger } from './SettingsDialog';
+export { SettingsDialog } from './SettingsDialog';
+export { SettingsTrigger } from './SettingsTrigger';

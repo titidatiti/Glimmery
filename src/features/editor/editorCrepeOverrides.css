@@ -1,0 +1,33 @@
+/* 须在 @milkdown/crepe/theme/common/style.css 之后加载，覆盖 reset.css 写死的 px 与 padding */
+
+.glimmery-body-editor .milkdown .ProseMirror {
+  font-family: var(--editor-font-family, var(--font-sans)) !important;
+  font-size: var(--editor-font-size-body, var(--font-size-lg)) !important;
+  line-height: var(--editor-line-height-body, var(--line-height-base)) !important;
+  padding: 0 !important;
+}
+
+.glimmery-body-editor .milkdown .ProseMirror p,
+.glimmery-body-editor .milkdown .ProseMirror li {
+  font-family: inherit !important;
+  font-size: var(--editor-font-size-body, var(--font-size-lg)) !important;
+  line-height: var(--editor-line-height-body, var(--line-height-base)) !important;
+  padding: 0 !important;
+}
+
+.glimmery-body-editor .milkdown .ProseMirror p {
+  margin: 0 0 var(--editor-paragraph-gap, 0.85em) !important;
+}
+
+.glimmery-body-editor .milkdown .ProseMirror p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.glimmery-body-editor .milkdown .ProseMirror h1,
+.glimmery-body-editor .milkdown .ProseMirror h2,
+.glimmery-body-editor .milkdown .ProseMirror h3,
+.glimmery-body-editor .milkdown .ProseMirror h4,
+.glimmery-body-editor .milkdown .ProseMirror h5,
+.glimmery-body-editor .milkdown .ProseMirror h6 {
+  padding: 0 !important;
+}

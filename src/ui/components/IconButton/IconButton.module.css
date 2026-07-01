@@ -6,14 +6,18 @@
   height: 36px;
   border-radius: var(--radius-md);
   color: var(--color-text-secondary);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition:
+    background var(--transition-warm),
+    color var(--transition-warm),
+    transform var(--transition-warm);
 }
 
 .iconButton:hover {
   background: var(--color-bg-elevated);
   color: var(--color-text-primary);
+  transform: scale(1.04);
 }
 
 .iconButton:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
 }

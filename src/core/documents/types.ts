@@ -20,6 +20,17 @@ export function createDocument(title = '', content = ''): DocumentData {
   };
 }
 
+/** 兼容旧数据：忽略已废弃的 summary 等额外字段 */
+export function normalizeDocument(doc: DocumentData & { summary?: string }): DocumentData {
+  return {
+    id: doc.id,
+    title: doc.title,
+    content: doc.content,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+  };
+}
+
 export function deriveTitleFromContent(content: string, fallback = '未命名文稿'): string {
   const firstLine = content
     .split('\n')

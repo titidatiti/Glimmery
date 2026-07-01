@@ -1,0 +1,61 @@
+/* 写作区排版 — 编辑窗与「字体与排版」预览共用，绑定 TypographyProvider 注入的变量 */
+
+.editorWritingSurface {
+  width: 100%;
+  font-family: var(--editor-font-family, var(--font-sans));
+  color: var(--color-text-body);
+}
+
+.editorWritingTitle {
+  display: block;
+  width: 100%;
+  margin: 0 0 var(--editor-title-body-gap, var(--spacing-xl));
+  padding: 0 0 var(--spacing-md);
+  border: none;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: transparent;
+  color: var(--color-text-heading);
+  font-family: inherit;
+  font-size: var(--editor-font-size-title, var(--font-size-xl));
+  font-weight: 600;
+  line-height: var(--editor-line-height-title, var(--line-height-tight));
+  letter-spacing: -0.02em;
+}
+
+.editorWritingBody {
+  margin: 0 0 var(--editor-paragraph-gap, 0.85em);
+  padding: 0;
+  font-family: inherit;
+  font-size: var(--editor-font-size-body, var(--font-size-lg));
+  line-height: var(--editor-line-height-body, var(--line-height-base));
+  color: var(--color-text-body);
+}
+
+.editorWritingBody:last-child {
+  margin-bottom: 0;
+}
+
+/* 主题预览：缩小编辑区排版，保持与真实编辑区相同的字号/行距比例 */
+.themePreviewEditorWriting {
+  --theme-preview-typography-scale: 0.52;
+  font-family: var(--editor-font-family, var(--font-sans));
+}
+
+.themePreviewEditorWriting .themePreviewTitle {
+  margin: 0 0 calc(var(--editor-title-body-gap, 32px) * var(--theme-preview-typography-scale));
+  padding: 0 0 calc(var(--spacing-md) * var(--theme-preview-typography-scale));
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: calc(var(--editor-font-size-title, 32px) * var(--theme-preview-typography-scale));
+  font-weight: 600;
+  line-height: var(--editor-line-height-title, 1.45);
+  letter-spacing: -0.02em;
+  color: var(--color-text-heading);
+}
+
+.themePreviewEditorWriting .themePreviewBody {
+  margin: 0;
+  padding: 0;
+  font-size: calc(var(--editor-font-size-body, 21px) * var(--theme-preview-typography-scale));
+  line-height: var(--editor-line-height-body, 1.75);
+  color: var(--color-text-body);
+}

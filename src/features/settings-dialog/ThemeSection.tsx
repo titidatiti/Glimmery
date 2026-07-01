@@ -1,86 +1,150 @@
-import { useState } from 'react';
-import { BUILTIN_THEMES, useThemeStore } from '@/core/themes';
-import { Button } from '@/ui';
+import { useMemo, useState, type MouseEvent, type ReactNode } from 'react';
+import {
+  DARK_BUILTIN_THEMES,
+  LIGHT_BUILTIN_THEMES,
+  useThemeStore,
+  type ThemeDefinition,
+} from '@/core/themes';
+import { CustomThemeEditor } from './CustomThemeEditor';
 import styles from './ThemeSection.module.css';
+
+function ThemeCard({
+  theme,
+  isActive,
+  onSelect,
+  onEdit,
+}: {
+  theme: ThemeDefinition;
+  isActive: boolean;
+  onSelect: () => void;
+  onEdit?: (e: MouseEvent) => void;
+}) {
+  const showEdit = !theme.isBuiltin && isActive && onEdit;
+
+  return (
+    <div className={`${styles.themeCard} ${isActive ? styles.active : ''}`}>
+      <button
+        type="button"
+        className={styles.cardSelect}
+        onClick={onSelect}
+        title={theme.description}
+        aria-pressed={isActive}
+      >
+        <span className={styles.swatch} style={{ background: theme.tokens.colors.editorBg }}>
+          <span
+            className={styles.accentDot}
+            style={{ background: theme.tokens.colors.accent }}
+          />
+        </span>
+        <span className={styles.themeName}>{theme.name}</span>
+      </button>
+      {showEdit && (
+        <button
+          type="button"
+          className={styles.editBtn}
+          onClick={onEdit}
+          aria-label={`编辑主题 ${theme.name}`}
+        >
+          编辑
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ThemeGroup({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className={styles.group}>
+      <h3 className={styles.groupTitle}>{title}</h3>
+      <div className={styles.grid}>{children}</div>
+    </section>
+  );
+}
 
 export function ThemeSection() {
   const themes = useThemeStore((s) => s.themes);
   const activeThemeId = useThemeStore((s) => s.activeThemeId);
   const setActiveTheme = useThemeStore((s) => s.setActiveTheme);
-  const addCustomTheme = useThemeStore((s) => s.addCustomTheme);
 
-  const [showEditor, setShowEditor] = useState(false);
-  const [customName, setCustomName] = useState('我的主题');
-  const [accentColor, setAccentColor] = useState('#cc7832');
-  const [baseThemeId, setBaseThemeId] = useState(activeThemeId);
+  const [editorMode, setEditorMode] = useState<'closed' | 'create' | 'edit'>('closed');
+  const [editingThemeId, setEditingThemeId] = useState<string | undefined>();
 
-  const handleCreate = () => {
-    addCustomTheme(customName.trim() || '我的主题', baseThemeId, accentColor);
-    setShowEditor(false);
+  const customThemes = useMemo(() => themes.filter((t) => !t.isBuiltin), [themes]);
+
+  const handleCloseEditor = () => {
+    setEditorMode('closed');
+    setEditingThemeId(undefined);
   };
+
+  const handleEditTheme = (themeId: string, e: MouseEvent) => {
+    e.stopPropagation();
+    setEditingThemeId(themeId);
+    setEditorMode('edit');
+  };
+
+  if (editorMode !== 'closed') {
+    return (
+      <CustomThemeEditor
+        editingThemeId={editorMode === 'edit' ? editingThemeId : undefined}
+        onClose={handleCloseEditor}
+      />
+    );
+  }
 
   return (
     <div className={styles.section}>
-      <div className={styles.grid}>
-        {themes.map((theme) => (
-          <button
+      <ThemeGroup title="深色主题">
+        {DARK_BUILTIN_THEMES.map((theme) => (
+          <ThemeCard
             key={theme.id}
-            type="button"
-            className={`${styles.themeCard} ${theme.id === activeThemeId ? styles.active : ''}`}
-            onClick={() => setActiveTheme(theme.id)}
-            title={theme.description}
-          >
-            <span className={styles.swatch} style={{ background: theme.tokens.colors.bgBase }}>
-              <span
-                className={styles.accentDot}
-                style={{ background: theme.tokens.colors.accent }}
-              />
-            </span>
-            <span className={styles.themeName}>{theme.name}</span>
-          </button>
-        ))}
-      </div>
-      {!showEditor ? (
-        <Button size="sm" onClick={() => setShowEditor(true)}>
-          自定义主题
-        </Button>
-      ) : (
-        <div className={styles.editor}>
-          <input
-            className={styles.input}
-            value={customName}
-            onChange={(e) => setCustomName(e.target.value)}
-            placeholder="主题名称"
+            theme={theme}
+            isActive={theme.id === activeThemeId}
+            onSelect={() => setActiveTheme(theme.id)}
           />
-          <select
-            className={styles.select}
-            value={baseThemeId}
-            onChange={(e) => setBaseThemeId(e.target.value)}
-          >
-            {BUILTIN_THEMES.map((t) => (
-              <option key={t.id} value={t.id}>
-                基于：{t.name}
-              </option>
-            ))}
-          </select>
-          <label className={styles.colorRow}>
-            强调色
-            <input
-              type="color"
-              value={accentColor}
-              onChange={(e) => setAccentColor(e.target.value)}
-            />
-          </label>
-          <div className={styles.actions}>
-            <Button size="sm" variant="primary" onClick={handleCreate}>
-              保存
-            </Button>
-            <Button size="sm" onClick={() => setShowEditor(false)}>
-              取消
-            </Button>
-          </div>
-        </div>
-      )}
+        ))}
+      </ThemeGroup>
+
+      <ThemeGroup title="浅色主题">
+        {LIGHT_BUILTIN_THEMES.map((theme) => (
+          <ThemeCard
+            key={theme.id}
+            theme={theme}
+            isActive={theme.id === activeThemeId}
+            onSelect={() => setActiveTheme(theme.id)}
+          />
+        ))}
+      </ThemeGroup>
+
+      <ThemeGroup title="自定义主题">
+        {customThemes.map((theme) => (
+          <ThemeCard
+            key={theme.id}
+            theme={theme}
+            isActive={theme.id === activeThemeId}
+            onSelect={() => setActiveTheme(theme.id)}
+            onEdit={(e) => handleEditTheme(theme.id, e)}
+          />
+        ))}
+        <button
+          type="button"
+          className={`${styles.themeCard} ${styles.createCard}`}
+          onClick={() => setEditorMode('create')}
+          title="创建自定义主题"
+        >
+          <span className={`${styles.swatch} ${styles.createSwatch}`}>
+            <span className={styles.plusIcon} aria-hidden>
+              +
+            </span>
+          </span>
+          <span className={styles.themeName}>新建主题</span>
+        </button>
+      </ThemeGroup>
     </div>
   );
 }

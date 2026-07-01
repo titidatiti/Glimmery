@@ -3,61 +3,183 @@
   grid-template-columns: var(--sidebar-width) 1fr;
   grid-template-rows: auto 1fr;
   height: 100%;
-  transition: grid-template-columns var(--transition-normal);
+  transition:
+    grid-template-columns var(--transition-warm-long),
+    grid-template-rows var(--transition-warm-long);
 }
 
 .shell.focusMode {
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
+  grid-template-columns: 0 1fr;
+  grid-template-rows: 0 1fr;
 }
 
 .sidebar {
   grid-row: 1 / -1;
+  grid-column: 1;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--color-sidebar-bg);
+  border-right: 1px solid var(--color-border-subtle);
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    opacity var(--transition-warm-long),
+    transform var(--transition-warm-long),
+    border-color var(--transition-warm);
+  pointer-events: auto;
+}
+
+.shell.focusMode .sidebar {
+  opacity: 0;
+  transform: translateX(calc(var(--sidebar-width) * -0.12));
+  border-right-color: transparent;
+  pointer-events: none;
+}
+
+.sidebarInner {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  width: var(--sidebar-width);
   height: 100%;
   min-height: 0;
-  background: var(--color-sidebar-bg);
-  border-right: 1px solid var(--color-border-subtle);
-  overflow: hidden;
+  min-width: 0;
+  overflow-x: hidden;
   padding: var(--spacing-lg) var(--sidebar-inset) var(--spacing-md);
   text-align: left;
 }
 
 .toolbar {
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
   align-items: center;
-  padding: var(--spacing-sm) var(--spacing-lg);
+  min-height: var(--toolbar-height);
+  max-height: var(--toolbar-height);
+  padding: 0 var(--spacing-xl);
   border-bottom: 1px solid var(--color-border-subtle);
   background: var(--color-bg-surface);
-  min-height: 40px;
+  opacity: 1;
+  transform: translateY(0);
+  overflow: hidden;
+  transition:
+    opacity var(--transition-warm),
+    transform var(--transition-warm),
+    max-height var(--transition-warm-long),
+    min-height var(--transition-warm-long),
+    padding var(--transition-warm-long),
+    border-color var(--transition-warm);
+  pointer-events: auto;
+}
+
+.shell.focusMode .toolbar {
+  opacity: 0;
+  transform: translateY(-6px);
+  min-height: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-bottom-color: transparent;
+  pointer-events: none;
 }
 
 .docName {
   flex: 1;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
+  min-width: 0;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--color-text-auxiliary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color var(--transition-warm);
+}
+
+.focusEnter {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+  margin-left: var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  color: var(--color-text-auxiliary);
+  font-size: var(--font-size-sm);
+  transition:
+    color var(--transition-warm),
+    background var(--transition-warm),
+    transform var(--transition-warm);
+}
+
+.focusEnter:hover,
+.focusEnter:focus-visible {
+  color: var(--color-text-primary);
+  background: var(--color-bg-elevated);
+  transform: translateY(-1px);
+}
+
+.focusEnterIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.focusEnterLabel {
+  line-height: 1;
 }
 
 .main {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background: var(--color-editor-bg);
   position: relative;
+  transition: grid-row var(--transition-warm-long);
+}
+
+.shell.focusMode .main {
+  grid-row: 1 / -1;
 }
 
 .writingArea {
-  flex: 1;
-  overflow-y: auto;
   max-width: var(--shell-max-width);
   width: 100%;
   margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-lg);
+  padding: var(--spacing-xxl) var(--spacing-xl) var(--spacing-xxl);
+  transition: padding var(--transition-warm-long);
+}
+
+.editorScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  scrollbar-gutter: stable;
+}
+
+.editorFooter {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-xl);
+  background: transparent;
+}
+
+.updatedAt {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.shell.focusMode .writingArea {
+  padding-top: calc(var(--spacing-xxl) + var(--spacing-md));
+  padding-bottom: var(--spacing-xxl);
 }
 
 .focusExit {
@@ -72,9 +194,20 @@
   border-radius: var(--radius-md);
   color: var(--color-text-muted);
   background: transparent;
-  opacity: 0.35;
-  transition: opacity var(--transition-fast), background var(--transition-fast),
-    color var(--transition-fast);
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition:
+    opacity var(--transition-warm),
+    transform var(--transition-warm),
+    color var(--transition-warm),
+    background var(--transition-warm);
+}
+
+.shell.focusMode .focusExit {
+  opacity: 0.4;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .focusExit:hover,

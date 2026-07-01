@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { AppShell } from './layout/AppShell';
-import { ServicesProvider, ThemeProvider } from './providers';
+import { ServicesProvider, ThemeProvider, TypographyProvider } from './providers';
 import { IndexedDBAdapter } from '@/services/storage';
 import { NoopSyncAdapter } from '@/services/sync';
 import { NoopAudioEngine } from '@/services/audio';
@@ -18,7 +18,9 @@ export function App() {
   return (
     <ServicesProvider value={services}>
       <ThemeProvider>
-        <AppShell />
+        <TypographyProvider>
+          <AppShell />
+        </TypographyProvider>
       </ThemeProvider>
     </ServicesProvider>
   );

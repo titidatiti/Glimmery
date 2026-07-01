@@ -1,41 +1,134 @@
 .section {
+  composes: scrollRegionInset from global;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-lg);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(var(--layout-focus-ring-width) + var(--spacing-sm));
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.groupTitle {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
+  align-content: start;
+}
+
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md) var(--spacing-lg);
+  }
 }
 
 .themeCard {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm);
+  align-items: stretch;
+  min-width: 0;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-subtle);
-  transition: border-color var(--transition-fast);
+  background: transparent;
+  transition:
+    border-color var(--transition-warm),
+    box-shadow var(--transition-warm),
+    background var(--transition-warm);
 }
 
 .themeCard:hover {
   border-color: var(--color-border);
+  background: var(--color-bg-elevated);
+  box-shadow: var(--shadow-sm);
 }
 
 .themeCard.active {
   border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.cardSelect {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-sm) var(--spacing-sm);
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.cardSelect:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+  border-radius: calc(var(--radius-md) - 1px);
+}
+
+.createCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md) var(--spacing-sm) var(--spacing-sm);
+  cursor: pointer;
+  color: inherit;
+}
+
+.createCard:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
 }
 
 .swatch {
   width: 100%;
-  height: 32px;
+  height: 36px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.createSwatch {
+  background: var(--color-bg-elevated);
+  border: 1px dashed var(--color-border);
+}
+
+.plusIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--color-text-muted);
+  transition: color var(--transition-warm);
+}
+
+.themeCard:hover .plusIcon {
+  color: var(--color-text-secondary);
 }
 
 .accentDot {
@@ -47,34 +140,30 @@
 .themeName {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  text-align: center;
+  line-height: 1.25;
 }
 
-.editor {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  background: var(--color-bg-elevated);
-  border-radius: var(--radius-md);
+.editBtn {
+  margin: 0 var(--spacing-sm) var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-top: 1px solid var(--color-border-subtle);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.2;
+  border-radius: 0 0 calc(var(--radius-md) - 2px) calc(var(--radius-md) - 2px);
+  transition:
+    color var(--transition-warm),
+    background var(--transition-warm);
 }
 
-.input,
-.select {
-  padding: var(--spacing-sm);
+.editBtn:hover {
+  color: var(--color-text-primary);
   background: var(--color-bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
 }
 
-.colorRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-.actions {
-  display: flex;
-  gap: var(--spacing-sm);
+.editBtn:focus-visible {
+  outline: none;
+  color: var(--color-text-primary);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
 }

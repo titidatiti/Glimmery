@@ -1,0 +1,269 @@
+.editor {
+
+  display: flex;
+
+  flex-direction: column;
+
+  height: 100%;
+
+  min-height: 0;
+
+}
+
+
+
+.controls {
+  composes: scrollRegionInset from global;
+
+  flex: 1;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: var(--spacing-md);
+
+  padding-bottom: var(--spacing-sm);
+
+}
+
+
+
+.field {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: var(--spacing-xs);
+
+}
+
+
+
+.fieldLabel {
+
+  font-size: var(--font-size-sm);
+
+  font-weight: 600;
+
+  color: var(--color-text-muted);
+
+  letter-spacing: 0.04em;
+
+}
+
+
+
+.input,
+
+.select {
+
+  composes: formControl from global;
+
+}
+
+
+
+.roleGroup {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: var(--spacing-sm);
+
+}
+
+
+
+.groupTitle {
+
+  margin: 0;
+
+  font-size: var(--font-size-sm);
+
+  font-weight: 600;
+
+  color: var(--color-text-muted);
+
+  letter-spacing: 0.04em;
+
+}
+
+
+
+.roleList {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: var(--spacing-xs);
+
+}
+
+
+
+.colorField {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: var(--spacing-md);
+
+  padding: var(--spacing-sm);
+
+  border: 1px solid var(--color-border-subtle);
+
+  border-radius: var(--layout-control-radius);
+
+  background: var(--color-bg-elevated);
+
+  transition:
+
+    border-color var(--transition-warm),
+
+    box-shadow var(--transition-warm);
+
+}
+
+
+
+.colorField:hover {
+
+  border-color: var(--color-border);
+
+}
+
+
+
+.colorField:focus-within {
+
+  border-color: var(--color-accent);
+
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+
+}
+
+
+
+.colorMeta {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+
+  min-width: 0;
+
+}
+
+
+
+.colorLabel {
+
+  font-size: var(--font-size-sm);
+
+  font-weight: 500;
+
+  color: var(--color-text-primary);
+
+}
+
+
+
+.colorHint {
+
+  font-size: 11px;
+
+  line-height: 1.35;
+
+  color: var(--color-text-muted);
+
+}
+
+
+
+.colorInput {
+
+  flex-shrink: 0;
+
+  width: 36px;
+
+  height: 28px;
+
+  padding: 0;
+
+  border: 1px solid var(--color-border-subtle);
+
+  border-radius: var(--radius-sm);
+
+  background: transparent;
+
+  cursor: pointer;
+
+}
+
+
+
+.colorInput:focus {
+
+  outline: none;
+
+}
+
+
+
+.colorInput:focus-visible {
+
+  outline: none;
+
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+
+}
+
+
+
+.colorInput:disabled {
+
+  opacity: 0.35;
+
+  cursor: not-allowed;
+
+}
+
+
+
+.toggleLabel {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: var(--spacing-sm);
+
+  cursor: pointer;
+
+}
+
+
+
+.toggleInput {
+
+  width: 16px;
+
+  height: 16px;
+
+  margin: 0;
+
+  accent-color: var(--color-accent);
+
+  cursor: pointer;
+
+}
+
