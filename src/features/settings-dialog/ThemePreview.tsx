@@ -19,7 +19,10 @@ export function ThemePreview({ tokens, size = 'default' }: ThemePreviewProps) {
     <div className={previewClass} style={cssVars as CSSProperties}>
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
-          <div className={styles.brand}>Glimmery</div>
+          <div className={styles.brandRow}>
+            <img className={styles.brandIcon} src="/icon.png" alt="" width={16} height={16} />
+            <div className={styles.brand}>Glimmery</div>
+          </div>
           <div className={styles.tagline}>Where every glimmer becomes memory.</div>
           <div className={styles.search}>搜索文稿…</div>
           <div className={styles.newDoc}>

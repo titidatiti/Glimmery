@@ -1,11 +1,20 @@
 import styles from './AboutSection.module.css';
 
+const BRAND_ICON_SRC = '/icon.png';
+
 export function AboutSection() {
   return (
     <div className={styles.section}>
       <div className={styles.brand}>
-        <h3 className={styles.name}>Glimmery</h3>
-        <p className={styles.tagline}>Where every glimmer becomes memory.</p>
+        <div className={styles.brandMark}>
+          <div className={styles.brandIconWrap}>
+            <img className={styles.brandIcon} src={BRAND_ICON_SRC} alt="" decoding="async" />
+          </div>
+          <div className={styles.titles}>
+            <h3 className={styles.name}>Glimmery</h3>
+            <p className={styles.tagline}>Where every glimmer becomes memory.</p>
+          </div>
+        </div>
       </div>
       <dl className={styles.meta}>
         <div className={styles.row}>

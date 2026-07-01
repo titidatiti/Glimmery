@@ -16,7 +16,32 @@
 }
 
 .previewLarge .brand {
-  font-size: 14px;
+  font-size: 13px;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.brandIcon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  display: block;
+}
+
+.brand {
+  font-family: var(--font-brand);
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--color-sidebar-text);
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+  min-width: 0;
 }
 
 .layout {
@@ -37,18 +62,16 @@
   line-height: 1.45;
 }
 
-.brand {
-  font-weight: 600;
-  font-size: 12px;
-  color: var(--color-sidebar-text);
-  letter-spacing: 0.04em;
-}
-
 .tagline {
+  font-family: var(--font-brand-subtitle);
   font-size: 9px;
-  color: var(--color-sidebar-text-muted);
+  font-weight: 400;
   font-style: italic;
+  line-height: 1.35;
+  letter-spacing: 0.015em;
+  color: var(--color-sidebar-text-muted);
   margin-bottom: 4px;
+  padding-left: 21px;
 }
 
 .search {
