@@ -17,7 +17,7 @@
   --crepe-color-inverse: var(--color-text-heading);
   --crepe-color-on-inverse: var(--color-bg-base);
   --crepe-color-inline-code: var(--color-accent);
-  --crepe-color-error: #e57373;
+  --crepe-color-error: var(--color-danger, #e57373);
   --crepe-color-hover: var(--color-bg-elevated);
   --crepe-color-selected: var(--color-selection-bg);
   --crepe-color-inline-area: var(--color-bg-elevated);
