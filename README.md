@@ -1,6 +1,30 @@
+<p align="center">
+  <img src="./public/icon.png" alt="Glimmery" width="96">
+</p>
+
 # Glimmery
 
-一款本地优先的沉浸式 Markdown 写作 Web 应用，支持主题定制与文稿管理。
+*Where every glimmer becomes memory.*
+
+*微光汇聚，字句成行。*
+
+这是一款追求极致沉浸式写作的 Web 应用，拥有极致简洁优雅的响应式界面，丰富的配色方案，支持 Markdown 格式。
+
+## 功能
+
+**现已支持**
+
+- **Markdown 写作**：Typora 式所见即所得编辑
+- **本地自动保存**：文稿保存在设备本地（IndexedDB），离线可用
+- **配色主题**：多套预设主题，支持自定义配色
+- **字体与排版**：字号、行距、字体等可在设置中调整
+- **响应式布局**：从桌面、平板到手机均可使用；手机端支持侧栏横滑、横屏优化与 PWA 安装
+
+**即将支持**
+
+- 白噪音 BGM
+- 打字音效
+- Google Drive 备份
 
 ## 快速开始
 
