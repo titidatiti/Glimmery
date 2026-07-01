@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
-import { clampPanelOffset, getCommitDistance } from './mobilePanelSwipeMath';
+import {
+  CLICK_SUPPRESS_MS,
+  CLICK_SUPPRESS_PX,
+  getCommitDistance,
+  isEdgeSwipe,
+  resolveDragAxis,
+  resolveDragOffset,
+  shouldCommitSwipe,
+  type TouchZone,
+} from './mobilePanelSwipeMath';
 
-/** 快速 flick 判定 */
-const FLICK_MIN_PX = 28;
-const FLICK_VELOCITY_PX_MS = 0.55;
-const AXIS_LOCK_PX = 10;
-const HORIZONTAL_AXIS_BIAS = 1.15;
-/** 编辑区左缘滑动手势区（可越过 input 启动拖拽） */
-const EDGE_SWIPE_ZONE_PX = 28;
-const CLICK_SUPPRESS_PX = 8;
-const CLICK_SUPPRESS_MS = 400;
 const HISTORY_STATE_KEY = 'glimmeryPanel';
 
 function isHistoryEditorState(): boolean {
@@ -24,15 +24,12 @@ function getViewportWidth(): number {
   return window.visualViewport?.width ?? window.innerWidth;
 }
 
-type DragAxis = 'pending' | 'horizontal' | 'vertical';
-type TouchZone = 'sidebar' | 'main';
-
 interface DragSession {
   startX: number;
   startY: number;
   startOffset: number;
   startTime: number;
-  axis: DragAxis;
+  axis: 'pending' | 'horizontal';
   zone: TouchZone;
   edgeSwipe: boolean;
 }
@@ -61,7 +58,7 @@ function shouldBlockTouchDrag(
 ): boolean {
   if (!(target instanceof Element)) return true;
 
-  if (zone === 'main' && focusMode && touch.clientX <= EDGE_SWIPE_ZONE_PX) {
+  if (isEdgeSwipe(zone, focusMode, touch.clientX)) {
     return false;
   }
 
@@ -183,8 +180,7 @@ export function useMobilePanelSwipe({
         return;
       }
 
-      const edgeSwipe =
-        zone === 'main' && focusModeRef.current && touch.clientX <= EDGE_SWIPE_ZONE_PX;
+      const edgeSwipe = isEdgeSwipe(zone, focusModeRef.current, touch.clientX);
 
       dragRef.current = {
         startX: touch.clientX,
@@ -204,13 +200,11 @@ export function useMobilePanelSwipe({
 
       const deltaX = touch.clientX - session.startX;
       const deltaY = touch.clientY - session.startY;
-      const absX = Math.abs(deltaX);
-      const absY = Math.abs(deltaY);
 
       if (session.axis === 'pending') {
-        if (absX < AXIS_LOCK_PX && absY < AXIS_LOCK_PX) return;
-        const verticalThreshold = session.edgeSwipe ? absX * 1.35 : absX * HORIZONTAL_AXIS_BIAS;
-        if (absY > verticalThreshold) {
+        const axis = resolveDragAxis(deltaX, deltaY, session.edgeSwipe);
+        if (axis === 'pending') return;
+        if (axis === 'vertical') {
           dragRef.current = null;
           return;
         }
@@ -224,17 +218,15 @@ export function useMobilePanelSwipe({
       e.preventDefault();
 
       const width = viewportWidthRef.current;
-      let nextOffset = session.startOffset + deltaX;
+      const clamped = resolveDragOffset(
+        session.startOffset,
+        deltaX,
+        session.zone,
+        focusModeRef.current,
+        width,
+      );
+      if (clamped === null) return;
 
-      if (session.zone === 'sidebar' && !focusModeRef.current) {
-        nextOffset = Math.min(0, nextOffset);
-      } else if (session.zone === 'main' && focusModeRef.current) {
-        nextOffset = Math.max(-width, nextOffset);
-      } else {
-        return;
-      }
-
-      const clamped = clampPanelOffset(nextOffset, width);
       offsetRef.current = clamped;
       setOffsetPx(clamped);
     };
@@ -255,9 +247,7 @@ export function useMobilePanelSwipe({
       const dragDistance = Math.abs(currentOffset - session.startOffset);
       const dragDuration = Math.max(performance.now() - session.startTime, 1);
       const dragVelocity = dragDistance / dragDuration;
-      const shouldCommit =
-        dragDistance >= commitDistance ||
-        (dragDistance >= FLICK_MIN_PX && dragVelocity >= FLICK_VELOCITY_PX_MS);
+      const shouldCommit = shouldCommitSwipe(dragDistance, dragVelocity, commitDistance);
 
       suppressAccidentalClick(dragDistance);
 

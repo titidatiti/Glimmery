@@ -305,13 +305,17 @@
   display: contents;
 }
 
-/*
- * 移动端侧栏/编辑区横滑 — 改动后必须在真机验证：
- * - .mobileTrack 在 ≤767px 必须为 flex 行（不可改回 display:contents）
- * - 非沉浸时 .main、沉浸时 .sidebar 须 pointer-events:none（见下方选择器）
- * - .shell.focusMode .sidebar 禁止写 pointer-events:auto
- * - 侧栏容器勿加 touch-action（会阻断 track 上的 touchmove）
- */
+/* ===================== 移动端横滑核心操作 · 契约区（谨慎修改） =====================
+ * 「侧栏 ↔ 编辑区」横滑是移动端唯一的导航方式，一旦破坏应用即不可用。
+ * 以下不变量由 mobileSwipeContract.test.ts **自动守护**，改坏会导致 `npm test` 失败：
+ *   - .mobileTrack 在 ≤767px 必须为 flex 行（不可改回 display:contents）
+ *   - .mobileTrack 保留 touch-action: pan-y pinch-zoom
+ *   - 非沉浸+非拖拽时 .main、沉浸+非拖拽时 .sidebar 须 pointer-events:none
+ *   - focusMode 的 .sidebar 禁止写 pointer-events:auto
+ *   - 仅 .editorScroll 允许 touch-action:pan-y；.sidebarInner 禁止任何 touch-action
+ * 若确需调整移动端布局：先改这里 → 同步更新守护测试 → **真机验证横滑**。
+ * 背景见 docs/MEMORY.md「移动端侧栏横滑易因 CSS 改动回归」。
+ * ================================================================================== */
 @media (max-width: 767px) {
   .shell.mobileShell {
     display: block;
