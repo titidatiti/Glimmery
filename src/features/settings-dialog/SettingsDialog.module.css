@@ -192,7 +192,7 @@
   flex-shrink: 0;
   border-top: 1px solid var(--color-border-subtle);
   color: var(--color-sidebar-text-muted);
-  font-size: var(--font-size-sm);
+  font-size: var(--sidebar-font-size-sm);
   text-align: left;
   transition:
     color var(--transition-warm),

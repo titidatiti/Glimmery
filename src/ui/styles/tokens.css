@@ -30,6 +30,9 @@
   --spacing-xxl: 48px;
 
   --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-brand: 'Cormorant Garamond', Georgia, 'Times New Roman', 'Songti SC', serif;
+  /** 品牌副标题：与 logo 同族，斜体 + 小字号以弱化视觉权重 */
+  --font-brand-subtitle: var(--font-brand);
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --font-size-base: 16px;
   --font-size-sm: 14px;
@@ -47,9 +50,27 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
 
   --shell-max-width: 880px;
-  --sidebar-width: 300px;
-  --sidebar-inset: 20px;
+  --sidebar-width: 340px;
+  --sidebar-inset: 24px;
+  --sidebar-font-size: var(--font-size-base);
+  --sidebar-font-size-sm: 15px;
+  --sidebar-brand-title-size: 1.375rem;
+  --sidebar-brand-tagline-size: 16px;
+  --sidebar-brand-row-gap: 3px;
+  --sidebar-brand-block-height: calc(
+    var(--sidebar-brand-title-size) * 1.12 + var(--sidebar-brand-row-gap) +
+      var(--sidebar-brand-tagline-size) * 1.4
+  );
   --toolbar-height: 56px;
+
+  /* 设置 · 关于页品牌区（字号略大于侧栏，便于阅读） */
+  --about-brand-title-size: var(--font-size-xl);
+  --about-brand-tagline-size: var(--font-size-lg);
+  --about-brand-row-gap: 4px;
+  --about-brand-block-height: calc(
+    var(--about-brand-title-size) * 1.12 + var(--about-brand-row-gap) +
+      var(--about-brand-tagline-size) * 1.45
+  );
 
   /* 编辑器排版（可由 TypographyProvider 覆盖） */
   --editor-font-family: var(--font-sans);
