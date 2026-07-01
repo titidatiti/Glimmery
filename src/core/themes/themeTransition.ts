@@ -11,7 +11,6 @@ export const THEME_COLOR_CSS_VARS = [
   '--color-text-muted',
   '--color-accent',
   '--color-accent-muted',
-  '--color-on-accent',
   '--color-danger',
   '--color-selection-bg',
   '--color-selection-text',

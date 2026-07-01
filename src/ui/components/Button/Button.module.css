@@ -19,8 +19,8 @@
 }
 
 .primary {
-  background: var(--color-accent);
-  color: var(--color-on-accent);
+  background: var(--color-selection-bg);
+  color: var(--color-selection-text);
 }
 
 .primary:hover {

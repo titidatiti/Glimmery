@@ -26,7 +26,6 @@ describe('colorRoles', () => {
       accentSoft: '#ffcccc',
       selectionBg: '#884444',
       selectionText: '#ffffff',
-      buttonOnAccent: '#eeeeee',
       danger: '#ff5252',
       caretColor: '#00ff00',
       border: '#555555',
@@ -86,9 +85,10 @@ describe('colorRoles', () => {
     expect(['#2a2a2a', '#1e1e1e']).toContain(text.toLowerCase());
   });
 
-  it('稻香主题保存按钮字色为显式 buttonOnAccent', () => {
+  it('稻香主题选区色与主按钮语义一致', () => {
     const colors = daoxiangTheme.tokens.colors;
-    expect(colors.buttonOnAccent).toBe('#2a2218');
-    expect(colors.buttonOnAccent).not.toBe(colors.bgBase);
+    const { bg, text } = finalizeSelectionPair(colors);
+    expect(bg).toBe('#b89878');
+    expect(text).toBe('#1a1208');
   });
 });

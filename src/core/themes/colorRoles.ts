@@ -15,7 +15,6 @@ export type ThemeColorRoleId =
   | 'accentSoft'
   | 'selectionBg'
   | 'selectionText'
-  | 'buttonOnAccent'
   | 'danger'
   | 'caretColor'
   | 'border'
@@ -116,19 +115,13 @@ export const THEME_COLOR_ROLE_DEFINITIONS: ThemeColorRoleDefinition[] = [
   {
     id: 'selectionBg',
     label: '选区背景',
-    hint: '编辑区拖选文字的背景色',
+    hint: '编辑区拖选文字的背景色；亦用于强调主按钮（如保存）',
     group: 'accent',
   },
   {
     id: 'selectionText',
     label: '选区文字',
-    hint: '编辑区拖选文字的前景色',
-    group: 'accent',
-  },
-  {
-    id: 'buttonOnAccent',
-    label: '按钮文字',
-    hint: '强调色主按钮（如保存）上的文字颜色',
+    hint: '编辑区拖选文字的前景色；亦用于强调主按钮文字',
     group: 'accent',
   },
   {
@@ -346,7 +339,6 @@ export function tokensToColorRoles(colors: ThemeColorTokens): ThemeColorRoles {
     accentSoft: colors.accentMuted,
     selectionBg: selection.bg,
     selectionText: selection.text,
-    buttonOnAccent: colors.buttonOnAccent ?? heading,
     danger: colors.danger ?? colors.textSecondary,
     caretColor: colors.caretColor ?? colors.accent,
     border: colors.border,
@@ -370,7 +362,6 @@ export function colorRolesToTokens(roles: ThemeColorRoles): ThemeColorTokens {
     accentMuted: roles.accentSoft,
     selectionBg: roles.selectionBg,
     selectionText: roles.selectionText,
-    buttonOnAccent: roles.buttonOnAccent,
     danger: roles.danger,
     caretColor: roles.caretColor,
     border: roles.border,
@@ -405,7 +396,6 @@ export function normalizeCustomThemeColors(colors: ThemeColorTokens): ThemeColor
     sidebarText: heading,
     textMuted: placeholder,
     sidebarTextMuted: placeholder,
-    buttonOnAccent: colors.buttonOnAccent ?? heading,
   };
 }
 

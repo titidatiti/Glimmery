@@ -25,8 +25,6 @@ const CSS_VAR_MAP: Record<string, (tokens: ThemeTokens) => string> = {
   '--color-text-muted': (t) => t.colors.textMuted,
   '--color-accent': (t) => t.colors.accent,
   '--color-accent-muted': (t) => t.colors.accentMuted,
-  '--color-on-accent': (t) =>
-    t.colors.buttonOnAccent ?? t.colors.headingText ?? t.colors.textPrimary,
   '--color-danger': (t) => t.colors.danger ?? t.colors.textSecondary,
   '--color-selection-bg': (t) => finalizeSelectionPair(t.colors).bg,
   '--color-selection-text': (t) => finalizeSelectionPair(t.colors).text,
