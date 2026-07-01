@@ -69,9 +69,9 @@ export default tseslint.config(
               message: 'features 之间不得互相 import',
             },
             {
-              target: './src/features/theme-switcher',
-              from: './src/features/!(theme-switcher)/**',
-              message: 'features 之间不得互相 import',
+              target: './src/features',
+              from: './src/app',
+              message: 'features 不得依赖 app（组合根方向应自上而下）；共享能力下沉到 core/ui/services',
             },
           ],
         },

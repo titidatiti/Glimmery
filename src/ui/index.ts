@@ -3,4 +3,5 @@ export type { ButtonProps } from './components/Button';
 export { IconButton } from './components/IconButton';
 export type { IconButtonProps } from './components/IconButton';
 export { GearIcon, FocusIcon } from './icons';
+export { useMediaQuery, useIsMobileLayout, MOBILE_LAYOUT_QUERY } from './hooks/useMediaQuery';
 

@@ -8,11 +8,11 @@ import { DEFAULT_SETTINGS } from '@/core/settings';
 
 import { debounce, formatUpdatedAt } from '@/lib';
 
-import { useServices } from '@/app/providers';
+import { useServices } from '@/services/context';
 
 import { useFocusGestures } from '@/app/hooks/useFocusGestures';
 
-import { useIsMobileLayout, useMobilePanelSwipe } from '@/app/hooks/useMobilePanelSwipe';
+import { useMobilePanelSwipe } from '@/app/hooks/useMobilePanelSwipe';
 
 import { EditorAdapter } from '@/features/editor';
 
@@ -22,7 +22,7 @@ import { DocumentSearch } from '@/features/document-search';
 
 import { SettingsDialog, SettingsTrigger } from '@/features/settings-dialog';
 
-import { FocusIcon } from '@/ui';
+import { FocusIcon, useIsMobileLayout } from '@/ui';
 
 import { SidebarBrand } from './SidebarBrand';
 
@@ -74,7 +74,6 @@ export function AppShell() {
     enabled: !isMobile,
     focusMode,
     onExitFocus: exitFocusMode,
-    mainRef,
   });
 
   useEffect(() => {

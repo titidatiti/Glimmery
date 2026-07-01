@@ -1,4 +1,3 @@
-import { useMediaQuery } from '@/app/hooks/useMediaQuery';
 import {
   useSettingsStore,
   EDITOR_FONT_FAMILY_PRESETS,
@@ -8,10 +7,11 @@ import {
   resolveEditorWidth,
   resolveFontSizes,
 } from '@/core/settings';
+import { useIsMobileLayout } from '@/ui';
 import styles from './TypographySection.module.css';
 
 export function TypographySection() {
-  const isMobile = useMediaQuery('(max-width: 767px)');
+  const isMobile = useIsMobileLayout();
   const editorTypography = useSettingsStore((s) => s.editorTypography);
   const setEditorFontFamily = useSettingsStore((s) => s.setEditorFontFamily);
   const setCustomFontFamily = useSettingsStore((s) => s.setCustomFontFamily);

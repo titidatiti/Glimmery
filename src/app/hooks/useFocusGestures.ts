@@ -1,23 +1,22 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useRef } from 'react';
+import { MOBILE_LAYOUT_QUERY } from '@/ui';
 
 const EDGE_THRESHOLD_PX = 28;
 const SWIPE_THRESHOLD_PX = 64;
-const MOBILE_MAX_WIDTH_QUERY = '(max-width: 767px)';
 
 interface UseFocusGesturesOptions {
   enabled: boolean;
   focusMode: boolean;
   onExitFocus: () => void;
-  mainRef: RefObject<HTMLElement | null>;
 }
 
 /** 桌面端：左缘右滑退出沉浸模式 */
-export function useFocusGestures({ enabled, focusMode, onExitFocus, mainRef }: UseFocusGesturesOptions): void {
+export function useFocusGestures({ enabled, focusMode, onExitFocus }: UseFocusGesturesOptions): void {
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const isMobileRef = useRef(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia(MOBILE_MAX_WIDTH_QUERY);
+    const mediaQuery = window.matchMedia(MOBILE_LAYOUT_QUERY);
     const syncMobile = () => {
       isMobileRef.current = mediaQuery.matches;
     };
@@ -79,5 +78,5 @@ export function useFocusGestures({ enabled, focusMode, onExitFocus, mainRef }: U
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [enabled, focusMode, onExitFocus, mainRef]);
+  }, [enabled, focusMode, onExitFocus]);
 }

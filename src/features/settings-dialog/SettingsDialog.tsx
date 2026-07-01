@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useMediaQuery } from '@/app/hooks/useMediaQuery';
 import { useSettingsStore } from '@/core/settings';
-import { IconButton } from '@/ui';
+import { IconButton, useIsMobileLayout } from '@/ui';
 import { AboutSection } from './AboutSection';
 import { PlaceholderSection } from './PlaceholderSection';
 import { SettingsPreviewPane } from './SettingsPreviewPane';
@@ -51,7 +50,7 @@ export function SettingsDialog() {
   const dialogRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<SettingsTabId>('theme');
   const [previewExpanded, setPreviewExpanded] = useState(true);
-  const isMobile = useMediaQuery('(max-width: 767px)');
+  const isMobile = useIsMobileLayout();
 
   const showPreview = tabHasPreview(activeTab);
 

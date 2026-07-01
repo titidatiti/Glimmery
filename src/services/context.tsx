@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import type { StorageProvider } from '@/services/storage';
-import type { SyncProvider } from '@/services/sync';
-import type { AudioEngine } from '@/services/audio';
+import type { StorageProvider } from './storage';
+import type { SyncProvider } from './sync';
+import type { AudioEngine } from './audio';
 
 export interface ServicesContextValue {
   storage: StorageProvider;

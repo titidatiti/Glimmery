@@ -1,19 +1,14 @@
 import { useMemo } from 'react';
 import { AppShell } from './layout/AppShell';
-import { ServicesProvider, ThemeProvider, TypographyProvider } from './providers';
-import { IndexedDBAdapter } from '@/services/storage';
-import { NoopSyncAdapter } from '@/services/sync';
-import { NoopAudioEngine } from '@/services/audio';
+import {
+  ServicesProvider,
+  ThemeProvider,
+  TypographyProvider,
+  createAppServices,
+} from './providers';
 
 export function App() {
-  const services = useMemo(
-    () => ({
-      storage: new IndexedDBAdapter(),
-      sync: new NoopSyncAdapter(),
-      audio: new NoopAudioEngine(),
-    }),
-    [],
-  );
+  const services = useMemo(() => createAppServices(), []);
 
   return (
     <ServicesProvider value={services}>

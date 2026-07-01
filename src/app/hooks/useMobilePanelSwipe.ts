@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { clampPanelOffset, getCommitDistance } from './mobilePanelSwipeMath';
 
-const MOBILE_MAX_WIDTH_QUERY = '(max-width: 767px)';
 /** 快速 flick 判定 */
 const FLICK_MIN_PX = 28;
 const FLICK_VELOCITY_PX_MS = 0.55;
@@ -347,20 +346,4 @@ export function useMobilePanelSwipe({
   };
 
   return { offsetPx, isDragging, trackStyle };
-}
-
-export function useIsMobileLayout(): boolean {
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia(MOBILE_MAX_WIDTH_QUERY).matches,
-  );
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(MOBILE_MAX_WIDTH_QUERY);
-    const sync = () => setIsMobile(mediaQuery.matches);
-    sync();
-    mediaQuery.addEventListener('change', sync);
-    return () => mediaQuery.removeEventListener('change', sync);
-  }, []);
-
-  return isMobile;
 }

@@ -1,7 +1,7 @@
-import { useIsMobileLayout } from '@/app/hooks/useMobilePanelSwipe';
 import { useDocumentStore } from '@/core/documents';
 import { useSettingsStore } from '@/core/settings';
-import { useServices } from '@/app/providers';
+import { useServices } from '@/services/context';
+import { useIsMobileLayout } from '@/ui';
 import styles from './NewDocumentButton.module.css';
 
 export function NewDocumentButton() {

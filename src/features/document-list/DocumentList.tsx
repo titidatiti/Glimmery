@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
-import { useIsMobileLayout } from '@/app/hooks/useMobilePanelSwipe';
 import { useDocumentStore, formatDocumentTitle } from '@/core/documents';
 import { useSettingsStore } from '@/core/settings';
-import { useServices } from '@/app/providers';
-import { IconButton } from '@/ui';
+import { useServices } from '@/services/context';
+import { IconButton, useIsMobileLayout } from '@/ui';
 import styles from './DocumentList.module.css';
 
 export function DocumentList() {
