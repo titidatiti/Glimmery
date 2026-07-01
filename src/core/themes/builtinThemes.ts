@@ -263,7 +263,7 @@ export const daoxiangTheme = buildTheme(
   '深褐稻纸，怀旧信笺',
   {
     bgBase: '#8a7458',
-    bgSurface: '#968062',
+    bgSurface: '#9c8468',
     bgElevated: '#a08870',
     textPrimary: '#2a2218',
     textSecondary: '#3a2e22',
