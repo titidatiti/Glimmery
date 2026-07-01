@@ -7,11 +7,17 @@ import { describe, expect, it } from 'vitest';
  * 「容器必须是横向滚动 + snap」「面板必须能对齐 snap 起点」这两条。
  */
 const css = readFileSync(new URL('./MobilePanelScroller.module.css', import.meta.url), 'utf8');
+const appShellCss = readFileSync(new URL('../layout/AppShell.module.css', import.meta.url), 'utf8');
 
 function ruleBody(source: string, selector: string): string | null {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const match = new RegExp(`${escaped}\\s*\\{([^}]*)\\}`).exec(source);
   return match ? match[1] : null;
+}
+
+function mobileBlock(source: string): string {
+  const match = /@media\s*\(\s*max-width:\s*767px\s*\)\s*\{([\s\S]*)\}\s*$/.exec(source);
+  return match ? match[1] : '';
 }
 
 describe('移动端横滑滚动容器契约', () => {
@@ -28,5 +34,12 @@ describe('移动端横滑滚动容器契约', () => {
     expect(body, '.panel 规则缺失').not.toBeNull();
     expect(body!).toContain('flex: 0 0 100%');
     expect(body!).toContain('scroll-snap-align: start');
+  });
+
+  it('AppShell 移动端禁止给 .editorScroll 设置 touch-action: pan-y（会吞掉横滑）', () => {
+    const mobile = mobileBlock(appShellCss);
+    const body = ruleBody(mobile, '.mobileShell .editorScroll');
+    expect(body, '缺少 .mobileShell .editorScroll 规则').not.toBeNull();
+    expect(body!).not.toMatch(/touch-action:\s*pan-y/);
   });
 });

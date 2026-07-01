@@ -86,34 +86,35 @@ export function useMobilePanelScroller({
       suppressSettleRef.current = false;
     };
 
+    const settle = () => {
+      if (suppressSettleRef.current) {
+        suppressSettleRef.current = false;
+        return;
+      }
+      const width = el.clientWidth || 1;
+      const index = nearestPanelIndex(el.scrollLeft, width);
+      if (index !== activeIndexRef.current) {
+        const wasEditor = activeIndexRef.current === 1;
+        activeIndexRef.current = index;
+        onActiveIndexChangeRef.current(index);
+        if (wasEditor && index === 0 && isHistoryEditorState()) {
+          history.back();
+        }
+      }
+    };
+
     const handleScroll = () => {
       window.clearTimeout(settleTimerRef.current);
-      settleTimerRef.current = window.setTimeout(() => {
-        if (suppressSettleRef.current) {
-          suppressSettleRef.current = false;
-          return;
-        }
-        const width = el.clientWidth || 1;
-        const index = nearestPanelIndex(el.scrollLeft, width);
-        if (index !== activeIndexRef.current) {
-          const wasEditor = activeIndexRef.current === 1;
-          activeIndexRef.current = index;
-          onActiveIndexChangeRef.current(index);
-          // 手势离开编辑区面板时，把此前 push 的历史记录一并消费掉，
-          // 否则会遗留一条悬空的「editor」历史项，干扰下一次系统返回手势/按钮。
-          if (wasEditor && index === 0 && isHistoryEditorState()) {
-            history.back();
-          }
-        }
-      }, SETTLE_DEBOUNCE_MS);
+      settleTimerRef.current = window.setTimeout(settle, SETTLE_DEBOUNCE_MS);
     };
 
     el.addEventListener('scroll', handleScroll, { passive: true });
-    // 用户开始真实交互（触摸/滚轮）时，若恰好命中程序化滚动窗口，改为信任这次交互结果
+    el.addEventListener('scrollend', settle, { passive: true });
     el.addEventListener('touchstart', clearSuppress, { passive: true });
     el.addEventListener('wheel', clearSuppress, { passive: true });
     return () => {
       el.removeEventListener('scroll', handleScroll);
+      el.removeEventListener('scrollend', settle);
       el.removeEventListener('touchstart', clearSuppress);
       el.removeEventListener('wheel', clearSuppress);
       window.clearTimeout(settleTimerRef.current);

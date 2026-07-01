@@ -345,12 +345,13 @@
   .shell.focusMode .sidebar {
     opacity: 1;
     transform: none;
+    pointer-events: auto;
   }
 
-  /* 编辑区仅纵向滚动；横滑手势由 MobilePanelScroller 的外层容器承担，
-     这里无需（也不应）给 .sidebarInner/.editorScroll 添加会限制横向手势的 touch-action。 */
+  /* 侧栏/编辑区内部的纵向滚动容器：只限制纵向 overscroll 链，不设置 touch-action。
+     touch-action: pan-y 会彻底禁止该区域的横向平移，导致从编辑区起手无法横滑（时好时坏）。 */
   .mobileShell .editorScroll {
-    touch-action: pan-y;
+    overscroll-behavior-y: contain;
   }
 
   .focusEnter {
