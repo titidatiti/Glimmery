@@ -1,0 +1,33 @@
+/*
+ * 移动端「侧栏 ↔ 编辑区」滚动容器。
+ * 依赖浏览器原生横向滚动 + scroll-snap 完成手势识别，不手写触摸追踪数学，
+ * 因此天然与系统手势（如 iOS 左缘返回）共存，也不会被无关 CSS 改动波及
+ * ——本文件与 AppShell 的其它样式完全解耦，只关心「两个面板怎么横向排列」。
+ */
+.scroller {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.panel {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  overflow: hidden;
+}

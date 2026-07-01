@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { useDocumentStore, formatDocumentTitle } from '@/core/documents';
 
@@ -12,7 +12,7 @@ import { useServices } from '@/services/context';
 
 import { useFocusGestures } from '@/app/hooks/useFocusGestures';
 
-import { useMobilePanelSwipe } from '@/app/hooks/useMobilePanelSwipe';
+import { MobilePanelScroller } from '@/app/mobile-panels';
 
 import { EditorAdapter } from '@/features/editor';
 
@@ -55,20 +55,7 @@ export function AppShell() {
 
   const autoSaveDelayMs = useSettingsStore((s) => s.autoSaveDelayMs);
 
-  const sidebarRef = useRef<HTMLElement>(null);
-  const mainRef = useRef<HTMLElement>(null);
-  const mobileTrackRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobileLayout();
-
-  const { trackStyle, isDragging } = useMobilePanelSwipe({
-    enabled: isMobile,
-    focusMode,
-    onEnterFocus: enterFocusMode,
-    onExitFocus: exitFocusMode,
-    trackRef: mobileTrackRef,
-    sidebarRef,
-    mainRef,
-  });
 
   useFocusGestures({
     enabled: !isMobile,
@@ -112,61 +99,64 @@ export function AppShell() {
     );
   }
 
-  return (
-    <div
-      className={`${styles.shell} ${focusMode ? styles.focusMode : ''} ${isMobile ? styles.mobileShell : ''} ${isDragging ? styles.mobileDragging : ''}`}
-    >
-      <div
-        ref={mobileTrackRef}
-        className={styles.mobileTrack}
-        style={isMobile ? trackStyle : undefined}
-      >
-        <aside ref={sidebarRef} className={`${styles.sidebar} ${styles.sidebarScroll}`}>
-          <div className={styles.sidebarInner}>
-            <SidebarBrand />
-            <DocumentSearch />
-            <NewDocumentButton />
-            <DocumentList />
-            <button
-              type="button"
-              className={styles.sidebarFocusEnter}
-              onClick={enterFocusMode}
-              aria-label="进入沉浸模式"
-              title="进入沉浸模式"
-            >
-              <FocusIcon className={styles.sidebarFocusEnterIcon} />
-              <span className={styles.sidebarFocusEnterLabel}>沉浸模式</span>
-            </button>
-            <SettingsTrigger />
-          </div>
-        </aside>
-
-        <main ref={mainRef} className={styles.main}>
-          <div className={styles.editorScroll}>
-            <div className={styles.writingArea}>
-              {activeDocument && activeDocumentId && (
-                <EditorAdapter
-                  key={activeDocumentId}
-                  title={activeDocument.title}
-                  initialContent={activeDocument.content}
-                  onTitleChange={handleTitleChange}
-                  onContentChange={handleContentChange}
-                />
-              )}
-            </div>
-          </div>
-
-          {activeDocument && (
-            <footer className={styles.editorFooter}>
-              <time className={styles.updatedAt} dateTime={activeDocument.updatedAt}>
-                最后修改 {formatUpdatedAt(activeDocument.updatedAt)}
-              </time>
-            </footer>
-          )}
-
-          {error && <div className={styles.error}>{error}</div>}
-        </main>
+  const sidebarPanel = (
+    <aside className={`${styles.sidebar} ${styles.sidebarScroll}`}>
+      <div className={styles.sidebarInner}>
+        <SidebarBrand />
+        <DocumentSearch />
+        <NewDocumentButton />
+        <DocumentList />
+        <button
+          type="button"
+          className={styles.sidebarFocusEnter}
+          onClick={enterFocusMode}
+          aria-label="进入沉浸模式"
+          title="进入沉浸模式"
+        >
+          <FocusIcon className={styles.sidebarFocusEnterIcon} />
+          <span className={styles.sidebarFocusEnterLabel}>沉浸模式</span>
+        </button>
+        <SettingsTrigger />
       </div>
+    </aside>
+  );
+
+  const mainPanel = (
+    <main className={styles.main}>
+      <div className={styles.editorScroll}>
+        <div className={styles.writingArea}>
+          {activeDocument && activeDocumentId && (
+            <EditorAdapter
+              key={activeDocumentId}
+              title={activeDocument.title}
+              initialContent={activeDocument.content}
+              onTitleChange={handleTitleChange}
+              onContentChange={handleContentChange}
+            />
+          )}
+        </div>
+      </div>
+
+      {activeDocument && (
+        <footer className={styles.editorFooter}>
+          <time className={styles.updatedAt} dateTime={activeDocument.updatedAt}>
+            最后修改 {formatUpdatedAt(activeDocument.updatedAt)}
+          </time>
+        </footer>
+      )}
+
+      {error && <div className={styles.error}>{error}</div>}
+    </main>
+  );
+
+  return (
+    <div className={`${styles.shell} ${focusMode ? styles.focusMode : ''} ${isMobile ? styles.mobileShell : ''}`}>
+      <MobilePanelScroller
+        enabled={isMobile}
+        activeIndex={focusMode ? 1 : 0}
+        onActiveIndexChange={(index) => (index === 1 ? enterFocusMode() : exitFocusMode())}
+        panels={[sidebarPanel, mainPanel]}
+      />
 
       <header className={styles.toolbar}>
         <span className={styles.docName}>

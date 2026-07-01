@@ -301,69 +301,17 @@
   }
 }
 
-.mobileTrack {
-  display: contents;
-}
-
-/* ===================== 移动端横滑核心操作 · 契约区（谨慎修改） =====================
- * 「侧栏 ↔ 编辑区」横滑是移动端唯一的导航方式，一旦破坏应用即不可用。
- * 以下不变量由 mobileSwipeContract.test.ts **自动守护**，改坏会导致 `npm test` 失败：
- *   - .mobileTrack 在 ≤767px 必须为 flex 行（不可改回 display:contents）
- *   - .mobileTrack 保留 touch-action: pan-y pinch-zoom
- *   - 非沉浸+非拖拽时 .main、沉浸+非拖拽时 .sidebar 须 pointer-events:none
- *   - focusMode 的 .sidebar 禁止写 pointer-events:auto
- *   - 仅 .editorScroll 允许 touch-action:pan-y；.sidebarInner 禁止任何 touch-action
- * 若确需调整移动端布局：先改这里 → 同步更新守护测试 → **真机验证横滑**。
- * 背景见 docs/MEMORY.md「移动端侧栏横滑易因 CSS 改动回归」。
- * ================================================================================== */
+/*
+ * 移动端「侧栏 ↔ 编辑区」的横滑导航本身由独立模块
+ * `src/app/mobile-panels/MobilePanelScroller` 负责（原生 scroll-snap 容器），
+ * 与此文件完全解耦——这里只保留 AppShell 自身在移动端的视觉/间距调整，
+ * 不再包含任何手势/pointer-events/touch-action 相关规则。
+ */
 @media (max-width: 767px) {
   .shell.mobileShell {
     display: block;
     overflow: hidden;
     position: relative;
-    overscroll-behavior-x: none;
-  }
-
-  .mobileTrack {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    height: 100%;
-    will-change: transform;
-    touch-action: pan-y pinch-zoom;
-    overscroll-behavior-x: none;
-  }
-
-  .mobileDragging .mobileTrack {
-    touch-action: none;
-  }
-
-  .mobileTrack .sidebar,
-  .mobileTrack .main {
-    flex: 0 0 100%;
-    width: 100%;
-    min-width: 100%;
-    max-width: 100%;
-    height: 100%;
-    min-height: 0;
-    grid-column: unset;
-    grid-row: unset;
-    opacity: 1;
-    transform: none;
-    visibility: visible;
-    pointer-events: auto;
-  }
-
-  .mobileTrack .sidebar {
-    border-right: 1px solid var(--color-border-subtle);
-  }
-
-  .mobileShell:not(.focusMode):not(.mobileDragging) .mobileTrack .main {
-    pointer-events: none;
-  }
-
-  .mobileShell.focusMode:not(.mobileDragging) .mobileTrack .sidebar {
-    pointer-events: none;
   }
 
   .shell.mobileShell {
@@ -375,6 +323,11 @@
     grid-column: unset;
     grid-row: unset;
     border-right: none;
+    height: 100%;
+  }
+
+  .main {
+    height: 100%;
   }
 
   .sidebarInner {
@@ -394,7 +347,8 @@
     transform: none;
   }
 
-  /* 仅编辑区纵向滚动；勿给 .sidebarInner 加 touch-action，否则会吞掉侧栏横滑 */
+  /* 编辑区仅纵向滚动；横滑手势由 MobilePanelScroller 的外层容器承担，
+     这里无需（也不应）给 .sidebarInner/.editorScroll 添加会限制横向手势的 touch-action。 */
   .mobileShell .editorScroll {
     touch-action: pan-y;
   }
