@@ -31,20 +31,6 @@ npm run lint
 npm run test
 ```
 
-## 文档
-
-| 文档 | 用途 |
-| --- | --- |
-| [docs/PROJECT_PLAN.md](./docs/PROJECT_PLAN.md) | 项目架构与规划 |
-| [docs/ENGINEERING_STANDARDS.md](./docs/ENGINEERING_STANDARDS.md) | 程序架构设计与编码标准 |
-| [docs/TASK.md](./docs/TASK.md) | 任务看板 |
-| [docs/MEMORY.md](./docs/MEMORY.md) | 开发记忆与错误归纳 |
-| [docs/AGENT_WORKFLOW.md](./docs/AGENT_WORKFLOW.md) | AI agent 行事标准与工作流 |
-
-## 参与开发（人类或 AI agent）
-
-本项目为文档驱动、多 agent 协作。开始前请先阅读 [AGENTS.md](./AGENTS.md) 与 [docs/AGENT_WORKFLOW.md](./docs/AGENT_WORKFLOW.md)。
-
 ## 许可
 
 见 [LICENSE](./LICENSE)。
