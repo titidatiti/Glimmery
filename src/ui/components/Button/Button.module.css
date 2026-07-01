@@ -20,7 +20,7 @@
 
 .primary {
   background: var(--color-accent);
-  color: var(--color-bg-base);
+  color: var(--color-on-accent);
 }
 
 .primary:hover {
@@ -51,11 +51,11 @@
 
 .danger {
   background: transparent;
-  color: #e85d5d;
+  color: var(--color-danger);
 }
 
 .danger:hover {
-  background: rgba(232, 93, 93, 0.1);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
 }
 
 .button:disabled {
