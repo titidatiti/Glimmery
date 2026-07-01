@@ -180,10 +180,18 @@ export function deriveSelectionBg(editorBg: string, accent: string, mix = 0.42):
 export const FALLBACK_SELECTION_TEXT_DARK = '#2a2a2a';
 export const FALLBACK_SELECTION_TEXT_LIGHT = '#f5f5f5';
 
+function srgbChannelToLinear(channel: number): number {
+  const v = channel / 255;
+  return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+}
+
 function relativeLuminance(hex: string): number | null {
   const rgb = parseHexColor(hex);
   if (!rgb) return null;
-  return (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  const r = srgbChannelToLinear(rgb.r);
+  const g = srgbChannelToLinear(rgb.g);
+  const b = srgbChannelToLinear(rgb.b);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
 /** WCAG 对比度（简化相对亮度） */
@@ -254,6 +262,85 @@ export function resolveSelectionBg(colors: ThemeColorTokens): string {
 
 export function resolveSelectionText(colors: ThemeColorTokens): string {
   return finalizeSelectionPair(colors).text;
+}
+
+const DANGER_CANDIDATES_DARK = ['#5c0000', '#690000', '#7f0000', '#8b0000', '#b71c1c', '#c62828', '#d32f2f'];
+const DANGER_CANDIDATES_LIGHT = ['#ff8a80', '#ff5252', '#ef5350', '#e85d5d', '#ff6b6b'];
+
+function pickHighestContrast(
+  background: string,
+  candidates: readonly string[],
+  minRatio = 3.2,
+): string {
+  const bgLum = relativeLuminance(background) ?? 0.5;
+  let best = candidates[0] ?? FALLBACK_SELECTION_TEXT_DARK;
+  let bestRatio = 0;
+
+  for (const fg of candidates) {
+    const fgLum = relativeLuminance(fg);
+    if (fgLum !== null && Math.abs(fgLum - bgLum) < 0.1) continue;
+
+    const ratio = contrastRatio(fg, background) ?? 0;
+    if (ratio > bestRatio) {
+      bestRatio = ratio;
+      best = fg;
+    }
+  }
+
+  if (bestRatio >= minRatio) return best;
+
+  const darkRatio = contrastRatio(FALLBACK_SELECTION_TEXT_DARK, background) ?? 0;
+  const lightRatio = contrastRatio(FALLBACK_SELECTION_TEXT_LIGHT, background) ?? 0;
+  const fallback =
+    darkRatio >= lightRatio ? FALLBACK_SELECTION_TEXT_DARK : FALLBACK_SELECTION_TEXT_LIGHT;
+  const fallbackRatio = contrastRatio(fallback, background) ?? 0;
+  return fallbackRatio > bestRatio ? fallback : best;
+}
+
+/** 强调色按钮上的文字色（如「保存」主按钮） */
+export function deriveOnAccentText(colors: ThemeColorTokens): string {
+  const accentLum = relativeLuminance(colors.accent) ?? 0.5;
+  const themeTexts = [
+    colors.headingText ?? colors.textPrimary,
+    colors.bodyText ?? colors.textPrimary,
+  ];
+
+  let bestThemeText = themeTexts[0];
+  let bestThemeRatio = 0;
+  for (const fg of themeTexts) {
+    if (fg.toLowerCase() === colors.bgBase.toLowerCase()) continue;
+    const fgLum = relativeLuminance(fg);
+    if (fgLum !== null && Math.abs(fgLum - accentLum) < 0.08) continue;
+
+    const ratio = contrastRatio(fg, colors.accent) ?? 0;
+    if (ratio > bestThemeRatio) {
+      bestThemeRatio = ratio;
+      bestThemeText = fg;
+    }
+  }
+
+  // 深强调色（如稻香、纸感）：沿用主题深色文字，避免误用与强调色相近的 bgBase
+  if (accentLum < 0.35 && bestThemeRatio >= 2.5) return bestThemeText;
+
+  const ordered =
+    accentLum >= 0.55
+      ? [...themeTexts, FALLBACK_SELECTION_TEXT_LIGHT, FALLBACK_SELECTION_TEXT_DARK]
+      : [...themeTexts, FALLBACK_SELECTION_TEXT_DARK, FALLBACK_SELECTION_TEXT_LIGHT];
+
+  const filtered = ordered.filter((fg) => {
+    if (fg.toLowerCase() === colors.bgBase.toLowerCase()) return false;
+    const fgLum = relativeLuminance(fg);
+    return fgLum === null || Math.abs(fgLum - accentLum) >= 0.08;
+  });
+
+  return pickHighestContrast(colors.accent, filtered.length > 0 ? filtered : ordered);
+}
+
+/** 危险操作文字色（如「删除主题」），相对面板底色保证可读 */
+export function deriveDangerColor(colors: ThemeColorTokens): string {
+  const surfaceLum = relativeLuminance(colors.bgSurface) ?? 0.5;
+  const pool = surfaceLum > 0.42 ? DANGER_CANDIDATES_DARK : DANGER_CANDIDATES_LIGHT;
+  return pickHighestContrast(colors.bgSurface, pool);
 }
 
 export function finalizeSelectionPair(

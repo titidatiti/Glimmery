@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   colorRolesToTokens,
   contrastRatio,
+  deriveOnAccentText,
   deriveSelectionText,
   FALLBACK_SELECTION_TEXT_DARK,
   finalizeSelectionPair,
   mergeColorRolesWithBase,
   tokensToColorRoles,
 } from './colorRoles';
-import { nightTheme } from './builtinThemes';
+import { daoxiangTheme, nightTheme } from './builtinThemes';
 
 describe('colorRoles', () => {
   it('round-trips between roles and tokens', () => {
@@ -82,5 +83,13 @@ describe('colorRoles', () => {
     expect(contrastRatio(text, bg)).toBeGreaterThanOrEqual(3.2);
     expect(text.toLowerCase()).not.toBe('#cccccc');
     expect(['#2a2a2a', '#1e1e1e']).toContain(text.toLowerCase());
+  });
+
+  it('deriveOnAccentText 不选用与强调色相近的 bgBase', () => {
+    const colors = daoxiangTheme.tokens.colors;
+    const onAccent = deriveOnAccentText(colors);
+    expect(onAccent.toLowerCase()).not.toBe(colors.bgBase.toLowerCase());
+    expect(onAccent.toLowerCase()).toBe('#2a2218');
+    expect(contrastRatio(onAccent, colors.accent)).toBeGreaterThanOrEqual(2.5);
   });
 });
