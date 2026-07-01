@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { deriveTitleFromContent, createDocument } from './types';
-import { updateDocumentContent } from './useCases';
+import { updateDocumentContent, updateDocumentTitle } from './useCases';
 
 describe('deriveTitleFromContent', () => {
   it('从首行标题提取文稿名', () => {
@@ -13,11 +13,19 @@ describe('deriveTitleFromContent', () => {
 });
 
 describe('updateDocumentContent', () => {
-  it('更新内容并刷新标题', () => {
+  it('仅更新正文，不改标题', () => {
     const doc = createDocument('旧标题', '');
-    const updated = updateDocumentContent(doc, '# 新标题\n');
+    const updated = updateDocumentContent(doc, '正文内容');
+    expect(updated.title).toBe('旧标题');
+    expect(updated.content).toBe('正文内容');
+  });
+});
+
+describe('updateDocumentTitle', () => {
+  it('更新标题', () => {
+    const doc = createDocument('', '');
+    const updated = updateDocumentTitle(doc, '新标题');
     expect(updated.title).toBe('新标题');
-    expect(updated.content).toBe('# 新标题\n');
   });
 });
 
@@ -26,6 +34,6 @@ describe('createDocument', () => {
     const doc = createDocument();
     expect(doc.id).toBeTruthy();
     expect(doc.createdAt).toBeTruthy();
-    expect(doc.title).toBe('未命名文稿');
+    expect(doc.title).toBe('');
   });
 });

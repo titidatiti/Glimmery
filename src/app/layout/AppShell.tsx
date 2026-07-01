@@ -4,12 +4,16 @@ import { useSettingsStore } from '@/core/settings';
 import { DEFAULT_SETTINGS } from '@/core/settings';
 import { debounce } from '@/lib';
 import { useServices } from '@/app/providers';
+import { useFocusGestures } from '@/app/hooks/useFocusGestures';
 import { EditorAdapter } from '@/features/editor';
 import { DocumentList } from '@/features/document-list';
-import { ThemeSwitcher, ThemeQuickPicker } from '@/features/theme-switcher';
-import { SettingsPanel } from '@/features/settings-panel';
-import { IconButton } from '@/ui';
+import { DocumentSearch } from '@/features/document-search';
+import { SettingsDialog, SettingsTrigger } from '@/features/settings-dialog';
 import styles from './AppShell.module.css';
+
+function displayTitle(title: string): string {
+  return title.trim() || '未命名文稿';
+}
 
 export function AppShell() {
   const { storage } = useServices();
@@ -17,18 +21,17 @@ export function AppShell() {
   const activeDocument = useDocumentStore((s) => s.activeDocument);
   const activeDocumentId = useDocumentStore((s) => s.activeDocumentId);
   const isLoading = useDocumentStore((s) => s.isLoading);
+  const updateTitle = useDocumentStore((s) => s.updateTitle);
   const updateContent = useDocumentStore((s) => s.updateContent);
-  const persistContent = useDocumentStore((s) => s.persistContent);
+  const persistActiveDocument = useDocumentStore((s) => s.persistActiveDocument);
   const error = useDocumentStore((s) => s.error);
 
   const focusMode = useSettingsStore((s) => s.focusMode);
-  const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed);
-  const toggleFocusMode = useSettingsStore((s) => s.toggleFocusMode);
-  const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
-  const setSidebarCollapsed = useSettingsStore((s) => s.setSidebarCollapsed);
+  const enterFocusMode = useSettingsStore((s) => s.enterFocusMode);
+  const exitFocusMode = useSettingsStore((s) => s.exitFocusMode);
   const autoSaveDelayMs = useSettingsStore((s) => s.autoSaveDelayMs);
 
-  const activeTitle = activeDocument?.title ?? 'Glimmery';
+  useFocusGestures(focusMode, exitFocusMode);
 
   useEffect(() => {
     void initialize(storage);
@@ -36,34 +39,31 @@ export function AppShell() {
 
   const debouncedPersist = useMemo(
     () =>
-      debounce((markdown: string) => {
-        updateContent(markdown);
-        void persistContent(storage);
+      debounce(() => {
+        void persistActiveDocument(storage);
       }, autoSaveDelayMs || DEFAULT_SETTINGS.autoSaveDelayMs),
-    [updateContent, persistContent, storage, autoSaveDelayMs],
+    [persistActiveDocument, storage, autoSaveDelayMs],
+  );
+
+  const handleTitleChange = useCallback(
+    (title: string) => {
+      updateTitle(title);
+      debouncedPersist();
+    },
+    [updateTitle, debouncedPersist],
   );
 
   const handleContentChange = useCallback(
-    (markdown: string) => {
-      debouncedPersist(markdown);
+    (content: string) => {
+      updateContent(content);
+      debouncedPersist();
     },
-    [debouncedPersist],
+    [updateContent, debouncedPersist],
   );
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'F11') {
-        e.preventDefault();
-        toggleFocusMode();
-      }
-      if (e.ctrlKey && e.key === 'b') {
-        e.preventDefault();
-        toggleSidebar();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleFocusMode, toggleSidebar]);
+  const handleBeginWriting = useCallback(() => {
+    enterFocusMode();
+  }, [enterFocusMode]);
 
   if (isLoading && !activeDocument) {
     return (
@@ -74,38 +74,20 @@ export function AppShell() {
   }
 
   return (
-    <div
-      className={`${styles.shell} ${focusMode ? styles.focusMode : ''} ${sidebarCollapsed ? styles.sidebarHidden : ''}`}
-    >
+    <div className={`${styles.shell} ${focusMode ? styles.focusMode : ''}`}>
       {!focusMode && (
-        <aside
-          className={`${styles.sidebar} ${styles.sidebarScroll} ${sidebarCollapsed ? styles.sidebarCollapsed : ''}`}
-        >
-          <ThemeSwitcher />
+        <aside className={`${styles.sidebar} ${styles.sidebarScroll}`}>
+          <DocumentSearch />
           <DocumentList />
-          <SettingsPanel />
+          <SettingsTrigger />
         </aside>
       )}
 
       {!focusMode && (
         <header className={styles.toolbar}>
-          <IconButton label={sidebarCollapsed ? '展开侧栏' : '折叠侧栏'} onClick={toggleSidebar}>
-            ☰
-          </IconButton>
-          <span className={styles.docName}>{activeTitle}</span>
-          <ThemeQuickPicker />
-          <IconButton
-            label="打开侧栏主题设置"
-            onClick={() => {
-              setSidebarCollapsed(false);
-              document.getElementById('theme-section')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-          >
-            ◑
-          </IconButton>
-          <IconButton label="专注模式 (F11)" onClick={toggleFocusMode}>
-            ◎
-          </IconButton>
+          <span className={styles.docName}>
+            {activeDocument ? displayTitle(activeDocument.title) : 'Glimmery'}
+          </span>
         </header>
       )}
 
@@ -113,24 +95,32 @@ export function AppShell() {
         <button
           type="button"
           className={styles.focusExit}
-          onClick={toggleFocusMode}
+          onClick={exitFocusMode}
           aria-label="退出专注模式"
-          title="退出专注模式 (F11)"
-        />
+          title="退出专注模式（Esc）"
+        >
+          <span className={styles.focusExitIcon}>☰</span>
+          <span className={styles.focusExitHint}>退出专注</span>
+        </button>
       )}
 
       <main className={styles.main}>
-        <div className={styles.writingArea}>
+        <div className={styles.writingArea} onPointerDown={handleBeginWriting}>
           {activeDocument && activeDocumentId && (
             <EditorAdapter
               key={activeDocumentId}
+              title={activeDocument.title}
               initialContent={activeDocument.content}
-              onChange={handleContentChange}
+              onTitleChange={handleTitleChange}
+              onContentChange={handleContentChange}
+              onBeginWriting={handleBeginWriting}
             />
           )}
         </div>
         {error && <div className={styles.error}>{error}</div>}
       </main>
+
+      <SettingsDialog />
     </div>
   );
 }

@@ -4,41 +4,75 @@
   color: var(--color-text-primary);
   background: var(--color-editor-bg);
   font-family: var(--font-sans);
-  font-size: var(--font-size-lg);
-  line-height: var(--line-height-base);
 }
 
-.editorWrapper :global(.milkdown) {
+.titleInput {
+  display: block;
+  width: 100%;
+  margin: 0 0 var(--spacing-md);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  line-height: var(--line-height-tight);
+  resize: none;
+  overflow: hidden;
+}
+
+.titleInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+.titleInput:focus {
+  outline: none;
+}
+
+.bodyEditor {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-base);
+  min-height: 50vh;
+}
+
+.bodyEditor :global(.milkdown) {
   background: transparent;
   color: var(--color-text-primary);
 }
 
-.editorWrapper :global(.ProseMirror) {
+.bodyEditor :global(.ProseMirror) {
   outline: none;
-  min-height: 50vh;
-  padding: var(--spacing-md) 0;
+  min-height: 48vh;
+  padding: 0;
 }
 
-.editorWrapper :global(.ProseMirror h1),
-.editorWrapper :global(.ProseMirror h2),
-.editorWrapper :global(.ProseMirror h3) {
+.bodyEditor :global(.ProseMirror p.is-editor-empty:first-child::before),
+.bodyEditor :global(.ProseMirror .placeholder) {
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.bodyEditor :global(.ProseMirror h1),
+.bodyEditor :global(.ProseMirror h2),
+.bodyEditor :global(.ProseMirror h3) {
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
   margin: var(--spacing-lg) 0 var(--spacing-sm);
 }
 
-.editorWrapper :global(.ProseMirror p) {
+.bodyEditor :global(.ProseMirror p) {
   margin: var(--spacing-sm) 0;
 }
 
-.editorWrapper :global(.ProseMirror blockquote) {
+.bodyEditor :global(.ProseMirror blockquote) {
   border-left: 3px solid var(--color-accent);
   padding-left: var(--spacing-md);
   color: var(--color-text-secondary);
   margin: var(--spacing-md) 0;
 }
 
-.editorWrapper :global(.ProseMirror code) {
+.bodyEditor :global(.ProseMirror code) {
   font-family: var(--font-mono);
   background: var(--color-bg-elevated);
   padding: 2px 6px;
@@ -46,30 +80,29 @@
   font-size: 0.9em;
 }
 
-.editorWrapper :global(.ProseMirror pre) {
+.bodyEditor :global(.ProseMirror pre) {
   background: var(--color-bg-elevated);
   padding: var(--spacing-md);
   border-radius: var(--radius-md);
   overflow-x: auto;
 }
 
-.editorWrapper :global(.ProseMirror a) {
+.bodyEditor :global(.ProseMirror a) {
   color: var(--color-accent);
 }
 
-.editorWrapper :global(.ProseMirror ul),
-.editorWrapper :global(.ProseMirror ol) {
+.bodyEditor :global(.ProseMirror ul),
+.bodyEditor :global(.ProseMirror ol) {
   padding-left: var(--spacing-lg);
 }
 
-.editorWrapper :global(.ProseMirror hr) {
+.bodyEditor :global(.ProseMirror hr) {
   border: none;
   border-top: 1px solid var(--color-border-subtle);
   margin: var(--spacing-lg) 0;
 }
 
-/* 隐藏 Crepe 默认工具栏以保持极简 */
-.editorWrapper :global(.crepe-toolbar),
-.editorWrapper :global(.milkdown-toolbar) {
+.bodyEditor :global(.crepe-toolbar),
+.bodyEditor :global(.milkdown-toolbar) {
   display: none;
 }

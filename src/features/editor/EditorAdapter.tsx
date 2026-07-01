@@ -5,17 +5,27 @@ import '@milkdown/crepe/theme/common/style.css';
 import styles from './EditorAdapter.module.css';
 
 export interface EditorAdapterProps {
-  /** 仅在挂载时作为初始内容，切换文稿时通过外层 key  remount */
+  title: string;
   initialContent: string;
-  onChange: (markdown: string) => void;
+  onTitleChange: (title: string) => void;
+  onContentChange: (content: string) => void;
+  onBeginWriting?: () => void;
   readOnly?: boolean;
 }
 
-function EditorSurface({ initialContent, onChange, readOnly = false }: EditorAdapterProps) {
-  const onChangeRef = useRef(onChange);
+function BodyEditor({
+  initialContent,
+  onContentChange,
+  onBeginWriting,
+  readOnly = false,
+}: Pick<
+  EditorAdapterProps,
+  'initialContent' | 'onContentChange' | 'onBeginWriting' | 'readOnly'
+>) {
+  const onChangeRef = useRef(onContentChange);
   const crepeRef = useRef<Crepe | null>(null);
   const initialContentRef = useRef(initialContent);
-  onChangeRef.current = onChange;
+  onChangeRef.current = onContentChange;
 
   useEditor(
     (root) => {
@@ -28,7 +38,7 @@ function EditorSurface({ initialContent, onChange, readOnly = false }: EditorAda
         },
         featureConfigs: {
           [CrepeFeature.Placeholder]: {
-            text: '开始书写…',
+            text: '正文',
           },
         },
       });
@@ -52,15 +62,47 @@ function EditorSurface({ initialContent, onChange, readOnly = false }: EditorAda
     crepeRef.current?.setReadonly(readOnly);
   }, [readOnly]);
 
-  return <Milkdown />;
+  return (
+    <div
+      className={styles.bodyEditor}
+      onPointerDown={() => onBeginWriting?.()}
+    >
+      <Milkdown />
+    </div>
+  );
 }
 
-export function EditorAdapter(props: EditorAdapterProps) {
+export function EditorAdapter({
+  title,
+  initialContent,
+  onTitleChange,
+  onContentChange,
+  onBeginWriting,
+  readOnly = false,
+}: EditorAdapterProps) {
   return (
-    <MilkdownProvider>
-      <div className={styles.editorWrapper}>
-        <EditorSurface {...props} />
-      </div>
-    </MilkdownProvider>
+    <div
+      className={styles.editorWrapper}
+      onPointerDown={() => onBeginWriting?.()}
+    >
+      <input
+        type="text"
+        className={styles.titleInput}
+        value={title}
+        onChange={(e) => onTitleChange(e.target.value)}
+        placeholder="标题"
+        aria-label="文稿标题"
+        onPointerDown={(e) => e.stopPropagation()}
+        onFocus={() => onBeginWriting?.()}
+      />
+      <MilkdownProvider>
+        <BodyEditor
+          initialContent={initialContent}
+          onContentChange={onContentChange}
+          onBeginWriting={onBeginWriting}
+          readOnly={readOnly}
+        />
+      </MilkdownProvider>
+    </div>
   );
 }

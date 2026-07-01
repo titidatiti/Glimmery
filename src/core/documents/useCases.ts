@@ -1,6 +1,6 @@
 import type { StorageProvider } from '@/services/storage';
 import type { DocumentData, DocumentMeta } from './types';
-import { createDocument, deriveTitleFromContent } from './types';
+import { createDocument } from './types';
 
 export async function listDocuments(storage: StorageProvider): Promise<DocumentMeta[]> {
   return storage.list();
@@ -49,15 +49,18 @@ export async function deleteDocument(storage: StorageProvider, id: string): Prom
   await storage.remove(id);
 }
 
-export function updateDocumentContent(
-  doc: DocumentData,
-  content: string,
-): DocumentData {
-  const title = deriveTitleFromContent(content, doc.title);
+export function updateDocumentContent(doc: DocumentData, content: string): DocumentData {
   return {
     ...doc,
     content,
-    title,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export function updateDocumentTitle(doc: DocumentData, title: string): DocumentData {
+  return {
+    ...doc,
+    title: title.trim() || '未命名文稿',
     updatedAt: new Date().toISOString(),
   };
 }

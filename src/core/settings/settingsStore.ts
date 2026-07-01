@@ -1,18 +1,27 @@
 import { create } from 'zustand';
-import { DEFAULT_SETTINGS, type AppSettings } from './types';
+import { DEFAULT_SETTINGS } from './types';
 
-export interface SettingsStoreState extends AppSettings {
-  toggleFocusMode: () => void;
+export interface SettingsStoreState {
+  focusMode: boolean;
+  settingsOpen: boolean;
+  autoSaveDelayMs: number;
   setFocusMode: (value: boolean) => void;
-  toggleSidebar: () => void;
-  setSidebarCollapsed: (value: boolean) => void;
+  enterFocusMode: () => void;
+  exitFocusMode: () => void;
+  setSettingsOpen: (value: boolean) => void;
+  openSettings: () => void;
+  closeSettings: () => void;
 }
 
 export const useSettingsStore = create<SettingsStoreState>((set) => ({
-  ...DEFAULT_SETTINGS,
+  focusMode: DEFAULT_SETTINGS.focusMode,
+  settingsOpen: DEFAULT_SETTINGS.settingsOpen,
+  autoSaveDelayMs: DEFAULT_SETTINGS.autoSaveDelayMs,
 
-  toggleFocusMode: () => set((s) => ({ focusMode: !s.focusMode })),
   setFocusMode: (value) => set({ focusMode: value }),
-  toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
-  setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
+  enterFocusMode: () => set({ focusMode: true }),
+  exitFocusMode: () => set({ focusMode: false }),
+  setSettingsOpen: (value) => set({ settingsOpen: value }),
+  openSettings: () => set({ settingsOpen: true }),
+  closeSettings: () => set({ settingsOpen: false }),
 }));

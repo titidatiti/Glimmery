@@ -9,7 +9,7 @@ export interface DocumentData extends DocumentMeta {
   content: string;
 }
 
-export function createDocument(title = '未命名文稿', content = ''): DocumentData {
+export function createDocument(title = '', content = ''): DocumentData {
   const now = new Date().toISOString();
   return {
     id: crypto.randomUUID(),

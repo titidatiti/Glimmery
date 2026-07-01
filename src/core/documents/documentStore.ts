@@ -9,12 +9,14 @@ import {
   renameDocument,
   saveDocument,
   updateDocumentContent,
+  updateDocumentTitle,
 } from './useCases';
 
 export interface DocumentStoreState {
   documents: DocumentMeta[];
   activeDocumentId: string | null;
   activeDocument: DocumentData | null;
+  searchQuery: string;
   isLoading: boolean;
   error: string | null;
   initialize: (storage: StorageProvider) => Promise<void>;
@@ -22,14 +24,17 @@ export interface DocumentStoreState {
   createDocument: (storage: StorageProvider) => Promise<void>;
   renameDocument: (storage: StorageProvider, id: string, title: string) => Promise<void>;
   deleteDocument: (storage: StorageProvider, id: string) => Promise<void>;
+  setSearchQuery: (query: string) => void;
+  updateTitle: (title: string) => void;
   updateContent: (content: string) => void;
-  persistContent: (storage: StorageProvider) => Promise<void>;
+  persistActiveDocument: (storage: StorageProvider) => Promise<void>;
 }
 
 export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
   documents: [],
   activeDocumentId: null,
   activeDocument: null,
+  searchQuery: '',
   isLoading: false,
   error: null,
 
@@ -162,7 +167,15 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
     set({ activeDocument: updateDocumentContent(activeDocument, content) });
   },
 
-  persistContent: async (storage) => {
+  updateTitle: (title) => {
+    const { activeDocument } = get();
+    if (!activeDocument) return;
+    set({ activeDocument: updateDocumentTitle(activeDocument, title) });
+  },
+
+  setSearchQuery: (query) => set({ searchQuery: query }),
+
+  persistActiveDocument: async (storage) => {
     const { activeDocument } = get();
     if (!activeDocument) return;
     try {

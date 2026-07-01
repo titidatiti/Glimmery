@@ -10,4 +10,5 @@ export {
   renameDocument,
   deleteDocument,
   updateDocumentContent,
+  updateDocumentTitle,
 } from './useCases';

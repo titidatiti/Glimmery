@@ -59,13 +59,18 @@ export default tseslint.config(
               message: 'features 之间不得互相 import',
             },
             {
-              target: './src/features/theme-switcher',
-              from: './src/features/!(theme-switcher)/**',
+              target: './src/features/document-search',
+              from: './src/features/!(document-search)/**',
               message: 'features 之间不得互相 import',
             },
             {
-              target: './src/features/settings-panel',
-              from: './src/features/!(settings-panel)/**',
+              target: './src/features/settings-dialog',
+              from: './src/features/!(settings-dialog)/**',
+              message: 'features 之间不得互相 import',
+            },
+            {
+              target: './src/features/theme-switcher',
+              from: './src/features/!(theme-switcher)/**',
               message: 'features 之间不得互相 import',
             },
           ],
