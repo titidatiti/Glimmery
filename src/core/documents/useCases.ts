@@ -1,6 +1,6 @@
 import type { StorageProvider } from '@/services/storage';
 import type { DocumentData, DocumentMeta } from './types';
-import { createDocument, normalizeDocument } from './types';
+import { createDocument, formatDocumentTitle, normalizeDocument } from './types';
 
 export async function listDocuments(storage: StorageProvider): Promise<DocumentMeta[]> {
   return storage.list();
@@ -39,7 +39,7 @@ export async function renameDocument(
   if (!existing) return null;
   const updated: DocumentData = {
     ...existing,
-    title: title.trim() || '未命名文稿',
+    title: formatDocumentTitle(title),
     updatedAt: new Date().toISOString(),
   };
   await storage.save(updated);
@@ -61,7 +61,7 @@ export function updateDocumentContent(doc: DocumentData, content: string): Docum
 export function updateDocumentTitle(doc: DocumentData, title: string): DocumentData {
   return {
     ...doc,
-    title: title.trim() || '未命名文稿',
+    title: formatDocumentTitle(title),
     updatedAt: new Date().toISOString(),
   };
 }

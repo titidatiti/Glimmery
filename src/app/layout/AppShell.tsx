@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { useDocumentStore } from '@/core/documents';
+import { useDocumentStore, formatDocumentTitle } from '@/core/documents';
 
 import { useSettingsStore } from '@/core/settings';
 
@@ -27,10 +27,6 @@ import { FocusIcon } from '@/ui';
 import { SidebarBrand } from './SidebarBrand';
 
 import styles from './AppShell.module.css';
-
-function displayTitle(title: string): string {
-  return title.trim() || '未命名文稿';
-}
 
 export function AppShell() {
   const { storage } = useServices();
@@ -175,7 +171,7 @@ export function AppShell() {
 
       <header className={styles.toolbar}>
         <span className={styles.docName}>
-          {activeDocument ? displayTitle(activeDocument.title) : 'Glimmery'}
+          {activeDocument ? formatDocumentTitle(activeDocument.title) : 'Glimmery'}
         </span>
         <button
           type="button"

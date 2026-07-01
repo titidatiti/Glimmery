@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { StorageProvider } from '@/services/storage';
 import type { DocumentData, DocumentMeta } from './types';
+import { sortDocumentsByUpdatedAt } from './types';
 import {
   createNewDocument,
   deleteDocument,
@@ -53,9 +54,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
         });
         return;
       }
-      const sorted = [...docs].sort(
-        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-      );
+      const sorted = sortDocumentsByUpdatedAt(docs);
       const first = await loadDocument(storage, sorted[0].id);
       set({
         documents: sorted,
@@ -95,9 +94,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
       const doc = await createNewDocument(storage);
       const docs = await listDocuments(storage);
       set({
-        documents: docs.sort(
-          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-        ),
+        documents: sortDocumentsByUpdatedAt(docs),
         activeDocumentId: doc.id,
         activeDocument: doc,
       });
@@ -113,9 +110,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
       if (!updated) return;
       const docs = await listDocuments(storage);
       set((state) => ({
-        documents: docs.sort(
-          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-        ),
+        documents: sortDocumentsByUpdatedAt(docs),
         activeDocument:
           state.activeDocumentId === id ? updated : state.activeDocument,
       }));
@@ -142,9 +137,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
         return;
       }
 
-      const sorted = docs.sort(
-        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-      );
+      const sorted = sortDocumentsByUpdatedAt(docs);
 
       if (activeDocumentId === id) {
         const next = await loadDocument(storage, sorted[0].id);
@@ -182,9 +175,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
       await saveDocument(storage, activeDocument);
       const docs = await listDocuments(storage);
       set({
-        documents: docs.sort(
-          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-        ),
+        documents: sortDocumentsByUpdatedAt(docs),
       });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : '保存失败' });
