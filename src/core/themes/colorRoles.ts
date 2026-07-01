@@ -1,4 +1,5 @@
 import type { ThemeColorTokens } from './types';
+import { mixHex, relativeLuminance } from './colorUtils';
 
 /** 用户可编辑的配色角色（与界面区域一一对应） */
 export type ThemeColorRoleId =
@@ -157,49 +158,18 @@ export function accentToFocusRing(accent: string): string {
   return hex;
 }
 
-function parseHexColor(hex: string): { r: number; g: number; b: number } | null {
-  const match = hex.trim().match(/^#([0-9a-fA-F]{6})$/);
-  if (!match) return null;
-  const value = Number.parseInt(match[1], 16);
-  return {
-    r: (value >> 16) & 255,
-    g: (value >> 8) & 255,
-    b: value & 255,
-  };
-}
-
-function toHexColor(r: number, g: number, b: number): string {
-  return `#${[r, g, b]
-    .map((channel) => Math.min(255, Math.max(0, Math.round(channel))).toString(16).padStart(2, '0'))
-    .join('')}`;
-}
-
 /** 从写作区底色与强调色推导柔和的选中行背景 */
 export function deriveActiveLineBg(editorBg: string, accent: string): string {
-  return mixHexColors(editorBg, accent, 0.14);
+  return mixHex(editorBg, accent, 0.14);
 }
 
 /** 从写作区底色与强调色推导文字选区背景（对比度高于选中行） */
 export function deriveSelectionBg(editorBg: string, accent: string, mix = 0.42): string {
-  return mixHexColors(editorBg, accent, mix);
+  return mixHex(editorBg, accent, mix);
 }
 
 export const FALLBACK_SELECTION_TEXT_DARK = '#2a2a2a';
 export const FALLBACK_SELECTION_TEXT_LIGHT = '#f5f5f5';
-
-function srgbChannelToLinear(channel: number): number {
-  const v = channel / 255;
-  return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-}
-
-function relativeLuminance(hex: string): number | null {
-  const rgb = parseHexColor(hex);
-  if (!rgb) return null;
-  const r = srgbChannelToLinear(rgb.r);
-  const g = srgbChannelToLinear(rgb.g);
-  const b = srgbChannelToLinear(rgb.b);
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
 
 /** WCAG 对比度（简化相对亮度） */
 export function contrastRatio(foreground: string, background: string): number | null {
@@ -236,18 +206,6 @@ export function deriveSelectionText(selectionBg: string, candidates: string[]): 
   }
 
   return best;
-}
-
-function mixHexColors(baseHex: string, accentHex: string, mix: number): string {
-  const bg = parseHexColor(baseHex);
-  const accentRgb = parseHexColor(accentHex);
-  if (!bg || !accentRgb) return baseHex;
-
-  return toHexColor(
-    bg.r + (accentRgb.r - bg.r) * mix,
-    bg.g + (accentRgb.g - bg.g) * mix,
-    bg.b + (accentRgb.b - bg.b) * mix,
-  );
 }
 
 export function resolveSelectionBg(colors: ThemeColorTokens): string {
@@ -297,8 +255,8 @@ export function finalizeSelectionPair(
     const lum = relativeLuminance(bg) ?? 0.5;
     bg =
       lum < 0.58
-        ? mixHexColors(bg, '#ffffff', 0.22)
-        : mixHexColors(bg, '#000000', 0.14);
+        ? mixHex(bg, '#ffffff', 0.22)
+        : mixHex(bg, '#000000', 0.14);
   }
 
   const text = pickSelectionTextForBg(bg, candidates, colors.selectionText);

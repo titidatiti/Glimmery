@@ -1,4 +1,5 @@
 import type { ThemeShadowTokens, ThemeTokens } from './types';
+import { parseHex6, rgbToHex } from './colorUtils';
 
 export interface ThemeShadowRoles {
   shadowEnabled: boolean;
@@ -13,23 +14,6 @@ export interface ThemeCustomSettings {
 }
 
 const DEFAULT_SHADOW_COLOR = '#000000';
-
-function parseHexColor(hex: string): { r: number; g: number; b: number } | null {
-  const match = hex.trim().match(/^#([0-9a-fA-F]{6})$/);
-  if (!match) return null;
-  const value = Number.parseInt(match[1], 16);
-  return {
-    r: (value >> 16) & 255,
-    g: (value >> 8) & 255,
-    b: value & 255,
-  };
-}
-
-function rgbToHex(r: number, g: number, b: number): string {
-  return `#${[r, g, b]
-    .map((channel) => Math.min(255, Math.max(0, Math.round(channel))).toString(16).padStart(2, '0'))
-    .join('')}`;
-}
 
 function parseFirstRgba(value: string): { r: number; g: number; b: number } | null {
   const match = value.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
@@ -52,12 +36,12 @@ function isShadowDisabled(value: string): boolean {
 }
 
 export function buildSmShadow(color: string): string {
-  const rgb = parseHexColor(color) ?? { r: 0, g: 0, b: 0 };
+  const rgb = parseHex6(color) ?? { r: 0, g: 0, b: 0 };
   return `0 1px 3px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.35)`;
 }
 
 export function buildMdShadow(color: string): string {
-  const rgb = parseHexColor(color) ?? { r: 0, g: 0, b: 0 };
+  const rgb = parseHex6(color) ?? { r: 0, g: 0, b: 0 };
   return `0 4px 12px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`;
 }
 
