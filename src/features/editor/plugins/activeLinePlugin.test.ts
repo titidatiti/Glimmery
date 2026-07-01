@@ -1,10 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.stubGlobal(
+  'getComputedStyle',
+  () =>
+    ({
+      paddingTop: '0px',
+    }) as CSSStyleDeclaration,
+);
 
 import {
   ACTIVE_LINE_OVERLAY_CLASS,
   computeOverlayGradient,
   computeOverlayMetrics,
   computeOverlayWidth,
+  computeSnappedLineMetrics,
 } from './activeLinePlugin';
 
 describe('computeOverlayMetrics', () => {
@@ -29,6 +38,36 @@ describe('computeOverlayMetrics', () => {
 
     expect(metrics.height).toBe(24);
     expect(metrics.top).toBe(8);
+  });
+});
+
+describe('computeSnappedLineMetrics', () => {
+  it('对齐到块内行网格，overlay 与 caret 分别相对 host/editor 定位', () => {
+    const blockEl = {
+      getBoundingClientRect: () => ({
+        top: 200,
+        left: 0,
+        right: 400,
+        bottom: 300,
+        width: 400,
+        height: 100,
+        x: 0,
+        y: 200,
+        toJSON: () => ({}),
+      }),
+    } as HTMLElement;
+
+    const metrics = computeSnappedLineMetrics(
+      { top: 248, bottom: 270 },
+      blockEl,
+      190,
+      200,
+      36,
+    );
+
+    expect(metrics.height).toBe(36);
+    expect(metrics.overlayTop).toBe(46);
+    expect(metrics.caretTop).toBe(36);
   });
 });
 
