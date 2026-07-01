@@ -9,6 +9,7 @@ import { EditorAdapter } from '@/features/editor';
 import { DocumentList } from '@/features/document-list';
 import { DocumentSearch } from '@/features/document-search';
 import { SettingsDialog, SettingsTrigger } from '@/features/settings-dialog';
+import { SidebarBrand } from './SidebarBrand';
 import styles from './AppShell.module.css';
 
 function displayTitle(title: string): string {
@@ -77,6 +78,7 @@ export function AppShell() {
     <div className={`${styles.shell} ${focusMode ? styles.focusMode : ''}`}>
       {!focusMode && (
         <aside className={`${styles.sidebar} ${styles.sidebarScroll}`}>
+          <SidebarBrand />
           <DocumentSearch />
           <DocumentList />
           <SettingsTrigger />

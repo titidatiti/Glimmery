@@ -41,7 +41,8 @@
   --shadow-glow: 0 0 24px rgba(232, 197, 71, 0.12);
 
   --shell-max-width: 720px;
-  --sidebar-width: 280px;
+  --sidebar-width: 300px;
+  --sidebar-inset: 20px;
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
 }
