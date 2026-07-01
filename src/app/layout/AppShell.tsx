@@ -6,7 +6,7 @@ import { debounce } from '@/lib';
 import { useServices } from '@/app/providers';
 import { EditorAdapter } from '@/features/editor';
 import { DocumentList } from '@/features/document-list';
-import { ThemeSwitcher } from '@/features/theme-switcher';
+import { ThemeSwitcher, ThemeQuickPicker } from '@/features/theme-switcher';
 import { SettingsPanel } from '@/features/settings-panel';
 import { IconButton } from '@/ui';
 import styles from './AppShell.module.css';
@@ -25,26 +25,29 @@ export function AppShell() {
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed);
   const toggleFocusMode = useSettingsStore((s) => s.toggleFocusMode);
   const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
+  const setSidebarCollapsed = useSettingsStore((s) => s.setSidebarCollapsed);
   const autoSaveDelayMs = useSettingsStore((s) => s.autoSaveDelayMs);
+
+  const activeTitle = activeDocument?.title ?? 'Glimmery';
 
   useEffect(() => {
     void initialize(storage);
   }, [initialize, storage]);
 
-  const debouncedSave = useMemo(
+  const debouncedPersist = useMemo(
     () =>
-      debounce(() => {
+      debounce((markdown: string) => {
+        updateContent(markdown);
         void persistContent(storage);
       }, autoSaveDelayMs || DEFAULT_SETTINGS.autoSaveDelayMs),
-    [persistContent, storage, autoSaveDelayMs],
+    [updateContent, persistContent, storage, autoSaveDelayMs],
   );
 
   const handleContentChange = useCallback(
     (markdown: string) => {
-      updateContent(markdown);
-      debouncedSave();
+      debouncedPersist(markdown);
     },
-    [updateContent, debouncedSave],
+    [debouncedPersist],
   );
 
   useEffect(() => {
@@ -71,13 +74,15 @@ export function AppShell() {
   }
 
   return (
-    <div className={`${styles.shell} ${focusMode ? styles.focusMode : ''} ${sidebarCollapsed ? styles.sidebarHidden : ''}`}>
+    <div
+      className={`${styles.shell} ${focusMode ? styles.focusMode : ''} ${sidebarCollapsed ? styles.sidebarHidden : ''}`}
+    >
       {!focusMode && (
         <aside
-          className={`${styles.sidebar} ${sidebarCollapsed ? styles.sidebarCollapsed : ''}`}
+          className={`${styles.sidebar} ${styles.sidebarScroll} ${sidebarCollapsed ? styles.sidebarCollapsed : ''}`}
         >
-          <DocumentList />
           <ThemeSwitcher />
+          <DocumentList />
           <SettingsPanel />
         </aside>
       )}
@@ -87,7 +92,17 @@ export function AppShell() {
           <IconButton label={sidebarCollapsed ? '展开侧栏' : '折叠侧栏'} onClick={toggleSidebar}>
             ☰
           </IconButton>
-          <span className={styles.docName}>{activeDocument?.title ?? 'Glimmery'}</span>
+          <span className={styles.docName}>{activeTitle}</span>
+          <ThemeQuickPicker />
+          <IconButton
+            label="打开侧栏主题设置"
+            onClick={() => {
+              setSidebarCollapsed(false);
+              document.getElementById('theme-section')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            ◑
+          </IconButton>
           <IconButton label="专注模式 (F11)" onClick={toggleFocusMode}>
             ◎
           </IconButton>
@@ -109,7 +124,7 @@ export function AppShell() {
           {activeDocument && activeDocumentId && (
             <EditorAdapter
               key={activeDocumentId}
-              content={activeDocument.content}
+              initialContent={activeDocument.content}
               onChange={handleContentChange}
             />
           )}

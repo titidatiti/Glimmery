@@ -1,5 +1,7 @@
 .switcher {
   padding: var(--spacing-md) 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .label {

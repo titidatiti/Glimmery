@@ -20,7 +20,7 @@ export function ThemeSwitcher() {
   };
 
   return (
-    <div className={styles.switcher}>
+    <div id="theme-section" className={styles.switcher}>
       <span className={styles.label}>主题</span>
       <div className={styles.grid}>
         {themes.map((theme) => (

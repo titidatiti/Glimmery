@@ -5,21 +5,23 @@ import '@milkdown/crepe/theme/common/style.css';
 import styles from './EditorAdapter.module.css';
 
 export interface EditorAdapterProps {
-  content: string;
+  /** 仅在挂载时作为初始内容，切换文稿时通过外层 key  remount */
+  initialContent: string;
   onChange: (markdown: string) => void;
   readOnly?: boolean;
 }
 
-function EditorSurface({ content, onChange, readOnly = false }: EditorAdapterProps) {
+function EditorSurface({ initialContent, onChange, readOnly = false }: EditorAdapterProps) {
   const onChangeRef = useRef(onChange);
   const crepeRef = useRef<Crepe | null>(null);
+  const initialContentRef = useRef(initialContent);
   onChangeRef.current = onChange;
 
   useEditor(
     (root) => {
       const crepe = new Crepe({
         root,
-        defaultValue: content,
+        defaultValue: initialContentRef.current,
         features: {
           [CrepeFeature.Toolbar]: false,
           [CrepeFeature.TopBar]: false,
@@ -43,7 +45,7 @@ function EditorSurface({ content, onChange, readOnly = false }: EditorAdapterPro
       crepeRef.current = crepe;
       return crepe;
     },
-    [content],
+    [],
   );
 
   useEffect(() => {

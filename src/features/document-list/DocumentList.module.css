@@ -1,15 +1,16 @@
 .list {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: var(--spacing-md);
+  min-height: 0;
+  padding: var(--spacing-md) 0;
 }
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  flex-shrink: 0;
 }
 
 .title {
@@ -25,6 +26,8 @@
   margin: 0;
   padding: 0;
   flex: 1;
+  min-height: 0;
+  max-height: min(36vh, 280px);
   overflow-y: auto;
 }
 
@@ -89,6 +92,8 @@
 }
 
 .footer {
-  padding-top: var(--spacing-md);
+  padding-top: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
   border-top: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
 }
