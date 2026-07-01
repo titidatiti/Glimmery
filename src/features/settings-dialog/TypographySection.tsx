@@ -1,3 +1,4 @@
+import { useMediaQuery } from '@/app/hooks/useMediaQuery';
 import {
   useSettingsStore,
   EDITOR_FONT_FAMILY_PRESETS,
@@ -10,6 +11,7 @@ import {
 import styles from './TypographySection.module.css';
 
 export function TypographySection() {
+  const isMobile = useMediaQuery('(max-width: 767px)');
   const editorTypography = useSettingsStore((s) => s.editorTypography);
   const setEditorFontFamily = useSettingsStore((s) => s.setEditorFontFamily);
   const setCustomFontFamily = useSettingsStore((s) => s.setCustomFontFamily);
@@ -82,7 +84,7 @@ export function TypographySection() {
         </p>
       </fieldset>
 
-      <fieldset className={styles.fieldset}>
+      <fieldset className={`${styles.fieldset} ${isMobile ? styles.fieldsetDisabled : ''}`}>
         <legend className={styles.legend}>编辑区宽度</legend>
         <div className={styles.sliderRow}>
           <span className={styles.sliderMark}>较窄</span>
@@ -95,11 +97,13 @@ export function TypographySection() {
             value={editorTypography.editorWidthScale}
             onChange={(e) => setEditorWidthScale(Number(e.target.value))}
             aria-valuetext={`${widthLabel}，${editorWidth}`}
+            disabled={isMobile}
+            aria-disabled={isMobile}
           />
           <span className={styles.sliderMark}>全宽</span>
         </div>
         <p className={styles.sliderValue}>
-          {widthLabel} · {editorWidth}
+          {isMobile ? '手机端自动使用全宽' : `${widthLabel} · ${editorWidth}`}
         </p>
       </fieldset>
 

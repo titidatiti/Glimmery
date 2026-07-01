@@ -24,11 +24,76 @@
   flex-direction: column;
 }
 
+.toggle {
+  display: none;
+}
+
 @media (max-width: 767px) {
   .pane {
     border-left: none;
     border-top: 1px solid var(--color-border-subtle);
-    max-height: min(42vh, 360px);
-    padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
+    max-height: min(38vh, 320px);
+    padding: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-normal);
+  }
+
+  .paneCollapsible {
+    flex-shrink: 0;
+  }
+
+  .paneCollapsed {
+    max-height: 44px;
+  }
+
+  .toggle {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: var(--spacing-sm) calc(var(--spacing-md) + var(--safe-area-right))
+      var(--spacing-sm) calc(var(--spacing-md) + var(--safe-area-left));
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    text-align: left;
+    background: var(--color-bg-elevated);
+    transition:
+      color var(--transition-warm),
+      background var(--transition-warm);
+  }
+
+  .toggle:hover,
+  .toggle:focus-visible {
+    color: var(--color-text-secondary);
+    background: var(--color-bg-surface);
+  }
+
+  .toggleLabel {
+    min-width: 0;
+  }
+
+  .toggleHint {
+    font-weight: 400;
+    color: var(--color-text-muted);
+  }
+
+  .toggle:hover .toggleHint,
+  .toggle:focus-visible .toggleHint {
+    color: var(--color-text-secondary);
+  }
+
+  .content {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 0 calc(var(--spacing-md) + var(--safe-area-right))
+      calc(var(--spacing-md) + var(--safe-area-bottom))
+      calc(var(--spacing-md) + var(--safe-area-left));
+  }
+
+  .paneCollapsed .content {
+    display: none;
   }
 }

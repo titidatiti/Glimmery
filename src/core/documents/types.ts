@@ -1,3 +1,5 @@
+import { generateId } from '@/lib';
+
 export interface DocumentMeta {
   id: string;
   title: string;
@@ -12,7 +14,7 @@ export interface DocumentData extends DocumentMeta {
 export function createDocument(title = '', content = ''): DocumentData {
   const now = new Date().toISOString();
   return {
-    id: crypto.randomUUID(),
+    id: generateId(),
     title,
     content,
     createdAt: now,

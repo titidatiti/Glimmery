@@ -57,16 +57,20 @@
   overflow: hidden;
   background: transparent;
   transform: translateX(0);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition:
     color var(--transition-warm),
     padding-left var(--transition-warm),
     transform var(--transition-warm);
 }
 
-.docRow:not(.docRowActive) .docButton:hover {
-  color: var(--color-sidebar-text);
-  padding-left: calc(var(--spacing-sm) + var(--spacing-xs));
-  transform: translateX(2px);
+@media (hover: hover) and (pointer: fine) {
+  .docRow:not(.docRowActive) .docButton:hover {
+    color: var(--color-sidebar-text);
+    padding-left: calc(var(--spacing-sm) + var(--spacing-xs));
+    transform: translateX(2px);
+  }
 }
 
 .docRowActive .docButton {
@@ -123,19 +127,22 @@
   height: 28px;
   margin-right: 2px;
   color: var(--color-sidebar-text-muted);
+  touch-action: manipulation;
   transition: opacity var(--transition-warm), transform var(--transition-warm);
 }
 
-.deleteBtn:hover {
-  background: transparent;
-  color: var(--color-sidebar-text);
-}
+@media (hover: hover) and (pointer: fine) {
+  .deleteBtn:hover {
+    background: transparent;
+    color: var(--color-sidebar-text);
+  }
 
-.docRow:hover .deleteBtn {
-  opacity: 0.5;
-}
+  .docRow:hover .deleteBtn {
+    opacity: 0.5;
+  }
 
-.docRow:hover .deleteBtn:hover {
-  opacity: 1;
-  transform: scale(1.05);
+  .docRow:hover .deleteBtn:hover {
+    opacity: 1;
+    transform: scale(1.05);
+  }
 }

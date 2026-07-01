@@ -24,6 +24,21 @@ describe('EDITOR_FONT_FAMILY_PRESETS', () => {
     });
 
     expect(vars['--editor-font-family']).toContain('Consolas');
+    expect(vars['--editor-font-family']).toContain('SF Mono');
+  });
+
+  it('prioritizes platform CJK fonts for kai and song presets', () => {
+    const kai = resolveEditorTypographyCssVars({
+      ...DEFAULT_EDITOR_TYPOGRAPHY,
+      fontFamilyId: 'kai',
+    });
+    const song = resolveEditorTypographyCssVars({
+      ...DEFAULT_EDITOR_TYPOGRAPHY,
+      fontFamilyId: 'song',
+    });
+
+    expect(kai['--editor-font-family']).toMatch(/^'LXGW WenKai TC'/);
+    expect(song['--editor-font-family']).toMatch(/^'Noto Serif SC'/);
   });
 });
 

@@ -128,6 +128,45 @@
   line-height: 1;
 }
 
+.sidebarFocusEnter {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+  width: 100%;
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-sidebar-text);
+  font-size: var(--sidebar-font-size-sm);
+  font-weight: 500;
+  background: var(--color-bg-elevated);
+  transition:
+    color var(--transition-warm),
+    background var(--transition-warm),
+    border-color var(--transition-warm),
+    transform var(--transition-warm);
+}
+
+.sidebarFocusEnter:hover,
+.sidebarFocusEnter:focus-visible {
+  color: var(--color-sidebar-text);
+  border-color: var(--color-border);
+  background: var(--color-bg-surface);
+  transform: translateY(-1px);
+}
+
+.sidebarFocusEnterIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.sidebarFocusEnterLabel {
+  line-height: 1.2;
+}
+
 .main {
   grid-column: 2;
   grid-row: 2;
@@ -259,5 +298,133 @@
   }
   50% {
     opacity: 1;
+  }
+}
+
+.mobileTrack {
+  display: contents;
+}
+
+/*
+ * 移动端侧栏/编辑区横滑 — 改动后必须在真机验证：
+ * - .mobileTrack 在 ≤767px 必须为 flex 行（不可改回 display:contents）
+ * - 非沉浸时 .main、沉浸时 .sidebar 须 pointer-events:none（见下方选择器）
+ * - .shell.focusMode .sidebar 禁止写 pointer-events:auto
+ * - 侧栏容器勿加 touch-action（会阻断 track 上的 touchmove）
+ */
+@media (max-width: 767px) {
+  .shell.mobileShell {
+    display: block;
+    overflow: hidden;
+    position: relative;
+    overscroll-behavior-x: none;
+  }
+
+  .mobileTrack {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    will-change: transform;
+    touch-action: pan-y pinch-zoom;
+    overscroll-behavior-x: none;
+  }
+
+  .mobileDragging .mobileTrack {
+    touch-action: none;
+  }
+
+  .mobileTrack .sidebar,
+  .mobileTrack .main {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    height: 100%;
+    min-height: 0;
+    grid-column: unset;
+    grid-row: unset;
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .mobileTrack .sidebar {
+    border-right: 1px solid var(--color-border-subtle);
+  }
+
+  .mobileShell:not(.focusMode):not(.mobileDragging) .mobileTrack .main {
+    pointer-events: none;
+  }
+
+  .mobileShell.focusMode:not(.mobileDragging) .mobileTrack .sidebar {
+    pointer-events: none;
+  }
+
+  .shell.mobileShell {
+    grid-template-columns: unset;
+    grid-template-rows: unset;
+  }
+
+  .sidebar {
+    grid-column: unset;
+    grid-row: unset;
+    border-right: none;
+  }
+
+  .sidebarInner {
+    width: 100%;
+    padding-top: calc(var(--spacing-lg) + var(--safe-area-top));
+    padding-right: calc(var(--sidebar-inset) + var(--safe-area-right));
+    padding-bottom: calc(var(--spacing-md) + var(--safe-area-bottom));
+    padding-left: calc(var(--sidebar-inset) + var(--safe-area-left));
+  }
+
+  .toolbar {
+    display: none;
+  }
+
+  .shell.focusMode .sidebar {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* 仅编辑区纵向滚动；勿给 .sidebarInner 加 touch-action，否则会吞掉侧栏横滑 */
+  .mobileShell .editorScroll {
+    touch-action: pan-y;
+  }
+
+  .focusEnter {
+    display: none;
+  }
+
+  .sidebarFocusEnter {
+    display: flex;
+  }
+
+  .focusExit {
+    display: none;
+  }
+
+  .writingArea {
+    padding: var(--spacing-lg) var(--spacing-md);
+    padding-top: calc(var(--spacing-xl) + var(--safe-area-top));
+    padding-bottom: calc(var(--spacing-lg) + var(--safe-area-bottom));
+  }
+
+  .shell.focusMode .writingArea {
+    padding-top: calc(var(--spacing-xl) + var(--safe-area-top));
+  }
+
+  .editorFooter {
+    padding-right: calc(var(--spacing-md) + var(--safe-area-right));
+    padding-bottom: calc(var(--spacing-sm) + var(--safe-area-bottom));
+    padding-left: calc(var(--spacing-md) + var(--safe-area-left));
+  }
+
+  .error {
+    bottom: calc(var(--spacing-lg) + var(--safe-area-bottom));
+    max-width: calc(100% - var(--spacing-lg) * 2);
   }
 }

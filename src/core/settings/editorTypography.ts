@@ -37,42 +37,51 @@ export const EDITOR_FONT_FAMILY_PRESETS: EditorFontFamilyPreset[] = [
   {
     id: 'sans',
     label: '现代无衬线',
-    stack: "'Segoe UI', 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+    // Web Font 优先（iOS 等移动端系统字体名常无法切换中文）；离线时回退系统字体
+    stack:
+      "'Noto Sans SC', 'Segoe UI', system-ui, -apple-system, 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif",
   },
   {
     id: 'rounded',
     label: '圆润幼圆',
-    stack: "'YouYuan', 'Yuanti SC', 'STYuanti', 'Hiragino Maru Gothic ProN', 'Arial Rounded MT Bold', sans-serif",
+    // iOS/macOS 优先系统圆体 Yuanti SC；无系统圆体时用 Nunito + Noto Sans SC 作柔和回退
+    stack:
+      "'Yuanti SC', 'STYuanti', 'YouYuan', 'Hiragino Maru Gothic ProN', 'Nunito', 'Noto Sans SC', sans-serif",
   },
   {
     id: 'serif',
     label: '经典衬线',
-    stack: "'Georgia', 'Times New Roman', 'Noto Serif SC', 'SimSun', serif",
+    stack:
+      "'Georgia', 'Times New Roman', 'Noto Serif SC', 'Songti SC', 'SimSun', 'STSong', serif",
   },
   {
     id: 'literary',
     label: '书卷气质',
-    stack: "'Palatino Linotype', 'Book Antiqua', 'Georgia', 'FangSong', serif",
+    stack:
+      "'Palatino Linotype', 'Palatino', 'Book Antiqua', 'Georgia', 'Noto Serif SC', 'FangSong', 'STFangsong', 'Songti SC', serif",
   },
   {
     id: 'mono',
     label: '等宽代码',
-    stack: "'JetBrains Mono', 'Cascadia Code', 'Consolas', 'Microsoft YaHei Mono', monospace",
+    stack:
+      "'JetBrains Mono', 'Cascadia Code', 'SF Mono', 'Menlo', 'Consolas', 'Noto Sans SC', monospace",
   },
   {
     id: 'kai',
     label: '楷体意韵',
-    stack: "'KaiTi', 'STKaiti', 'AR PL UKai CN', '楷体', serif",
+    stack:
+      "'LXGW WenKai TC', 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', serif",
   },
   {
     id: 'song',
     label: '宋体典雅',
-    stack: "'SimSun', 'Songti SC', 'Noto Serif SC', 'STSong', serif",
+    stack: "'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif",
   },
   {
     id: 'gothic',
     label: '几何简约',
-    stack: "'Century Gothic', 'Futura', 'Avenir Next', 'PingFang SC', sans-serif",
+    stack:
+      "'Futura', 'Avenir Next', 'Avenir', 'Century Gothic', 'Noto Sans SC', 'Helvetica Neue', sans-serif",
   },
 ];
 

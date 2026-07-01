@@ -14,5 +14,10 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, 'src'),
       },
     },
+    server: {
+      // 允许手机等同网段设备通过电脑局域网 IP 访问（如 http://192.168.x.x:5173）
+      host: true,
+      port: 5173,
+    },
   };
 });

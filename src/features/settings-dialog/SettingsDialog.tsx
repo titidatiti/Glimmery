@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useMediaQuery } from '@/app/hooks/useMediaQuery';
 import { useSettingsStore } from '@/core/settings';
 import { IconButton } from '@/ui';
 import { AboutSection } from './AboutSection';
@@ -49,6 +50,8 @@ export function SettingsDialog() {
   const closeSettings = useSettingsStore((s) => s.closeSettings);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<SettingsTabId>('theme');
+  const [previewExpanded, setPreviewExpanded] = useState(true);
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   const showPreview = tabHasPreview(activeTab);
 
@@ -62,8 +65,15 @@ export function SettingsDialog() {
   }, [settingsOpen, closeSettings]);
 
   useEffect(() => {
-    if (settingsOpen) setActiveTab('theme');
+    if (settingsOpen) {
+      setActiveTab('theme');
+      setPreviewExpanded(true);
+    }
   }, [settingsOpen]);
+
+  useEffect(() => {
+    setPreviewExpanded(true);
+  }, [activeTab]);
 
   if (!settingsOpen) return null;
 
@@ -86,7 +96,11 @@ export function SettingsDialog() {
           </IconButton>
         </header>
 
-        <div className={`${styles.layout} ${showPreview ? styles.layoutWithPreview : ''}`}>
+        <div
+          className={`${styles.layout} ${showPreview ? styles.layoutWithPreview : ''} ${
+            showPreview && isMobile && !previewExpanded ? styles.layoutPreviewCollapsed : ''
+          }`}
+        >
           <nav className={styles.tabNav} aria-label="设置分类">
             {SETTINGS_TABS.map((tab) => (
               <button
@@ -106,7 +120,11 @@ export function SettingsDialog() {
           </div>
 
           {showPreview && (
-            <SettingsPreviewPane>
+            <SettingsPreviewPane
+              collapsible={isMobile}
+              expanded={previewExpanded}
+              onExpandedChange={setPreviewExpanded}
+            >
               <SettingsTabPreview tab={activeTab} />
             </SettingsPreviewPane>
           )}

@@ -130,6 +130,26 @@
   box-shadow: var(--shadow-sm);
 }
 
+.slider:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.slider:disabled::-webkit-slider-thumb {
+  cursor: not-allowed;
+  transform: none;
+}
+
+.slider:disabled::-moz-range-thumb {
+  cursor: not-allowed;
+}
+
+.fieldsetDisabled .legend,
+.fieldsetDisabled .sliderMark,
+.fieldsetDisabled .sliderValue {
+  color: var(--color-text-muted);
+}
+
 .sliderValue {
   margin: var(--spacing-xs) 0 0;
   font-size: var(--font-size-sm);

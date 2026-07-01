@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useIsMobileLayout } from '@/app/hooks/useMobilePanelSwipe';
 import { useDocumentStore } from '@/core/documents';
 import { useSettingsStore } from '@/core/settings';
 import { useServices } from '@/app/providers';
@@ -17,7 +18,9 @@ export function DocumentList() {
   const selectDocument = useDocumentStore((s) => s.selectDocument);
   const renameDocument = useDocumentStore((s) => s.renameDocument);
   const deleteDocument = useDocumentStore((s) => s.deleteDocument);
+  const enterFocusMode = useSettingsStore((s) => s.enterFocusMode);
   const exitFocusMode = useSettingsStore((s) => s.exitFocusMode);
+  const isMobile = useIsMobileLayout();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -41,8 +44,16 @@ export function DocumentList() {
   };
 
   const handleSelect = (id: string) => {
-    exitFocusMode();
-    void selectDocument(storage, id);
+    void (async () => {
+      if (activeDocumentId !== id) {
+        await selectDocument(storage, id);
+      }
+      if (isMobile) {
+        enterFocusMode();
+        return;
+      }
+      exitFocusMode();
+    })();
   };
 
   return (

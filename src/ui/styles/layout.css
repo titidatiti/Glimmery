@@ -7,6 +7,15 @@
   /* 8pt 基准网格 */
   --layout-grid-unit: 8px;
 
+  /* 移动端断点（与 Settings / AppShell 一致） */
+  --layout-mobile-max: 767px;
+
+  /* iOS 安全区（standalone / 刘海屏） */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+
   /* 面板内边距（Settings、对话框内容区等） */
   --layout-panel-padding-inline: var(--spacing-lg);
   --layout-panel-padding-block: var(--spacing-md);

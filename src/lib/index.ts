@@ -1,6 +1,10 @@
 export function generateId(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    try {
+      return crypto.randomUUID();
+    } catch {
+      // 非 HTTPS / 部分 WebView 下 randomUUID 可能不可用
+    }
   }
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }

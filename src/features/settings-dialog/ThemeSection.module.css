@@ -31,6 +31,41 @@
   align-content: start;
 }
 
+@media (max-width: 767px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-sm);
+  }
+
+  .cardSelect,
+  .createCard {
+    padding: var(--spacing-sm) var(--spacing-xs) var(--spacing-xs);
+    gap: 4px;
+  }
+
+  .swatch {
+    height: 28px;
+  }
+
+  .themeName {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .editBtn {
+    margin-inline: var(--spacing-xs);
+    margin-bottom: var(--spacing-xs);
+    padding: 4px var(--spacing-xs);
+    font-size: 10px;
+  }
+
+  .plusIcon {
+    width: 20px;
+    height: 20px;
+    font-size: 18px;
+  }
+}
+
 @media (min-width: 900px) {
   .grid {
     grid-template-columns: repeat(3, 1fr);

@@ -13,7 +13,16 @@ html,
 body,
 #root {
   height: 100%;
+  height: 100dvh;
   margin: 0;
+}
+
+@media (max-width: 767px) {
+  html,
+  body,
+  #root {
+    overscroll-behavior-x: none;
+  }
 }
 
 body {
