@@ -1,0 +1,94 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--spacing-md);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.docButton {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition: background var(--transition-fast);
+  min-width: 0;
+}
+
+.docButton:hover {
+  background: var(--color-bg-elevated);
+}
+
+.docButton.active {
+  background: var(--color-bg-elevated);
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.docTitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.docDate {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.renameInput {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.deleteBtn {
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.item:hover .deleteBtn {
+  opacity: 1;
+}
+
+.footer {
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border-subtle);
+}

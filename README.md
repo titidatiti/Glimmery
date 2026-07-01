@@ -18,7 +18,18 @@ React 18 + TypeScript + Vite · Milkdown · Zustand · CSS 变量主题 · Index
 
 ## 项目状态
 
-早期开发中，采用「本地优先 + 面向接口 + 分层解耦」架构，从最小 demo 渐进迭代。详见文档。
+阶段一 MVP 已实现：脚手架、主题系统、沉浸式外壳、Milkdown 编辑器、IndexedDB 本地存储与文稿管理。
+
+## 快速开始
+
+```bash
+npm install
+npm run dev          # 本地开发（base=/）
+npm run build        # 自建部署构建
+npm run build:pages  # GitHub Pages 构建（base=/Glimmery/）
+npm run lint
+npm run test
+```
 
 ## 文档
 

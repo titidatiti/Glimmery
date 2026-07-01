@@ -1,0 +1,50 @@
+.panel {
+  padding: var(--spacing-md) 0;
+}
+
+.heading {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--spacing-md);
+}
+
+.section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.subheading {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-sm);
+}
+
+.hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.shortcuts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.shortcuts li {
+  margin-bottom: var(--spacing-xs);
+}
+
+.shortcuts kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}

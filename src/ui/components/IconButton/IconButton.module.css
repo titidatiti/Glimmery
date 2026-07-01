@@ -1,0 +1,19 @@
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.iconButton:hover {
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+}
+
+.iconButton:active {
+  transform: scale(0.96);
+}
