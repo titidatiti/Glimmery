@@ -10,11 +10,14 @@
   /* 移动端断点（与 Settings / AppShell 一致） */
   --layout-mobile-max: 767px;
 
-  /* iOS 安全区（standalone / 刘海屏） */
+  /* iOS 刘海 / Home Indicator（须配合 index.html viewport-fit=cover） */
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-left: env(safe-area-inset-left, 0px);
+
+  /* 手机横屏矮视口：与 MOBILE_LAYOUT_QUERY 第二分支一致 */
+  --layout-phone-landscape-max-height: 500px;
 
   /* 面板内边距（Settings、对话框内容区等） */
   --layout-panel-padding-inline: var(--spacing-lg);

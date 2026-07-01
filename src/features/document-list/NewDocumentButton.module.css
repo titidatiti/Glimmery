@@ -48,3 +48,11 @@
 .label {
   line-height: 1.2;
 }
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .button {
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-sm);
+  }
+}

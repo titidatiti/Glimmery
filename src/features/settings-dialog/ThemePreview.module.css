@@ -292,3 +292,15 @@
     font-size: 12px;
   }
 }
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .preview,
+  .previewLarge {
+    min-height: 0;
+  }
+
+  .previewLarge .layout,
+  .layout {
+    min-height: 0;
+  }
+}

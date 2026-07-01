@@ -21,8 +21,11 @@
   border: none;
   border-radius: 0;
   box-shadow: var(--shadow-md);
-  padding-top: var(--safe-area-top);
-  padding-bottom: var(--safe-area-bottom);
+  padding:
+    var(--safe-area-top)
+    var(--safe-area-right)
+    var(--safe-area-bottom)
+    var(--safe-area-left);
 }
 
 .header {
@@ -30,8 +33,7 @@
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  padding: var(--spacing-md) calc(var(--spacing-md) + var(--safe-area-right))
-    var(--spacing-md) calc(var(--spacing-md) + var(--safe-area-left));
+  padding: var(--spacing-md);
   border-bottom: 1px solid var(--color-border-subtle);
 }
 
@@ -93,8 +95,7 @@
   width: 100%;
   min-width: 0;
   max-width: none;
-  padding: var(--spacing-xs) calc(var(--spacing-sm) + var(--safe-area-right))
-    var(--spacing-xs) calc(var(--spacing-sm) + var(--safe-area-left));
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-right: none;
   border-bottom: 1px solid var(--color-border-subtle);
   background: var(--color-bg-elevated);
@@ -141,10 +142,14 @@
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
+  min-width: 0;
   padding-block: var(--spacing-sm);
-  padding-inline: calc(var(--spacing-md) + var(--layout-scroll-gutter-inline) + var(--safe-area-left))
-    calc(var(--spacing-md) + var(--layout-scroll-gutter-inline) + var(--safe-area-right));
+  padding-inline: calc(var(--spacing-md) + var(--layout-scroll-gutter-inline));
   scrollbar-gutter: stable;
+}
+
+.previewSlot {
+  display: contents;
 }
 
 .trigger {
@@ -190,7 +195,13 @@
   transform: rotate(45deg);
 }
 
-@media (min-width: 768px) {
+@media (orientation: landscape) and (max-height: 500px) {
+  .trigger {
+    margin-top: 0;
+  }
+}
+
+@media (min-width: 768px) and (min-height: 501px) {
   .backdrop {
     align-items: center;
     padding: var(--spacing-lg);
@@ -296,5 +307,115 @@
 
   .layoutWithPreview {
     grid-template-columns: var(--settings-tab-nav-width) minmax(0, 1fr) minmax(320px, 440px);
+  }
+}
+
+/*
+ * 手机端全屏：竖屏窄宽，或横屏矮视口（宽往往 >767px）
+ */
+@media (max-width: 767px), (orientation: landscape) and (max-height: 500px) {
+  .backdrop {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .dialog {
+    width: 100%;
+    height: 100%;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding:
+      var(--safe-area-top)
+      var(--safe-area-right)
+      var(--safe-area-bottom)
+      var(--safe-area-left);
+  }
+}
+
+/*
+ * 手机横屏：Tab 顶部横向；下方「设置内容 | 窄预览」并排
+ */
+@media (orientation: landscape) and (max-height: 500px) {
+  .header {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .title {
+    font-size: var(--font-size-base);
+  }
+
+  .closeButton {
+    width: 36px;
+    height: 36px;
+    font-size: 1.5rem;
+  }
+
+  .layout,
+  .layoutPreviewCollapsed {
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .layoutWithPreview {
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .tabNav {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--spacing-xs);
+    width: 100%;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-subtle);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .tab {
+    width: auto;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    line-height: 1.25;
+    text-align: center;
+    white-space: nowrap;
+    border-radius: var(--radius-full);
+  }
+
+  .tabActive {
+    box-shadow: inset 0 0 0 1px var(--color-border-subtle);
+  }
+
+  .panel {
+    grid-column: 1;
+    grid-row: 2;
+    padding-block: var(--spacing-xs);
+    padding-inline: calc(var(--spacing-sm) + var(--layout-scroll-gutter-inline))
+      calc(var(--spacing-sm) + var(--layout-scroll-gutter-inline));
+  }
+
+  .previewSlot {
+    display: flex;
+    flex-direction: column;
+    grid-column: 2;
+    grid-row: 2;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    border-left: 1px solid var(--color-border-subtle);
+    background: var(--color-bg-elevated);
+  }
+
+  .previewSlot > * {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
   }
 }

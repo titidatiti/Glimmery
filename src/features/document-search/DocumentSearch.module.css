@@ -39,3 +39,19 @@
 .input::-webkit-search-cancel-button {
   display: none;
 }
+
+@media (max-width: 767px), (orientation: landscape) and (max-height: 500px) {
+  .searchBar {
+    padding-bottom: var(--spacing-sm);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .searchBar {
+    padding-bottom: var(--spacing-xs);
+  }
+
+  .input {
+    font-size: var(--font-size-sm);
+  }
+}

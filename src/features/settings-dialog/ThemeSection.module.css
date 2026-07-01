@@ -66,6 +66,13 @@
   }
 }
 
+@media (orientation: landscape) and (max-height: 500px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--spacing-xs);
+  }
+}
+
 @media (min-width: 900px) {
   .grid {
     grid-template-columns: repeat(3, 1fr);

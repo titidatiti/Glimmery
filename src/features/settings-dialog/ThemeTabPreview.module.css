@@ -24,3 +24,21 @@
 .actionSpacer {
   flex: 1;
 }
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .wrapper {
+    gap: var(--spacing-xs);
+  }
+
+  .editorActions {
+    flex-direction: column;
+    align-items: stretch;
+    padding-top: var(--spacing-xs);
+    gap: var(--spacing-xs);
+  }
+
+  .actionGroup {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

@@ -1,10 +1,14 @@
+import { useIsPhoneLandscapeLayout } from '@/ui';
+
 import styles from './SidebarBrand.module.css';
 
 const BRAND_ICON_SRC = '/icon.png';
 
 export function SidebarBrand() {
+  const isPhoneLandscape = useIsPhoneLandscapeLayout();
+
   return (
-    <header className={styles.brand}>
+    <header className={`${styles.brand} ${isPhoneLandscape ? styles.brandPhoneLandscape : ''}`}>
       <div className={styles.brandMark}>
         <div className={styles.brandIconWrap}>
           <img className={styles.brandIcon} src={BRAND_ICON_SRC} alt="" decoding="async" />

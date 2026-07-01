@@ -58,3 +58,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* 仅手机横屏（由 JS 挂 class，避免 orientation 媒体查询误伤竖屏） */
+.brandPhoneLandscape .titles {
+  min-height: 0;
+}
+
+.brandPhoneLandscape .tagline {
+  line-height: 1;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  overflow-wrap: break-word;
+}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSettingsStore } from '@/core/settings';
-import { IconButton, useIsMobileLayout } from '@/ui';
+import { IconButton, useIsMobilePortraitLayout } from '@/ui';
 import { AboutSection } from './AboutSection';
 import { PlaceholderSection } from './PlaceholderSection';
 import { SettingsPreviewPane } from './SettingsPreviewPane';
@@ -50,7 +50,7 @@ export function SettingsDialog() {
   const dialogRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<SettingsTabId>('theme');
   const [previewExpanded, setPreviewExpanded] = useState(true);
-  const isMobile = useIsMobileLayout();
+  const isMobilePortrait = useIsMobilePortraitLayout();
 
   const showPreview = tabHasPreview(activeTab);
 
@@ -97,7 +97,7 @@ export function SettingsDialog() {
 
         <div
           className={`${styles.layout} ${showPreview ? styles.layoutWithPreview : ''} ${
-            showPreview && isMobile && !previewExpanded ? styles.layoutPreviewCollapsed : ''
+            showPreview && isMobilePortrait && !previewExpanded ? styles.layoutPreviewCollapsed : ''
           }`}
         >
           <nav className={styles.tabNav} aria-label="设置分类">
@@ -119,13 +119,15 @@ export function SettingsDialog() {
           </div>
 
           {showPreview && (
-            <SettingsPreviewPane
-              collapsible={isMobile}
-              expanded={previewExpanded}
-              onExpandedChange={setPreviewExpanded}
-            >
-              <SettingsTabPreview tab={activeTab} />
-            </SettingsPreviewPane>
+            <div className={styles.previewSlot}>
+              <SettingsPreviewPane
+                collapsible={isMobilePortrait}
+                expanded={previewExpanded}
+                onExpandedChange={setPreviewExpanded}
+              >
+                <SettingsTabPreview tab={activeTab} />
+              </SettingsPreviewPane>
+            </div>
           )}
         </div>
       </div>

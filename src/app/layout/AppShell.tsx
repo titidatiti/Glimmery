@@ -102,21 +102,27 @@ export function AppShell() {
   const sidebarPanel = (
     <aside className={`${styles.sidebar} ${styles.sidebarScroll}`}>
       <div className={styles.sidebarInner}>
-        <SidebarBrand />
-        <DocumentSearch />
-        <NewDocumentButton />
-        <DocumentList />
-        <button
-          type="button"
-          className={styles.sidebarFocusEnter}
-          onClick={enterFocusMode}
-          aria-label="进入沉浸模式"
-          title="进入沉浸模式"
-        >
-          <FocusIcon className={styles.sidebarFocusEnterIcon} />
-          <span className={styles.sidebarFocusEnterLabel}>沉浸模式</span>
-        </button>
-        <SettingsTrigger />
+        <div className={styles.sidebarControls}>
+          <SidebarBrand />
+          <DocumentSearch />
+          <NewDocumentButton />
+        </div>
+        <div className={styles.sidebarDocuments}>
+          <DocumentList />
+        </div>
+        <div className={styles.sidebarControlsFooter}>
+          <button
+            type="button"
+            className={styles.sidebarFocusEnter}
+            onClick={enterFocusMode}
+            aria-label="进入沉浸模式"
+            title="进入沉浸模式"
+          >
+            <FocusIcon className={styles.sidebarFocusEnterIcon} />
+            <span className={styles.sidebarFocusEnterLabel}>沉浸模式</span>
+          </button>
+          <SettingsTrigger />
+        </div>
       </div>
     </aside>
   );

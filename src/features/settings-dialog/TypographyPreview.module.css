@@ -29,3 +29,10 @@
     padding: var(--spacing-md);
   }
 }
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .preview {
+    padding: var(--spacing-sm);
+    min-height: 0;
+  }
+}

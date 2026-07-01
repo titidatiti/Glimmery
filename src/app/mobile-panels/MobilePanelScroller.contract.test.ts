@@ -16,8 +16,12 @@ function ruleBody(source: string, selector: string): string | null {
 }
 
 function mobileBlock(source: string): string {
-  const match = /@media\s*\(\s*max-width:\s*767px\s*\)\s*\{([\s\S]*)\}\s*$/.exec(source);
-  return match ? match[1] : '';
+  const combined = /@media\s*\(\s*max-width:\s*767px\s*\)\s*,\s*\(\s*orientation:\s*landscape\s*\)\s*and\s*\(\s*max-height:\s*500px\s*\)\s*\{([\s\S]*)\}\s*$/.exec(
+    source,
+  );
+  if (combined) return combined[1];
+  const fallback = /@media\s*\(\s*max-width:\s*767px\s*\)\s*\{([\s\S]*)\}\s*$/.exec(source);
+  return fallback ? fallback[1] : '';
 }
 
 describe('移动端横滑滚动容器契约', () => {
@@ -41,5 +45,16 @@ describe('移动端横滑滚动容器契约', () => {
     const body = ruleBody(mobile, '.mobileShell .editorScroll');
     expect(body, '缺少 .mobileShell .editorScroll 规则').not.toBeNull();
     expect(body!).not.toMatch(/touch-action:\s*pan-y/);
+  });
+
+  it('手持横屏侧栏 inner 必须是两列 grid', () => {
+    const landscapeBlock = /@media\s*\(\s*orientation:\s*landscape\s*\)\s*and\s*\(\s*max-height:\s*500px\s*\)\s*\{([\s\S]*?)\n\}/.exec(
+      appShellCss,
+    );
+    expect(landscapeBlock, '缺少横屏 media 块').not.toBeNull();
+    const body = ruleBody(landscapeBlock![1], '.mobileShell .sidebarInner');
+    expect(body, '缺少 .mobileShell .sidebarInner 横屏规则').not.toBeNull();
+    expect(body!).toContain('display: grid');
+    expect(body!).toContain('grid-template-columns');
   });
 });

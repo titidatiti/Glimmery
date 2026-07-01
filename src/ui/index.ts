@@ -3,5 +3,13 @@ export type { ButtonProps } from './components/Button';
 export { IconButton } from './components/IconButton';
 export type { IconButtonProps } from './components/IconButton';
 export { GearIcon, FocusIcon } from './icons';
-export { useMediaQuery, useIsMobileLayout, MOBILE_LAYOUT_QUERY } from './hooks/useMediaQuery';
+export {
+  useMediaQuery,
+  useIsMobileLayout,
+  useIsMobilePortraitLayout,
+  useIsPhoneLandscapeLayout,
+  MOBILE_LAYOUT_QUERY,
+  MOBILE_PORTRAIT_QUERY,
+  PHONE_LANDSCAPE_QUERY,
+} from './hooks/useMediaQuery';
 

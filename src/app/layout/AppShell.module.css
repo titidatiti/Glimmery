@@ -49,6 +49,29 @@
   text-align: left;
 }
 
+.sidebarControls {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.sidebarControlsFooter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.sidebarDocuments {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .toolbar {
   grid-column: 2;
   grid-row: 1;
@@ -302,19 +325,21 @@
 }
 
 /*
- * 移动端「侧栏 ↔ 编辑区」的横滑导航本身由独立模块
- * `src/app/mobile-panels/MobilePanelScroller` 负责（原生 scroll-snap 容器），
- * 与此文件完全解耦——这里只保留 AppShell 自身在移动端的视觉/间距调整，
- * 不再包含任何手势/pointer-events/touch-action 相关规则。
+ * 手持端（竖屏窄宽 / 横屏矮视口）：shell 统一避让刘海，子区域不再重复叠加 safe-area
  */
-@media (max-width: 767px) {
+@media (max-width: 767px), (orientation: landscape) and (max-height: 500px) {
   .shell.mobileShell {
     display: block;
     overflow: hidden;
     position: relative;
-  }
-
-  .shell.mobileShell {
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 100dvh;
+    padding:
+      var(--safe-area-top)
+      var(--safe-area-right)
+      var(--safe-area-bottom)
+      var(--safe-area-left);
     grid-template-columns: unset;
     grid-template-rows: unset;
   }
@@ -323,7 +348,10 @@
     grid-column: unset;
     grid-row: unset;
     border-right: none;
+    display: flex;
+    flex-direction: column;
     height: 100%;
+    min-height: 0;
   }
 
   .main {
@@ -331,11 +359,16 @@
   }
 
   .sidebarInner {
+    flex: 1;
     width: 100%;
-    padding-top: calc(var(--spacing-lg) + var(--safe-area-top));
-    padding-right: calc(var(--sidebar-inset) + var(--safe-area-right));
-    padding-bottom: calc(var(--spacing-md) + var(--safe-area-bottom));
-    padding-left: calc(var(--sidebar-inset) + var(--safe-area-left));
+    height: 100%;
+    min-height: 0;
+    padding: var(--spacing-lg) var(--sidebar-inset) var(--spacing-md);
+  }
+
+  .sidebarControlsFooter {
+    flex-shrink: 0;
+    margin-top: var(--spacing-md);
   }
 
   .toolbar {
@@ -367,23 +400,78 @@
   }
 
   .writingArea {
-    padding: var(--spacing-lg) var(--spacing-md);
-    padding-top: calc(var(--spacing-xl) + var(--safe-area-top));
-    padding-bottom: calc(var(--spacing-lg) + var(--safe-area-bottom));
+    padding: var(--spacing-xl) var(--spacing-md) var(--spacing-lg);
   }
 
   .shell.focusMode .writingArea {
-    padding-top: calc(var(--spacing-xl) + var(--safe-area-top));
+    padding-top: var(--spacing-xl);
   }
 
   .editorFooter {
-    padding-right: calc(var(--spacing-md) + var(--safe-area-right));
-    padding-bottom: calc(var(--spacing-sm) + var(--safe-area-bottom));
-    padding-left: calc(var(--spacing-md) + var(--safe-area-left));
+    padding: 0 var(--spacing-md) var(--spacing-sm);
   }
 
   .error {
-    bottom: calc(var(--spacing-lg) + var(--safe-area-bottom));
+    bottom: var(--spacing-lg);
     max-width: calc(100% - var(--spacing-lg) * 2);
+  }
+
+  .loading {
+    padding:
+      var(--safe-area-top)
+      var(--safe-area-right)
+      var(--safe-area-bottom)
+      var(--safe-area-left);
+  }
+}
+
+/*
+ * 手持横屏：侧栏两列——左列控件，右列文稿列表（占满高度可滚动）
+ */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mobileShell .sidebarInner {
+    display: grid;
+    grid-template-columns: clamp(148px, 34vw, 220px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: var(--spacing-md);
+    align-items: stretch;
+    height: 100%;
+    padding: var(--spacing-md);
+  }
+
+  .mobileShell .sidebarControls {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+    justify-self: stretch;
+    min-height: 0;
+    max-height: calc(100% - 5.5rem);
+    overflow-y: auto;
+    padding-right: var(--spacing-sm);
+    border-right: 1px solid var(--color-border-subtle);
+  }
+
+  .mobileShell .sidebarControlsFooter {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    justify-self: stretch;
+    margin-top: 0;
+    padding-top: var(--spacing-sm);
+    padding-right: var(--spacing-sm);
+    border-right: 1px solid var(--color-border-subtle);
+    background: var(--color-sidebar-bg);
+  }
+
+  .mobileShell .sidebarFocusEnter {
+    margin-top: 0;
+  }
+
+  .mobileShell .sidebarDocuments {
+    grid-column: 2;
+    grid-row: 1;
+    flex: unset;
+    height: 100%;
+    min-height: 0;
   }
 }
