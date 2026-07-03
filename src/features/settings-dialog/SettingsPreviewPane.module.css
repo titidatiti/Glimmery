@@ -28,12 +28,12 @@
   display: none;
 }
 
-/* SETTINGS_COMPACT_PORTRAIT_QUERY：设置界面紧凑竖屏（含 iPad 竖屏） */
+/* SETTINGS_COMPACT_PORTRAIT_QUERY（仅 portrait，横屏不命中） */
 @media (orientation: portrait) and (max-width: 1024px) {
   .pane {
     border-left: none;
     border-top: 1px solid var(--color-border-subtle);
-    max-height: min(38vh, 320px);
+    max-height: min(38vh, var(--settings-preview-pane-max-height-phone));
     padding: 0;
     overflow: hidden;
     transition: max-height var(--transition-normal);
@@ -93,6 +93,18 @@
 
   .paneCollapsed .content {
     display: none;
+  }
+}
+
+/* iPad 竖屏：预览区加高，完整显示主题/排版预览（含编辑操作栏） */
+@media (min-width: 768px) and (orientation: portrait) and (max-width: 1024px) {
+  .pane {
+    max-height: min(48vh, var(--settings-preview-pane-max-height-tablet-portrait));
+  }
+
+  .content {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

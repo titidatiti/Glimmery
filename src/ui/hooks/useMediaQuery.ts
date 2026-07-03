@@ -13,12 +13,23 @@ export const LAYOUT_PHONE_LANDSCAPE_MAX_HEIGHT = 500;
 export const MOBILE_PORTRAIT_QUERY =
   `(max-width: ${LAYOUT_MOBILE_MAX}px) and (orientation: portrait)`;
 
+/** iPad 竖屏（768–1024px 宽），不含手机 */
+export const SETTINGS_TABLET_PORTRAIT_QUERY =
+  `(orientation: portrait) and (min-width: ${LAYOUT_MOBILE_MAX + 1}px) and (max-width: ${LAYOUT_TABLET_PORTRAIT_MAX}px)`;
+
 /**
- * 设置界面紧凑竖屏：手机竖屏 + iPad 竖屏（如 iPad Air 820px 宽）。
- * 不影响 AppShell / 编辑区等主界面布局。
+ * 设置界面紧凑竖屏：手机竖屏 + iPad 竖屏。
+ * 不含任何横屏（iPad 横屏仍走桌面弹窗布局）。
  */
 export const SETTINGS_COMPACT_PORTRAIT_QUERY =
   `(orientation: portrait) and (max-width: ${LAYOUT_TABLET_PORTRAIT_MAX}px)`;
+
+/**
+ * 设置界面桌面/平板弹窗：横屏平板（含 iPad 横屏）或宽屏竖屏。
+ * 与 SettingsDialog.module.css 中桌面 @media 对齐。
+ */
+export const SETTINGS_DESKTOP_QUERY =
+  `(min-width: ${LAYOUT_MOBILE_MAX + 1}px) and (min-height: 501px) and (orientation: landscape), (min-width: ${LAYOUT_TABLET_PORTRAIT_MAX + 1}px) and (min-height: 501px)`;
 
 /** 手机横屏（宽常 >767px，须用视口高度识别） */
 export const PHONE_LANDSCAPE_QUERY =

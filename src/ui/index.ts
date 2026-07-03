@@ -13,6 +13,8 @@ export {
   MOBILE_PORTRAIT_QUERY,
   PHONE_LANDSCAPE_QUERY,
   SETTINGS_COMPACT_PORTRAIT_QUERY,
+  SETTINGS_DESKTOP_QUERY,
+  SETTINGS_TABLET_PORTRAIT_QUERY,
 } from './hooks/useMediaQuery';
 export { useComposingInput } from './hooks/useComposingInput';
 

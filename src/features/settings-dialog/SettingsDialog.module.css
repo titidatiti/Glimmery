@@ -202,10 +202,11 @@
 }
 
 /*
- * 平板/桌面设置布局（侧栏 Tab + 预览列）。
- * 排除 iPad 竖屏等紧凑竖屏，避免 820px 宽仍套用桌面两栏。
+ * 设置桌面/平板弹窗：侧栏 Tab + 右侧预览列。
+ * 横屏 iPad 走此分支；竖屏 iPad（768–1024px）由下方紧凑全屏块覆盖。
  */
-@media (min-width: 768px) and (min-height: 501px) and not ((orientation: portrait) and (max-width: 1024px)) {
+@media (min-width: 768px) and (min-height: 501px) and (orientation: landscape),
+  (min-width: 1025px) and (min-height: 501px) {
   .backdrop {
     align-items: center;
     padding: var(--spacing-lg);
@@ -315,9 +316,9 @@
 }
 
 /*
- * 设置界面全屏紧凑排版：手机、横屏矮视口、或 iPad 竖屏（仅 Settings，不影响主界面 shell）
+ * 设置界面紧凑全屏：手机、手机横屏矮视口、或 iPad 竖屏（768–1024px）
  */
-@media (max-width: 767px), (orientation: landscape) and (max-height: 500px), (orientation: portrait) and (max-width: 1024px) {
+@media (max-width: 767px), (orientation: landscape) and (max-height: 500px), (orientation: portrait) and (min-width: 768px) and (max-width: 1024px) {
   .backdrop {
     padding: 0;
     align-items: stretch;

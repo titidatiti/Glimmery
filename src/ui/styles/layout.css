@@ -42,6 +42,10 @@
 
   /* 设置对话框左侧 Tab 栏固定宽度（容纳「字体与排版」等最长标签） */
   --settings-tab-nav-width: 156px;
+
+  /* 设置预览窗 max-height 上限（vh 比例见 SettingsPreviewPane.module.css） */
+  --settings-preview-pane-max-height-phone: 320px;
+  --settings-preview-pane-max-height-tablet-portrait: 520px;
 }
 
 /* 可滚动内容区：水平内边距含安全区，禁止裁切交互元素描边 */

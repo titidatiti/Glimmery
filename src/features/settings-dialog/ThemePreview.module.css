@@ -304,3 +304,13 @@
     min-height: 0;
   }
 }
+
+@media (min-width: 768px) and (orientation: portrait) and (max-width: 1024px) {
+  .previewLarge {
+    min-height: 240px;
+  }
+
+  .previewLarge .layout {
+    min-height: 320px;
+  }
+}
