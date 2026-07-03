@@ -1,14 +1,29 @@
 /** Drive appDataFolder 中的备份文件名 */
 export const DRIVE_BACKUP_FILENAME = 'glimmery-documents.json';
 
-export const DRIVE_BACKUP_VERSION = 1;
+export const DRIVE_BACKUP_VERSION = 2;
 
 export const DRIVE_APPDATA_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 
+/** 读取当前授权 Google 账号的邮箱与显示名（OAuth 同意屏会一并展示） */
+export const GOOGLE_USERINFO_EMAIL_SCOPE = 'https://www.googleapis.com/auth/userinfo.email';
+export const GOOGLE_USERINFO_PROFILE_SCOPE = 'https://www.googleapis.com/auth/userinfo.profile';
+
+export const GOOGLE_DRIVE_OAUTH_SCOPES = [
+  DRIVE_APPDATA_SCOPE,
+  GOOGLE_USERINFO_EMAIL_SCOPE,
+  GOOGLE_USERINFO_PROFILE_SCOPE,
+].join(' ');
+
 export const KV_GOOGLE_DRIVE_TOKEN = 'sync:google-drive:token';
+export const KV_GOOGLE_DRIVE_PROFILE = 'sync:google-drive:profile';
 
 export interface DriveBackupPayload {
   version: number;
   exportedAt: string;
   documents: import('@/core/documents').DocumentData[];
+  /** v2+：用户自定义配色 */
+  customThemes?: import('@/core/themes').SerializedTheme[];
+  /** v2+：当前选用的主题 id */
+  activeThemeId?: string;
 }

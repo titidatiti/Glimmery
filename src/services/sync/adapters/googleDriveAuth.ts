@@ -1,9 +1,26 @@
 import type { StorageKeyValue } from '@/services/storage';
-import { DRIVE_APPDATA_SCOPE, KV_GOOGLE_DRIVE_TOKEN } from '../constants';
+import type { SyncAccountProfile } from '../types';
+import {
+  GOOGLE_DRIVE_OAUTH_SCOPES,
+  KV_GOOGLE_DRIVE_PROFILE,
+  KV_GOOGLE_DRIVE_TOKEN,
+} from '../constants';
 
 interface StoredToken {
   accessToken: string;
   expiresAt: number;
+}
+
+interface StoredProfile {
+  email: string;
+  name?: string;
+  pictureUrl?: string;
+}
+
+interface GoogleUserInfoResponse {
+  email?: string;
+  name?: string;
+  picture?: string;
 }
 
 interface TokenClientConfig {
@@ -36,6 +53,7 @@ declare global {
 }
 
 const GIS_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
+const USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo';
 
 let gisScriptPromise: Promise<void> | null = null;
 
@@ -84,6 +102,69 @@ export class GoogleDriveAuth {
     return (await this.getAccessToken()) !== null;
   }
 
+  async getAccountProfile(): Promise<SyncAccountProfile | null> {
+    const token = await this.getAccessToken();
+    if (!token) {
+      await this.kv.removeItem(KV_GOOGLE_DRIVE_PROFILE);
+      return null;
+    }
+
+    const cached = await this.loadStoredProfile();
+    if (cached) return cached;
+
+    try {
+      const profile = await this.fetchUserInfo(token);
+      await this.kv.setItem(KV_GOOGLE_DRIVE_PROFILE, JSON.stringify(profile));
+      return profile;
+    } catch {
+      return null;
+    }
+  }
+
+  private async loadStoredProfile(): Promise<SyncAccountProfile | null> {
+    const raw = await this.kv.getItem(KV_GOOGLE_DRIVE_PROFILE);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw) as StoredProfile;
+      if (!parsed.email) return null;
+      return {
+        email: parsed.email,
+        name: parsed.name,
+        pictureUrl: parsed.pictureUrl,
+      };
+    } catch {
+      await this.kv.removeItem(KV_GOOGLE_DRIVE_PROFILE);
+      return null;
+    }
+  }
+
+  private async fetchUserInfo(accessToken: string): Promise<SyncAccountProfile> {
+    const response = await fetch(USERINFO_URL, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) {
+      throw new Error(`无法读取 Google 账号信息 (${response.status})`);
+    }
+    const data = (await response.json()) as GoogleUserInfoResponse;
+    if (!data.email) {
+      throw new Error('Google 账号信息缺少邮箱');
+    }
+    return {
+      email: data.email,
+      name: data.name?.trim() || undefined,
+      pictureUrl: data.picture || undefined,
+    };
+  }
+
+  private async persistProfile(accessToken: string): Promise<void> {
+    try {
+      const profile = await this.fetchUserInfo(accessToken);
+      await this.kv.setItem(KV_GOOGLE_DRIVE_PROFILE, JSON.stringify(profile));
+    } catch {
+      await this.kv.removeItem(KV_GOOGLE_DRIVE_PROFILE);
+    }
+  }
+
   async requestAccessToken(): Promise<string> {
     await loadGoogleIdentityScript();
     const oauth2 = window.google?.accounts?.oauth2;
@@ -94,7 +175,7 @@ export class GoogleDriveAuth {
     return new Promise((resolve, reject) => {
       const client = oauth2.initTokenClient({
         client_id: this.clientId,
-        scope: DRIVE_APPDATA_SCOPE,
+        scope: GOOGLE_DRIVE_OAUTH_SCOPES,
         callback: (response) => {
           if (response.error || !response.access_token) {
             reject(new Error(response.error_description ?? response.error ?? '授权失败'));
@@ -105,7 +186,8 @@ export class GoogleDriveAuth {
             accessToken: response.access_token,
             expiresAt: Date.now() + expiresIn * 1000,
           };
-          void this.kv.setItem(KV_GOOGLE_DRIVE_TOKEN, JSON.stringify(stored)).then(() => {
+          void this.kv.setItem(KV_GOOGLE_DRIVE_TOKEN, JSON.stringify(stored)).then(async () => {
+            await this.persistProfile(response.access_token!);
             resolve(response.access_token!);
           });
         },
@@ -128,5 +210,6 @@ export class GoogleDriveAuth {
       }
     }
     await this.kv.removeItem(KV_GOOGLE_DRIVE_TOKEN);
+    await this.kv.removeItem(KV_GOOGLE_DRIVE_PROFILE);
   }
 }

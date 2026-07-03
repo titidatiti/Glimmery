@@ -21,9 +21,12 @@ export {
 export type { SyncConflict, ConflictResolution, RestorePlan } from './syncUseCases';
 export {
   loadAllDocuments,
+  buildBackupSnapshot,
   planRestore,
   backupAllDocuments,
   applyRestore,
+  pullRemoteBackup,
   pullRemoteDocuments,
+  formatRestoreSummary,
 } from './syncUseCases';
 export { performCloudBackup } from './cloudBackup';

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useCloudSyncStore } from '@/core/sync';
 import type { ThemeDefinition, ThemeTokens } from './types';
 import {
   BUILTIN_THEMES,
@@ -83,6 +84,42 @@ function buildCustomTheme(
   };
 }
 
+/** 导出供云端备份的自定义配色与当前主题 id */
+export function exportThemeBackupState(): {
+  customThemes: SerializedTheme[];
+  activeThemeId: string;
+} {
+  const state = useThemeStore.getState();
+  return {
+    customThemes: state.themes.filter((t) => !t.isBuiltin).map(serializeTheme),
+    activeThemeId: state.activeThemeId,
+  };
+}
+
+/** 从云端恢复自定义配色并刷新主题 store */
+export function applyThemeBackupState(
+  customThemes: SerializedTheme[],
+  activeThemeId?: string,
+): void {
+  const deserialized = customThemes.map(deserializeTheme);
+  saveCustomThemesToLocal([...BUILTIN_THEMES, ...deserialized]);
+
+  const resolvedId = activeThemeId ?? useThemeStore.getState().activeThemeId;
+  const activeTheme = resolveTheme(resolvedId, deserialized);
+  localStorage.setItem(THEME_STORAGE_KEY, activeTheme.id);
+
+  useThemeStore.setState({
+    themes: [...BUILTIN_THEMES, ...deserialized],
+    activeThemeId: activeTheme.id,
+    activeTheme,
+    previewTokens: null,
+  });
+}
+
+function markThemeCloudPending(): void {
+  useCloudSyncStore.getState().markPending();
+}
+
 export const useThemeStore = create<ThemeStoreState>((set, get) => {
   const customThemes = loadCustomThemesFromLocal();
   const allThemes = [...BUILTIN_THEMES, ...customThemes];
@@ -114,6 +151,7 @@ export const useThemeStore = create<ThemeStoreState>((set, get) => {
       saveCustomThemesToLocal(themes);
       localStorage.setItem(THEME_STORAGE_KEY, theme.id);
       set({ themes, activeThemeId: theme.id, activeTheme: theme, previewTokens: null });
+      markThemeCloudPending();
       return theme;
     },
 
@@ -136,6 +174,7 @@ export const useThemeStore = create<ThemeStoreState>((set, get) => {
         activeTheme: isActive ? updated : get().activeTheme,
         previewTokens: null,
       });
+      markThemeCloudPending();
     },
 
     deleteCustomTheme: (id) => {
@@ -144,6 +183,7 @@ export const useThemeStore = create<ThemeStoreState>((set, get) => {
 
       const themes = get().themes.filter((t) => t.id !== id);
       saveCustomThemesToLocal(themes);
+      markThemeCloudPending();
 
       if (get().activeThemeId === id) {
         const fallback = getBuiltinTheme(DEFAULT_THEME_ID) ?? BUILTIN_THEMES[0];

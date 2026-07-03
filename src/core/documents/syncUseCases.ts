@@ -1,5 +1,6 @@
 import type { StorageProvider } from '@/services/storage';
-import type { SyncProvider } from '@/services/sync';
+import type { BackupSnapshot, SyncProvider } from '@/services/sync';
+import { applyThemeBackupState, exportThemeBackupState } from '@/core/themes/themeStore';
 import type { DocumentData } from './types';
 
 export interface SyncConflict {
@@ -18,6 +19,8 @@ export interface RestorePlan {
   localOnly: DocumentData[];
   /** 内容一致或本地不存在冲突 */
   toApplyFromRemote: DocumentData[];
+  remoteThemes: BackupSnapshot['customThemes'];
+  remoteActiveThemeId: string;
 }
 
 export async function loadAllDocuments(storage: StorageProvider): Promise<DocumentData[]> {
@@ -26,14 +29,20 @@ export async function loadAllDocuments(storage: StorageProvider): Promise<Docume
   return docs.filter((doc): doc is DocumentData => doc !== null);
 }
 
-export function planRestore(local: DocumentData[], remote: DocumentData[]): RestorePlan {
+export async function buildBackupSnapshot(storage: StorageProvider): Promise<BackupSnapshot> {
+  const documents = await loadAllDocuments(storage);
+  const { customThemes, activeThemeId } = exportThemeBackupState();
+  return { documents, customThemes, activeThemeId };
+}
+
+export function planRestore(local: DocumentData[], remote: BackupSnapshot): RestorePlan {
   const localById = new Map(local.map((doc) => [doc.id, doc]));
-  const remoteById = new Map(remote.map((doc) => [doc.id, doc]));
+  const remoteById = new Map(remote.documents.map((doc) => [doc.id, doc]));
   const conflicts: SyncConflict[] = [];
   const remoteOnly: DocumentData[] = [];
   const toApplyFromRemote: DocumentData[] = [];
 
-  for (const remoteDoc of remote) {
+  for (const remoteDoc of remote.documents) {
     const localDoc = localById.get(remoteDoc.id);
     if (!localDoc) {
       remoteOnly.push(remoteDoc);
@@ -55,15 +64,22 @@ export function planRestore(local: DocumentData[], remote: DocumentData[]): Rest
 
   const localOnly = local.filter((doc) => !remoteById.has(doc.id));
 
-  return { conflicts, remoteOnly, localOnly, toApplyFromRemote };
+  return {
+    conflicts,
+    remoteOnly,
+    localOnly,
+    toApplyFromRemote,
+    remoteThemes: remote.customThemes,
+    remoteActiveThemeId: remote.activeThemeId,
+  };
 }
 
 export async function backupAllDocuments(
   storage: StorageProvider,
   sync: SyncProvider,
 ): Promise<{ success: boolean; pushed: number; error?: string }> {
-  const docs = await loadAllDocuments(storage);
-  const result = await sync.push(docs);
+  const snapshot = await buildBackupSnapshot(storage);
+  const result = await sync.push(snapshot);
   return { success: result.success, pushed: result.pushed, error: result.error };
 }
 
@@ -87,9 +103,30 @@ export async function applyRestore(
     }
   }
 
+  applyThemeBackupState(plan.remoteThemes, plan.remoteActiveThemeId);
+
   return applied;
 }
 
-export async function pullRemoteDocuments(sync: SyncProvider): Promise<DocumentData[]> {
+export async function pullRemoteBackup(sync: SyncProvider): Promise<BackupSnapshot> {
   return sync.pull();
+}
+
+/** @deprecated 使用 pullRemoteBackup */
+export async function pullRemoteDocuments(sync: SyncProvider): Promise<DocumentData[]> {
+  const snapshot = await pullRemoteBackup(sync);
+  return snapshot.documents;
+}
+
+export function formatRestoreSummary(appliedDocs: number, themeCount: number): string {
+  if (appliedDocs > 0 && themeCount > 0) {
+    return `已从云端恢复 ${appliedDocs} 篇文稿与 ${themeCount} 个自定义配色`;
+  }
+  if (appliedDocs > 0) {
+    return `已从云端恢复 ${appliedDocs} 篇文稿`;
+  }
+  if (themeCount > 0) {
+    return `已从云端恢复 ${themeCount} 个自定义配色`;
+  }
+  return '云端数据已与本地一致';
 }

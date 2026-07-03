@@ -1,12 +1,11 @@
-import type { DocumentData } from '@/core/documents';
-import { normalizeDocument } from '@/core/documents';
 import type { StorageKeyValue } from '@/services/storage';
 import {
-  DRIVE_BACKUP_FILENAME,
-  DRIVE_BACKUP_VERSION,
-  type DriveBackupPayload,
-} from '../constants';
-import type { SyncProvider, SyncResult } from '../types';
+  createDriveBackupPayload,
+  emptyBackupSnapshot,
+  parseDriveBackupPayload,
+} from '../backupPayload';
+import { DRIVE_BACKUP_FILENAME } from '../constants';
+import type { BackupSnapshot, SyncProvider, SyncResult, SyncAccountProfile } from '../types';
 import { GoogleDriveAuth } from './googleDriveAuth';
 
 const DRIVE_FILES_URL = 'https://www.googleapis.com/drive/v3/files';
@@ -32,6 +31,10 @@ export class GoogleDriveAdapter implements SyncProvider {
     return this.auth.isAuthenticated();
   }
 
+  async getAccountProfile(): Promise<SyncAccountProfile | null> {
+    return this.auth.getAccountProfile();
+  }
+
   async authenticate(): Promise<void> {
     await this.auth.requestAccessToken();
   }
@@ -40,15 +43,10 @@ export class GoogleDriveAdapter implements SyncProvider {
     await this.auth.signOut();
   }
 
-  async push(docs: DocumentData[]): Promise<SyncResult> {
+  async push(snapshot: BackupSnapshot): Promise<SyncResult> {
     try {
       const token = await this.requireToken();
-      const payload: DriveBackupPayload = {
-        version: DRIVE_BACKUP_VERSION,
-        exportedAt: new Date().toISOString(),
-        documents: docs,
-      };
-      const body = JSON.stringify(payload);
+      const body = JSON.stringify(createDriveBackupPayload(snapshot));
       const fileId = await this.findBackupFileId(token);
 
       if (fileId) {
@@ -75,7 +73,7 @@ export class GoogleDriveAdapter implements SyncProvider {
         });
       }
 
-      return { success: true, pushed: docs.length, pulled: 0 };
+      return { success: true, pushed: snapshot.documents.length, pulled: 0 };
     } catch (error) {
       return {
         success: false,
@@ -86,18 +84,14 @@ export class GoogleDriveAdapter implements SyncProvider {
     }
   }
 
-  async pull(): Promise<DocumentData[]> {
+  async pull(): Promise<BackupSnapshot> {
     const token = await this.requireToken();
     const fileId = await this.findBackupFileId(token);
-    if (!fileId) return [];
+    if (!fileId) return emptyBackupSnapshot();
 
     const response = await this.driveFetch(`${DRIVE_FILES_URL}/${fileId}?alt=media`, token);
     const text = await response.text();
-    const payload = JSON.parse(text) as DriveBackupPayload;
-    if (!Array.isArray(payload.documents)) {
-      throw new Error('云端备份格式无效');
-    }
-    return payload.documents.map((doc) => normalizeDocument(doc));
+    return parseDriveBackupPayload(JSON.parse(text) as unknown);
   }
 
   private async requireToken(): Promise<string> {

@@ -41,5 +41,9 @@ export {
   THEME_COLOR_CSS_VARS,
   THEME_SHADOW_CSS_VARS,
 } from './themeTransition';
-export { useThemeStore } from './themeStore';
-export type { ThemeStoreState } from './themeStore';
+export {
+  applyThemeBackupState,
+  exportThemeBackupState,
+  useThemeStore,
+  type ThemeStoreState,
+} from './themeStore';

@@ -1,4 +1,9 @@
-export type { SyncProvider, SyncResult } from './types';
+export type { SyncProvider, SyncResult, SyncAccountProfile, BackupSnapshot } from './types';
+export {
+  createDriveBackupPayload,
+  parseDriveBackupPayload,
+  emptyBackupSnapshot,
+} from './backupPayload';
 export { NoopSyncAdapter } from './adapters/NoopSyncAdapter';
 export { GoogleDriveAdapter } from './adapters/GoogleDriveAdapter';
 export {

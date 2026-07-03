@@ -1,5 +1,5 @@
-import type { DocumentData } from '@/core/documents';
-import type { SyncProvider, SyncResult } from '../types';
+import { DEFAULT_THEME_ID } from '@/core/themes';
+import type { BackupSnapshot, SyncAccountProfile, SyncProvider, SyncResult } from '../types';
 
 export class NoopSyncAdapter implements SyncProvider {
   readonly id = 'noop';
@@ -12,6 +12,10 @@ export class NoopSyncAdapter implements SyncProvider {
     return false;
   }
 
+  async getAccountProfile(): Promise<SyncAccountProfile | null> {
+    return null;
+  }
+
   async authenticate(): Promise<void> {
     // 未配置 VITE_GOOGLE_CLIENT_ID 时使用空实现
   }
@@ -20,12 +24,12 @@ export class NoopSyncAdapter implements SyncProvider {
     /* noop */
   }
 
-  async push(docs: DocumentData[]): Promise<SyncResult> {
-    void docs;
+  async push(snapshot: BackupSnapshot): Promise<SyncResult> {
+    void snapshot;
     return { success: true, pushed: 0, pulled: 0 };
   }
 
-  async pull(): Promise<DocumentData[]> {
-    return [];
+  async pull(): Promise<BackupSnapshot> {
+    return { documents: [], customThemes: [], activeThemeId: DEFAULT_THEME_ID };
   }
 }
