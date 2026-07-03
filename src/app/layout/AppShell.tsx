@@ -10,7 +10,9 @@ import { debounce, formatUpdatedAt } from '@/lib';
 
 import { useServices } from '@/services/context';
 
+import { useAutoCloudBackup } from '@/app/hooks/useAutoCloudBackup';
 import { useFocusGestures } from '@/app/hooks/useFocusGestures';
+import { useCloudSyncStore } from '@/core/sync';
 
 import { MobilePanelScroller } from '@/app/mobile-panels';
 
@@ -25,11 +27,12 @@ import { SettingsDialog, SettingsTrigger } from '@/features/settings-dialog';
 import { FocusIcon, useIsMobileLayout } from '@/ui';
 
 import { SidebarBrand } from './SidebarBrand';
+import { CloudBackupIndicator } from './CloudBackupIndicator';
 
 import styles from './AppShell.module.css';
 
 export function AppShell() {
-  const { storage } = useServices();
+  const { storage, sync } = useServices();
 
   const initialize = useDocumentStore((s) => s.initialize);
 
@@ -56,6 +59,9 @@ export function AppShell() {
   const autoSaveDelayMs = useSettingsStore((s) => s.autoSaveDelayMs);
 
   const isMobile = useIsMobileLayout();
+  const isCloudBackingUp = useCloudSyncStore((s) => s.isCloudBackingUp);
+
+  useAutoCloudBackup(storage, sync);
 
   useFocusGestures({
     enabled: !isMobile,
@@ -148,6 +154,7 @@ export function AppShell() {
           <time className={styles.updatedAt} dateTime={activeDocument.updatedAt}>
             最后修改 {formatUpdatedAt(activeDocument.updatedAt)}
           </time>
+          {isCloudBackingUp && <CloudBackupIndicator />}
         </footer>
       )}
 

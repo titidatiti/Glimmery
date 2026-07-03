@@ -1,11 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   createDocument,
   formatDocumentTitle,
   sortDocumentsByUpdatedAt,
   DEFAULT_DOCUMENT_TITLE,
 } from './types';
-import { updateDocumentContent, updateDocumentTitle } from './useCases';
+import { saveDocument, updateDocumentContent, updateDocumentTitle } from './useCases';
+import type { StorageProvider } from '@/services/storage';
 
 describe('formatDocumentTitle', () => {
   it('去除首尾空白', () => {
@@ -31,6 +32,22 @@ describe('sortDocumentsByUpdatedAt', () => {
       '2026-01-01T00:00:00.000Z',
     ]);
     expect(input[0].updatedAt).toBe('2026-01-01T00:00:00.000Z');
+  });
+});
+
+describe('saveDocument', () => {
+  it('落盘时不改写 updatedAt', async () => {
+    const doc = createDocument('标题', '正文');
+    const storage: StorageProvider = {
+      list: vi.fn(),
+      load: vi.fn(),
+      save: vi.fn(),
+      remove: vi.fn(),
+    };
+
+    await saveDocument(storage, doc);
+
+    expect(storage.save).toHaveBeenCalledWith(doc);
   });
 });
 

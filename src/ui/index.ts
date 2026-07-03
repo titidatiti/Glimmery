@@ -12,4 +12,5 @@ export {
   MOBILE_PORTRAIT_QUERY,
   PHONE_LANDSCAPE_QUERY,
 } from './hooks/useMediaQuery';
+export { useComposingInput } from './hooks/useComposingInput';
 

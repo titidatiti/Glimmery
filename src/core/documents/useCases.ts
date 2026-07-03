@@ -14,14 +14,12 @@ export async function loadDocument(
   return doc ? normalizeDocument(doc) : null;
 }
 
+/** 持久化文稿；updatedAt 由调用方在内容变更时维护，此处不自动刷新 */
 export async function saveDocument(
   storage: StorageProvider,
   doc: DocumentData,
 ): Promise<void> {
-  await storage.save({
-    ...doc,
-    updatedAt: new Date().toISOString(),
-  });
+  await storage.save(doc);
 }
 
 export async function createNewDocument(storage: StorageProvider): Promise<DocumentData> {

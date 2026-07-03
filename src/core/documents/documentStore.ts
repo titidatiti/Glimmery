@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import type { StorageProvider } from '@/services/storage';
+import { scheduleCloudBackupIfPending, useCloudSyncStore } from '@/core/sync';
 import type { DocumentData, DocumentMeta } from './types';
-import { sortDocumentsByUpdatedAt } from './types';
+import { formatDocumentTitle, sortDocumentsByUpdatedAt } from './types';
 import {
   createNewDocument,
   deleteDocument,
@@ -17,6 +18,8 @@ export interface DocumentStoreState {
   documents: DocumentMeta[];
   activeDocumentId: string | null;
   activeDocument: DocumentData | null;
+  /** 当前文稿相对上次落盘有未保存改动 */
+  hasUnsavedChanges: boolean;
   searchQuery: string;
   isLoading: boolean;
   error: string | null;
@@ -35,6 +38,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
   documents: [],
   activeDocumentId: null,
   activeDocument: null,
+  hasUnsavedChanges: false,
   searchQuery: '',
   isLoading: false,
   error: null,
@@ -50,6 +54,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
           documents: docs,
           activeDocumentId: created.id,
           activeDocument: created,
+          hasUnsavedChanges: false,
           isLoading: false,
         });
         return;
@@ -60,6 +65,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
         documents: sorted,
         activeDocumentId: sorted[0].id,
         activeDocument: first,
+        hasUnsavedChanges: false,
         isLoading: false,
       });
     } catch (err) {
@@ -72,12 +78,15 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
 
   selectDocument: async (storage, id) => {
     if (get().activeDocumentId === id) return;
+    await get().persistActiveDocument(storage);
+    scheduleCloudBackupIfPending();
     set({ isLoading: true, error: null });
     try {
       const doc = await loadDocument(storage, id);
       set({
         activeDocumentId: id,
         activeDocument: doc,
+        hasUnsavedChanges: false,
         isLoading: false,
       });
     } catch (err) {
@@ -91,13 +100,17 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
   createDocument: async (storage) => {
     set({ error: null });
     try {
+      await get().persistActiveDocument(storage);
+      scheduleCloudBackupIfPending();
       const doc = await createNewDocument(storage);
       const docs = await listDocuments(storage);
       set({
         documents: sortDocumentsByUpdatedAt(docs),
         activeDocumentId: doc.id,
         activeDocument: doc,
+        hasUnsavedChanges: false,
       });
+      useCloudSyncStore.getState().markPending();
     } catch (err) {
       set({ error: err instanceof Error ? err.message : '创建文稿失败' });
     }
@@ -114,6 +127,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
         activeDocument:
           state.activeDocumentId === id ? updated : state.activeDocument,
       }));
+      useCloudSyncStore.getState().markPending();
     } catch (err) {
       set({ error: err instanceof Error ? err.message : '重命名失败' });
     }
@@ -133,7 +147,9 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
           documents: refreshed,
           activeDocumentId: created.id,
           activeDocument: created,
+          hasUnsavedChanges: false,
         });
+        useCloudSyncStore.getState().markPending();
         return;
       }
 
@@ -145,10 +161,12 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
           documents: sorted,
           activeDocumentId: sorted[0].id,
           activeDocument: next,
+          hasUnsavedChanges: false,
         });
       } else {
         set({ documents: sorted });
       }
+      useCloudSyncStore.getState().markPending();
     } catch (err) {
       set({ error: err instanceof Error ? err.message : '删除文稿失败' });
     }
@@ -156,26 +174,36 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
 
   updateContent: (content) => {
     const { activeDocument } = get();
-    if (!activeDocument) return;
-    set({ activeDocument: updateDocumentContent(activeDocument, content) });
+    if (!activeDocument || activeDocument.content === content) return;
+    set({
+      activeDocument: updateDocumentContent(activeDocument, content),
+      hasUnsavedChanges: true,
+    });
+    useCloudSyncStore.getState().markPending();
   },
 
   updateTitle: (title) => {
     const { activeDocument } = get();
     if (!activeDocument) return;
-    set({ activeDocument: updateDocumentTitle(activeDocument, title) });
+    if (formatDocumentTitle(title) === activeDocument.title) return;
+    set({
+      activeDocument: updateDocumentTitle(activeDocument, title),
+      hasUnsavedChanges: true,
+    });
+    useCloudSyncStore.getState().markPending();
   },
 
   setSearchQuery: (query) => set({ searchQuery: query }),
 
   persistActiveDocument: async (storage) => {
-    const { activeDocument } = get();
-    if (!activeDocument) return;
+    const { activeDocument, hasUnsavedChanges } = get();
+    if (!activeDocument || !hasUnsavedChanges) return;
     try {
       await saveDocument(storage, activeDocument);
       const docs = await listDocuments(storage);
       set({
         documents: sortDocumentsByUpdatedAt(docs),
+        hasUnsavedChanges: false,
       });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : '保存失败' });

@@ -1,5 +1,5 @@
 import { IndexedDBAdapter } from '@/services/storage';
-import { NoopSyncAdapter } from '@/services/sync';
+import { GoogleDriveAdapter, NoopSyncAdapter } from '@/services/sync';
 import { NoopAudioEngine } from '@/services/audio';
 import type { ServicesContextValue } from '@/services/context';
 
@@ -8,9 +8,13 @@ import type { ServicesContextValue } from '@/services/context';
  * 未来切换存储/同步/音频实现只需修改这里。
  */
 export function createAppServices(): ServicesContextValue {
+  const storage = new IndexedDBAdapter();
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ?? '';
+  const sync = clientId ? new GoogleDriveAdapter(storage, clientId) : new NoopSyncAdapter();
+
   return {
-    storage: new IndexedDBAdapter(),
-    sync: new NoopSyncAdapter(),
+    storage,
+    sync,
     audio: new NoopAudioEngine(),
   };
 }

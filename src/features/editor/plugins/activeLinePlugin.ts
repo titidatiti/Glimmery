@@ -174,6 +174,11 @@ function createActiveLinePlugin() {
       };
 
       const update = () => {
+        if (view.composing) {
+          hide();
+          return;
+        }
+
         if (!view.hasFocus()) {
           hide();
           return;
@@ -206,6 +211,7 @@ function createActiveLinePlugin() {
 
       /** virtual-cursor 会在 selectionchange 时把高度重置为字形高，需在其后再同步整行高 */
       const syncCaretAfterVirtualCursor = () => {
+        if (view.composing) return;
         scheduleUpdate();
       };
 
@@ -227,6 +233,7 @@ function createActiveLinePlugin() {
       ownerDoc.addEventListener('selectionchange', syncCaretAfterVirtualCursor);
       view.dom.addEventListener('focusin', scheduleUpdate);
       view.dom.addEventListener('focusout', scheduleUpdate);
+      view.dom.addEventListener('compositionend', scheduleUpdate);
       view.dom.addEventListener('dragend', scheduleSettledUpdate);
       window.addEventListener('resize', scheduleUpdate);
       scrollParent?.addEventListener('scroll', scheduleUpdate, { passive: true });
@@ -235,6 +242,7 @@ function createActiveLinePlugin() {
 
       return {
         update(nextView, prevState) {
+          if (nextView.composing) return;
           if (
             nextView.state.selection !== prevState.selection ||
             nextView.state.doc !== prevState.doc
@@ -246,6 +254,7 @@ function createActiveLinePlugin() {
           ownerDoc.removeEventListener('selectionchange', syncCaretAfterVirtualCursor);
           view.dom.removeEventListener('focusin', scheduleUpdate);
           view.dom.removeEventListener('focusout', scheduleUpdate);
+          view.dom.removeEventListener('compositionend', scheduleUpdate);
           view.dom.removeEventListener('dragend', scheduleSettledUpdate);
           window.removeEventListener('resize', scheduleUpdate);
           scrollParent?.removeEventListener('scroll', scheduleUpdate);

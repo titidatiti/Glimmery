@@ -3,6 +3,7 @@ import { useSettingsStore } from '@/core/settings';
 import { IconButton, useIsMobilePortraitLayout } from '@/ui';
 import { AboutSection } from './AboutSection';
 import { PlaceholderSection } from './PlaceholderSection';
+import { SyncSection } from './SyncSection';
 import { SettingsPreviewPane } from './SettingsPreviewPane';
 import { SETTINGS_TABS, tabHasPreview, type SettingsTabId } from './settingsTabs';
 import { ThemeSection } from './ThemeSection';
@@ -25,12 +26,7 @@ function SettingsPanel({ tab }: { tab: SettingsTabId }) {
         />
       );
     case 'sync':
-      return (
-        <PlaceholderSection
-          title="云同步"
-          description="文稿与设置的云端备份将在后续版本开放，本地数据始终优先。"
-        />
-      );
+      return <SyncSection />;
     case 'about':
       return <AboutSection />;
     default:

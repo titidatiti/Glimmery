@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Crepe, CrepeFeature } from '@milkdown/crepe';
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react';
 import '@milkdown/crepe/theme/common/style.css';
+import { useComposingInput } from '@/ui';
 import { glimmeryCodeMirrorTheme } from './codeMirrorTheme';
 import './editorCrepeTheme.css';
 import './editorCrepeOverrides.css';
@@ -84,13 +85,17 @@ export function EditorAdapter({
   onContentChange,
   readOnly = false,
 }: EditorAdapterProps) {
+  const titleInput = useComposingInput(title, onTitleChange);
+
   return (
     <div className="editorWritingSurface">
       <input
         type="text"
         className={`editorWritingTitle ${styles.titleInput}`}
-        value={title}
-        onChange={(e) => onTitleChange(e.target.value)}
+        value={titleInput.value}
+        onChange={titleInput.onChange}
+        onCompositionStart={titleInput.onCompositionStart}
+        onCompositionEnd={titleInput.onCompositionEnd}
         placeholder="标题"
         aria-label="文稿标题"
       />

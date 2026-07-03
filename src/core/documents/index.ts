@@ -18,3 +18,12 @@ export {
   updateDocumentContent,
   updateDocumentTitle,
 } from './useCases';
+export type { SyncConflict, ConflictResolution, RestorePlan } from './syncUseCases';
+export {
+  loadAllDocuments,
+  planRestore,
+  backupAllDocuments,
+  applyRestore,
+  pullRemoteDocuments,
+} from './syncUseCases';
+export { performCloudBackup } from './cloudBackup';

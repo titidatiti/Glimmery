@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useDocumentStore, formatDocumentTitle } from '@/core/documents';
 import { useSettingsStore } from '@/core/settings';
 import { useServices } from '@/services/context';
-import { IconButton, useIsMobileLayout } from '@/ui';
+import { IconButton, useComposingInput, useIsMobileLayout } from '@/ui';
 import styles from './DocumentList.module.css';
 
 export function DocumentList() {
@@ -19,6 +19,7 @@ export function DocumentList() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const renameInput = useComposingInput(editTitle, setEditTitle);
 
   const filteredDocuments = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -69,8 +70,10 @@ export function DocumentList() {
                   {isEditing ? (
                     <input
                       className={styles.renameInput}
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
+                      value={renameInput.value}
+                      onChange={renameInput.onChange}
+                      onCompositionStart={renameInput.onCompositionStart}
+                      onCompositionEnd={renameInput.onCompositionEnd}
                       onBlur={() => commitRename(doc.id)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') void commitRename(doc.id);

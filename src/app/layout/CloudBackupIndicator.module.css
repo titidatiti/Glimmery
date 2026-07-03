@@ -1,0 +1,30 @@
+.indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-left: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.label {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid color-mix(in srgb, var(--color-text-muted) 35%, transparent);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: cloudBackupSpin 0.75s linear infinite;
+}
+
+@keyframes cloudBackupSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

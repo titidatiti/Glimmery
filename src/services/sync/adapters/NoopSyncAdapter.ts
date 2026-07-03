@@ -4,12 +4,20 @@ import type { SyncProvider, SyncResult } from '../types';
 export class NoopSyncAdapter implements SyncProvider {
   readonly id = 'noop';
 
+  isConfigured(): boolean {
+    return false;
+  }
+
   async isAuthenticated(): Promise<boolean> {
     return false;
   }
 
   async authenticate(): Promise<void> {
-    // 阶段二占位：Google Drive 同步尚未实现
+    // 未配置 VITE_GOOGLE_CLIENT_ID 时使用空实现
+  }
+
+  async signOut(): Promise<void> {
+    /* noop */
   }
 
   async push(docs: DocumentData[]): Promise<SyncResult> {
