@@ -2,10 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   applyRestore,
   formatDocumentTitle,
+  formatRestoreSummary,
   loadAllDocuments,
   performCloudBackup,
   planRestore,
-  pullRemoteDocuments,
+  pullRemoteBackup,
   useDocumentStore,
   type ConflictResolution,
   type RestorePlan,
@@ -22,7 +23,59 @@ import {
 } from '@/core/settings/cloudBackupPreferences';
 import { useCloudSyncStore } from '@/core/sync';
 import { useServices } from '@/services/context';
+import type { SyncAccountProfile } from '@/services/sync';
 import styles from './SyncSection.module.css';
+
+function accountInitial(profile: SyncAccountProfile): string {
+  const source = profile.name?.trim() || profile.email;
+  return source.charAt(0).toUpperCase();
+}
+
+function AccountCard({
+  profile,
+  onSignOut,
+  signOutDisabled,
+}: {
+  profile: SyncAccountProfile;
+  onSignOut: () => void;
+  signOutDisabled?: boolean;
+}) {
+  const name = profile.name?.trim();
+
+  return (
+    <div className={styles.accountCard}>
+      {profile.pictureUrl ? (
+        <img
+          className={styles.accountAvatar}
+          src={profile.pictureUrl}
+          alt=""
+          width={40}
+          height={40}
+        />
+      ) : (
+        <span className={styles.accountAvatarFallback} aria-hidden="true">
+          {accountInitial(profile)}
+        </span>
+      )}
+      <div className={styles.accountBody}>
+        {name && name !== profile.email && (
+          <p className={styles.accountName}>{name}</p>
+        )}
+        <p className={name && name !== profile.email ? styles.accountEmail : styles.accountName}>
+          {profile.email}
+        </p>
+      </div>
+      <button
+        type="button"
+        className={styles.signOutButton}
+        disabled={signOutDisabled}
+        onClick={onSignOut}
+      >
+        退出账号
+      </button>
+    </div>
+  );
+}
 
 function formatTime(iso: string): string {
   try {
@@ -53,10 +106,10 @@ function ConflictPicker({
         发现 {conflicts.length} 篇文稿本地与云端版本不一致，请选择保留哪一版：
       </p>
       <div className={styles.bulkActions}>
-        <button type="button" className={styles.buttonGhost} onClick={() => setAll('use-remote')}>
+        <button type="button" className={styles.bulkButton} onClick={() => setAll('use-remote')}>
           全部用云端
         </button>
-        <button type="button" className={styles.buttonGhost} onClick={() => setAll('keep-local')}>
+        <button type="button" className={styles.bulkButton} onClick={() => setAll('keep-local')}>
           全部保留本地
         </button>
       </div>
@@ -101,6 +154,7 @@ export function SyncSection() {
   const lastCloudBackupAt = useCloudSyncStore((s) => s.lastCloudBackupAt);
 
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  const [accountProfile, setAccountProfile] = useState<SyncAccountProfile | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -113,9 +167,12 @@ export function SyncSection() {
   const refreshAuth = useCallback(async () => {
     if (!configured) {
       setAuthenticated(false);
+      setAccountProfile(null);
       return;
     }
-    setAuthenticated(await sync.isAuthenticated());
+    const authed = await sync.isAuthenticated();
+    setAuthenticated(authed);
+    setAccountProfile(authed ? await sync.getAccountProfile() : null);
   }, [configured, sync]);
 
   useEffect(() => {
@@ -129,6 +186,7 @@ export function SyncSection() {
     try {
       await sync.authenticate();
       setAuthenticated(true);
+      setAccountProfile(await sync.getAccountProfile());
       setMessage('已连接 Google 账号');
     } catch (err) {
       setError(err instanceof Error ? err.message : '连接失败');
@@ -144,6 +202,7 @@ export function SyncSection() {
     try {
       await sync.signOut();
       setAuthenticated(false);
+      setAccountProfile(null);
       setRestorePlan(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : '退出失败');
@@ -185,8 +244,8 @@ export function SyncSection() {
     setMessage(null);
     setRestorePlan(null);
     try {
-      const remote = await pullRemoteDocuments(sync);
-      if (remote.length === 0) {
+      const remote = await pullRemoteBackup(sync);
+      if (remote.documents.length === 0 && remote.customThemes.length === 0) {
         setMessage('云端暂无备份');
         return;
       }
@@ -196,7 +255,7 @@ export function SyncSection() {
         const applied = await applyRestore(storage, plan, new Map());
         await initialize(storage);
         useCloudSyncStore.getState().markSynced();
-        setMessage(`已从云端恢复 ${applied} 篇文稿`);
+        setMessage(formatRestoreSummary(applied, plan.remoteThemes.length));
         return;
       }
       const initial = new Map<string, ConflictResolution>();
@@ -221,7 +280,7 @@ export function SyncSection() {
       await initialize(storage);
       setRestorePlan(null);
       useCloudSyncStore.getState().markSynced();
-      setMessage(`恢复完成，已写入 ${applied} 篇文稿`);
+      setMessage(formatRestoreSummary(applied, restorePlan.remoteThemes.length));
     } catch (err) {
       setError(err instanceof Error ? err.message : '恢复失败');
     } finally {
@@ -243,83 +302,139 @@ export function SyncSection() {
     );
   }
 
-  return (
-    <div className={styles.section}>
-      <p className={styles.lead}>
-        本地保存后，若已连接 Google 账号，将按设定间隔自动备份；切换文稿时也会尝试备份。关闭页面前若有未同步修改，浏览器会提示确认。
+  if (authenticated === null) {
+    return (
+      <div className={styles.section}>
+        <p className={styles.lead}>
+        文稿与自定义配色将加密备份至 Google Drive 应用专用空间，本地始终为主副本。
       </p>
+        <div className={styles.accountCardLoading} aria-busy="true">
+          <p className={styles.accountPlaceholder}>正在检查登录状态…</p>
+        </div>
+      </div>
+    );
+  }
 
-      <p className={`${styles.status} ${authenticated ? styles.statusOk : ''}`}>
-        {authenticated === null
-          ? '正在检查登录状态…'
-          : authenticated
-            ? '已连接 Google 账号'
-            : '未连接 Google 账号'}
+  if (!authenticated) {
+    return (
+      <div className={styles.section}>
+        <p className={styles.lead}>
+        文稿与自定义配色将加密备份至 Google Drive 应用专用空间，本地始终为主副本。
       </p>
-
-      {authenticated && (
-        <p className={styles.status}>
-          {pendingCloudSync
-            ? '有尚未同步到云端的本地修改'
-            : lastCloudBackupAt
-              ? `最近云端备份：${formatTime(lastCloudBackupAt)}`
-              : '暂无云端备份记录'}
-        </p>
-      )}
-
-      {error && <p className={styles.error}>{error}</p>}
-      {message && <p className={styles.success}>{message}</p>}
-
-      <div className={styles.actions}>
-        {!authenticated ? (
+        {error && <p className={styles.noticeError}>{error}</p>}
+        {message && <p className={styles.noticeSuccess}>{message}</p>}
+        <div className={styles.connectCard}>
+          <p className={styles.connectHint}>
+            连接 Google 账号后，可自动或手动将文稿备份到云端，并在多设备间恢复。
+          </p>
           <button
             type="button"
-            className={styles.buttonPrimary}
+            className={styles.connectButton}
             disabled={busy}
             onClick={() => void handleConnect()}
           >
             连接 Google 账号
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.section}>
+      <p className={styles.lead}>
+        文稿与自定义配色将加密备份至 Google Drive 应用专用空间，本地始终为主副本。
+      </p>
+
+      {error && <p className={styles.noticeError}>{error}</p>}
+      {message && <p className={styles.noticeSuccess}>{message}</p>}
+
+      <div className={styles.block}>
+        <p className={styles.subheading}>已连接 Google 账号</p>
+        {accountProfile ? (
+          <AccountCard
+            profile={accountProfile}
+            signOutDisabled={busy}
+            onSignOut={() => void handleSignOut()}
+          />
         ) : (
-          <>
-            <label className={styles.intervalField}>
-              <span className={styles.intervalLabel}>自动备份间隔（秒）</span>
-              <input
-                type="number"
-                className={styles.intervalInput}
-                min={MIN_CLOUD_BACKUP_INTERVAL_SEC}
-                max={MAX_CLOUD_BACKUP_INTERVAL_SEC}
-                step={15}
-                value={backupIntervalSec}
-                onChange={(e) => handleIntervalChange(e.target.value)}
-              />
-            </label>
+          <div className={styles.accountCard}>
+            <span className={styles.accountAvatarFallback} aria-hidden="true">
+              G
+            </span>
+            <div className={styles.accountBody}>
+              <p className={styles.accountName}>Google 账号</p>
+              <p className={styles.accountEmail}>已授权，正在读取账号信息…</p>
+            </div>
             <button
               type="button"
-              className={styles.buttonPrimary}
-              disabled={busy}
-              onClick={() => void handleBackup()}
-            >
-              备份到 Google Drive
-            </button>
-            <button
-              type="button"
-              className={styles.button}
-              disabled={busy}
-              onClick={() => void handleStartRestore()}
-            >
-              从云端恢复
-            </button>
-            <button
-              type="button"
-              className={styles.buttonGhost}
+              className={styles.signOutButton}
               disabled={busy}
               onClick={() => void handleSignOut()}
             >
-              退出 Google 账号
+              退出账号
             </button>
-          </>
+          </div>
         )}
+      </div>
+
+      <div className={styles.block}>
+        <div className={styles.infoGroup}>
+          <p className={styles.subheading}>最近备份</p>
+          <p className={styles.infoValue}>
+            {lastCloudBackupAt ? formatTime(lastCloudBackupAt) : '尚无记录'}
+          </p>
+        </div>
+        <div className={styles.infoGroup}>
+          <p className={styles.subheading}>本地修改</p>
+          <p
+            className={`${styles.infoValue} ${pendingCloudSync ? styles.infoValuePending : ''}`}
+          >
+            {pendingCloudSync ? '待同步至云端' : '已全部同步'}
+          </p>
+        </div>
+      </div>
+
+      <div className={styles.block}>
+        <p className={styles.subheading}>自动备份</p>
+        <div className={styles.settingRow}>
+          <span className={styles.itemLabel}>备份间隔</span>
+          <div className={styles.settingControl}>
+            <input
+              type="number"
+              className={styles.intervalInput}
+              min={MIN_CLOUD_BACKUP_INTERVAL_SEC}
+              max={MAX_CLOUD_BACKUP_INTERVAL_SEC}
+              step={15}
+              value={backupIntervalSec}
+              onChange={(e) => handleIntervalChange(e.target.value)}
+              aria-label="自动备份间隔（秒）"
+            />
+            <span className={styles.settingUnit}>秒</span>
+          </div>
+        </div>
+        <p className={styles.fieldHint}>
+          有未同步修改时按间隔自动备份；切换文稿时也会尝试同步。备份进行时在编辑区右下角显示「正在云同步」。离开页面前若仍有待同步内容，浏览器会提示确认。
+        </p>
+      </div>
+
+      <div className={styles.actionGrid}>
+        <button
+          type="button"
+          className={styles.actionButtonPrimary}
+          disabled={busy}
+          onClick={() => void handleBackup()}
+        >
+          立即备份
+        </button>
+        <button
+          type="button"
+          className={styles.actionButton}
+          disabled={busy}
+          onClick={() => void handleStartRestore()}
+        >
+          从云端恢复
+        </button>
       </div>
 
       {restorePlan && restorePlan.conflicts.length > 0 && (
@@ -333,7 +448,7 @@ export function SyncSection() {
           />
           <button
             type="button"
-            className={styles.buttonPrimary}
+            className={styles.actionButtonPrimary}
             disabled={busy}
             onClick={() => void handleConfirmRestore()}
           >
