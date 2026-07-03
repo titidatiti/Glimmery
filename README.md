@@ -11,7 +11,7 @@
 「微光汇聚，字句成行」——做极致的减法，让创作的空间中只有创作。愿你的灵感微光，都能融汇成美好的记忆，留在这里。
 
 <p align="center">
-  <img src="./assets/preview.gif" alt="Glimmery 写作界面预览" width="720">
+  <img src="./assets/preview.gif" alt="Glimmery 写作界面预览" width="100%">
 </p>
 
 ## 功能
@@ -35,29 +35,29 @@
 ## 功能预览
 
 <p align="center">
-  <img src="./assets/feature-font.png" alt="字体与排版设置" width="640">
+  <img src="./assets/feature-font.png" alt="字体与排版设置" width="100%">
 </p>
 
 <p align="center">
-  <img src="./assets/feature-theme.png" alt="配色主题" width="640">
+  <img src="./assets/feature-theme.png" alt="配色主题" width="100%">
 </p>
 
 <p align="center">
-  <img src="./assets/feature-custom-theme.png" alt="自定义配色" width="640">
+  <img src="./assets/feature-custom-theme.png" alt="自定义配色" width="100%">
 </p>
 
 ## 多端适配
 
 <p align="center">
-  <img src="./assets/mobile_01.png" alt="手机端界面" width="360">
+  <img src="./assets/mobile_01.png" alt="手机端界面" width="100%">
 </p>
 
 <p align="center">
-  <img src="./assets/mobile_02.png" alt="手机端横屏与侧栏" width="360">
+  <img src="./assets/mobile_02.png" alt="手机端横屏与侧栏" width="100%">
 </p>
 
 <p align="center">
-  <img src="./assets/ipad_01.png" alt="平板端界面" width="640">
+  <img src="./assets/ipad_01.png" alt="平板端界面" width="100%">
 </p>
 
 ## 快速开始
