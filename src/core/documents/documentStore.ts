@@ -18,6 +18,8 @@ export interface DocumentStoreState {
   documents: DocumentMeta[];
   activeDocumentId: string | null;
   activeDocument: DocumentData | null;
+  /** 仅在外部重载正文时递增，用于编辑器 remount（勿与 updatedAt 绑定，避免每键重载） */
+  activeDocumentEditorEpoch: number;
   /** 当前文稿相对上次落盘有未保存改动 */
   hasUnsavedChanges: boolean;
   searchQuery: string;
@@ -40,6 +42,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
   documents: [],
   activeDocumentId: null,
   activeDocument: null,
+  activeDocumentEditorEpoch: 0,
   hasUnsavedChanges: false,
   searchQuery: '',
   isLoading: false,
@@ -101,12 +104,13 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
           : sorted[0].id;
 
       const active = await loadDocument(storage, targetId);
-      set({
+      set((state) => ({
         documents: sorted,
         activeDocumentId: targetId,
         activeDocument: active,
         hasUnsavedChanges: false,
-      });
+        activeDocumentEditorEpoch: state.activeDocumentEditorEpoch + 1,
+      }));
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : '刷新文稿失败',

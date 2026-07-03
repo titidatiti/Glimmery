@@ -40,6 +40,7 @@ export function AppShell() {
   const activeDocument = useDocumentStore((s) => s.activeDocument);
 
   const activeDocumentId = useDocumentStore((s) => s.activeDocumentId);
+  const activeDocumentEditorEpoch = useDocumentStore((s) => s.activeDocumentEditorEpoch);
 
   const isLoading = useDocumentStore((s) => s.isLoading);
 
@@ -141,7 +142,7 @@ export function AppShell() {
         <div className={styles.writingArea}>
           {activeDocument && activeDocumentId && (
             <EditorAdapter
-              key={`${activeDocumentId}:${activeDocument.updatedAt}`}
+              key={`${activeDocumentId}:${activeDocumentEditorEpoch}`}
               title={activeDocument.title}
               initialContent={activeDocument.content}
               onTitleChange={handleTitleChange}
