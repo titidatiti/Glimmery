@@ -32,7 +32,7 @@
 - 白噪音 BGM
 - 打字音效
 
-## 效果预览
+## 功能预览
 
 <p align="center">
   <img src="./assets/feature-font.png" alt="字体与排版设置" width="640">
@@ -44,6 +44,20 @@
 
 <p align="center">
   <img src="./assets/feature-custom-theme.png" alt="自定义配色" width="640">
+</p>
+
+## 多端适配
+
+<p align="center">
+  <img src="./assets/mobile_01.png" alt="手机端界面" width="360">
+</p>
+
+<p align="center">
+  <img src="./assets/mobile_02.png" alt="手机端横屏与侧栏" width="360">
+</p>
+
+<p align="center">
+  <img src="./assets/ipad_01.png" alt="平板端界面" width="640">
 </p>
 
 ## 快速开始
