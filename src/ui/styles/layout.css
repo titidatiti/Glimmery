@@ -8,7 +8,6 @@
 
   /* 移动端断点（与 useMediaQuery.ts 常量一致） */
   --layout-mobile-max: 767px;
-  --layout-tablet-portrait-max: 1024px;
 
   /* iOS 刘海 / Home Indicator（须配合 index.html viewport-fit=cover） */
   --safe-area-top: env(safe-area-inset-top, 0px);
@@ -18,6 +17,12 @@
 
   /* 手机横屏矮视口：与 MOBILE_LAYOUT_QUERY 第二分支一致 */
   --layout-phone-landscape-max-height: 500px;
+
+  /*
+   * 平板竖屏紧凑布局上限（与 TABLET_PORTRAIT_QUERY / MOBILE_PORTRAIT_QUERY 一致）
+   * iPad Air 竖屏约 820px，须纳入手机端 shell 与设置全屏排版。
+   */
+  --layout-tablet-portrait-max: 1024px;
 
   /* 面板内边距（Settings、对话框内容区等） */
   --layout-panel-padding-inline: var(--spacing-lg);

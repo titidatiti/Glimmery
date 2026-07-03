@@ -201,7 +201,11 @@
   }
 }
 
-@media (min-width: 768px) and (min-height: 501px) {
+/*
+ * 平板/桌面设置布局（侧栏 Tab + 预览列）。
+ * 排除 iPad 竖屏等紧凑竖屏，避免 820px 宽仍套用桌面两栏。
+ */
+@media (min-width: 768px) and (min-height: 501px) and not ((orientation: portrait) and (max-width: 1024px)) {
   .backdrop {
     align-items: center;
     padding: var(--spacing-lg);
@@ -311,7 +315,7 @@
 }
 
 /*
- * 手机端全屏：竖屏窄宽，或横屏矮视口（宽往往 >767px）
+ * 手持端全屏：手机窄宽、横屏矮视口、或 iPad 等平板竖屏（宽 768–1024px）
  */
 @media (max-width: 767px), (orientation: landscape) and (max-height: 500px), (orientation: portrait) and (max-width: 1024px) {
   .backdrop {
