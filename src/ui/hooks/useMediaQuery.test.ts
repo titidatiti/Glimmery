@@ -18,6 +18,13 @@ describe('MOBILE_LAYOUT_QUERY', () => {
   });
 });
 
+describe('MOBILE_PORTRAIT_QUERY', () => {
+  it('仅匹配手机竖屏', () => {
+    expect(MOBILE_PORTRAIT_QUERY).toContain('max-width: 767px');
+    expect(MOBILE_PORTRAIT_QUERY).not.toBe(SETTINGS_COMPACT_PORTRAIT_QUERY);
+  });
+});
+
 describe('SETTINGS_DESKTOP_QUERY', () => {
   it('横屏 iPad 须命中桌面弹窗分支', () => {
     expect(SETTINGS_DESKTOP_QUERY).toContain('orientation: landscape');
