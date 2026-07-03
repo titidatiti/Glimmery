@@ -4,7 +4,11 @@ import {
   emptyBackupSnapshot,
   parseDriveBackupPayload,
 } from '../backupPayload';
-import { DRIVE_BACKUP_FILENAME } from '../constants';
+import {
+  DRIVE_BACKUP_FILENAME,
+  GOOGLE_DRIVE_SCOPE_ERROR_PATTERN,
+  INSUFFICIENT_DRIVE_SCOPE_MESSAGE,
+} from '../constants';
 import type { BackupSnapshot, SyncProvider, SyncResult, SyncAccountProfile } from '../types';
 import { GoogleDriveAuth } from './googleDriveAuth';
 
@@ -36,7 +40,7 @@ export class GoogleDriveAdapter implements SyncProvider {
   }
 
   async authenticate(): Promise<void> {
-    await this.auth.requestAccessToken();
+    await this.auth.requestAccessToken({ prompt: 'consent' });
   }
 
   async signOut(): Promise<void> {
@@ -45,7 +49,7 @@ export class GoogleDriveAdapter implements SyncProvider {
 
   async push(snapshot: BackupSnapshot): Promise<SyncResult> {
     try {
-      const token = await this.requireToken();
+      const token = await this.requireDriveToken();
       const body = JSON.stringify(createDriveBackupPayload(snapshot));
       const fileId = await this.findBackupFileId(token);
 
@@ -85,7 +89,7 @@ export class GoogleDriveAdapter implements SyncProvider {
   }
 
   async pull(): Promise<BackupSnapshot> {
-    const token = await this.requireToken();
+    const token = await this.requireDriveToken();
     const fileId = await this.findBackupFileId(token);
     if (!fileId) return emptyBackupSnapshot();
 
@@ -94,10 +98,10 @@ export class GoogleDriveAdapter implements SyncProvider {
     return parseDriveBackupPayload(JSON.parse(text) as unknown);
   }
 
-  private async requireToken(): Promise<string> {
+  private async requireDriveToken(): Promise<string> {
     let token = await this.auth.getAccessToken();
     if (!token) {
-      token = await this.auth.requestAccessToken();
+      token = await this.auth.requestAccessToken({ prompt: 'consent' });
     }
     return token;
   }
@@ -116,6 +120,7 @@ export class GoogleDriveAdapter implements SyncProvider {
     url: string,
     token: string,
     init: RequestInit = {},
+    allowScopeRetry = true,
   ): Promise<Response> {
     const headers = new Headers(init.headers);
     headers.set('Authorization', `Bearer ${token}`);
@@ -128,6 +133,21 @@ export class GoogleDriveAdapter implements SyncProvider {
       } catch {
         /* ignore */
       }
+
+      if (
+        allowScopeRetry &&
+        response.status === 403 &&
+        GOOGLE_DRIVE_SCOPE_ERROR_PATTERN.test(message)
+      ) {
+        await this.auth.signOut();
+        const freshToken = await this.auth.requestAccessToken({ prompt: 'consent' });
+        return this.driveFetch(url, freshToken, init, false);
+      }
+
+      if (GOOGLE_DRIVE_SCOPE_ERROR_PATTERN.test(message)) {
+        throw new Error(INSUFFICIENT_DRIVE_SCOPE_MESSAGE);
+      }
+
       throw new Error(message);
     }
     return response;

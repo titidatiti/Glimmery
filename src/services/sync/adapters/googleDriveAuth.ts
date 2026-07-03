@@ -2,6 +2,8 @@ import type { StorageKeyValue } from '@/services/storage';
 import type { SyncAccountProfile } from '../types';
 import {
   GOOGLE_DRIVE_OAUTH_SCOPES,
+  includesDriveAppDataScope,
+  INSUFFICIENT_DRIVE_SCOPE_MESSAGE,
   KV_GOOGLE_DRIVE_PROFILE,
   KV_GOOGLE_DRIVE_TOKEN,
 } from '../constants';
@@ -9,6 +11,7 @@ import {
 interface StoredToken {
   accessToken: string;
   expiresAt: number;
+  scope?: string;
 }
 
 interface StoredProfile {
@@ -38,12 +41,15 @@ interface TokenClientConfig {
 interface GoogleTokenResponse {
   access_token?: string;
   expires_in?: number;
+  scope?: string;
   error?: string;
   error_description?: string;
 }
 
 interface GoogleAccountsOAuth2 {
-  initTokenClient: (config: TokenClientConfig) => { requestAccessToken: () => void };
+  initTokenClient: (config: TokenClientConfig) => {
+    requestAccessToken: (overrides?: { prompt?: '' | 'none' | 'consent' | 'select_account' }) => void;
+  };
   revoke: (token: string, callback?: () => void) => void;
 }
 
@@ -100,6 +106,11 @@ function formatOAuthClientError(error: GoogleOAuthClientError): Error {
   return new Error('授权失败');
 }
 
+export interface RequestAccessTokenOptions {
+  /** 首次连接或 scope 不足时传 consent，强制展示完整权限 */
+  prompt?: 'consent' | 'select_account';
+}
+
 export class GoogleDriveAuth {
   constructor(
     private readonly kv: StorageKeyValue,
@@ -107,17 +118,16 @@ export class GoogleDriveAuth {
   ) {}
 
   async getAccessToken(): Promise<string | null> {
-    const raw = await this.kv.getItem(KV_GOOGLE_DRIVE_TOKEN);
-    if (!raw) return null;
-    try {
-      const parsed = JSON.parse(raw) as StoredToken;
-      if (Date.now() < parsed.expiresAt - 60_000) {
-        return parsed.accessToken;
-      }
-    } catch {
-      /* 损坏的 token 视为未登录 */
+    const stored = await this.loadStoredToken();
+    if (!stored) return null;
+    if (!includesDriveAppDataScope(stored.scope)) {
+      await this.clearStoredCredentials();
+      return null;
     }
-    await this.kv.removeItem(KV_GOOGLE_DRIVE_TOKEN);
+    if (Date.now() < stored.expiresAt - 60_000) {
+      return stored.accessToken;
+    }
+    await this.clearStoredCredentials();
     return null;
   }
 
@@ -139,6 +149,16 @@ export class GoogleDriveAuth {
       const profile = await this.fetchUserInfo(token);
       await this.kv.setItem(KV_GOOGLE_DRIVE_PROFILE, JSON.stringify(profile));
       return profile;
+    } catch {
+      return null;
+    }
+  }
+
+  private async loadStoredToken(): Promise<StoredToken | null> {
+    const raw = await this.kv.getItem(KV_GOOGLE_DRIVE_TOKEN);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as StoredToken;
     } catch {
       return null;
     }
@@ -188,7 +208,7 @@ export class GoogleDriveAuth {
     }
   }
 
-  async requestAccessToken(): Promise<string> {
+  async requestAccessToken(options?: RequestAccessTokenOptions): Promise<string> {
     await loadGoogleIdentityScript();
     const oauth2 = window.google?.accounts?.oauth2;
     if (!oauth2) {
@@ -204,10 +224,15 @@ export class GoogleDriveAuth {
             reject(new Error(response.error_description ?? response.error ?? '授权失败'));
             return;
           }
+          if (!includesDriveAppDataScope(response.scope)) {
+            reject(new Error(INSUFFICIENT_DRIVE_SCOPE_MESSAGE));
+            return;
+          }
           const expiresIn = response.expires_in ?? 3600;
           const stored: StoredToken = {
             accessToken: response.access_token,
             expiresAt: Date.now() + expiresIn * 1000,
+            scope: response.scope,
           };
           void this.kv.setItem(KV_GOOGLE_DRIVE_TOKEN, JSON.stringify(stored)).then(async () => {
             await this.persistProfile(response.access_token!);
@@ -218,16 +243,20 @@ export class GoogleDriveAuth {
           reject(formatOAuthClientError(error));
         },
       });
-      client.requestAccessToken();
+      client.requestAccessToken(options?.prompt ? { prompt: options.prompt } : undefined);
     });
   }
 
+  private async clearStoredCredentials(): Promise<void> {
+    await this.kv.removeItem(KV_GOOGLE_DRIVE_TOKEN);
+  }
+
   async signOut(): Promise<void> {
-    const token = await this.getAccessToken();
-    if (token) {
+    const stored = await this.loadStoredToken();
+    if (stored?.accessToken) {
       try {
         await loadGoogleIdentityScript();
-        window.google?.accounts?.oauth2?.revoke(token, () => undefined);
+        window.google?.accounts?.oauth2?.revoke(stored.accessToken, () => undefined);
       } catch {
         /* revoke 失败仍清除本地 token */
       }

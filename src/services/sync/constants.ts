@@ -15,6 +15,17 @@ export const GOOGLE_DRIVE_OAUTH_SCOPES = [
   GOOGLE_USERINFO_PROFILE_SCOPE,
 ].join(' ');
 
+/** GIS 回调中的 scope 是否包含 Drive appData 读写权限 */
+export function includesDriveAppDataScope(scope: string | undefined): boolean {
+  if (!scope?.trim()) return false;
+  return scope.split(/\s+/).includes(DRIVE_APPDATA_SCOPE);
+}
+
+export const INSUFFICIENT_DRIVE_SCOPE_MESSAGE =
+  '未获得 Google Drive 访问权限。请在设置中断开 Google 账号后重新连接，并在授权页允许访问 Drive。';
+
+export const GOOGLE_DRIVE_SCOPE_ERROR_PATTERN = /insufficient authentication scopes/i;
+
 export const KV_GOOGLE_DRIVE_TOKEN = 'sync:google-drive:token';
 export const KV_GOOGLE_DRIVE_PROFILE = 'sync:google-drive:profile';
 
