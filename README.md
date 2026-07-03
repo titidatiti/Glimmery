@@ -10,6 +10,10 @@
 
 「微光汇聚，字句成行」——做极致的减法，让创作的空间中只有创作。愿你的灵感微光，都能融汇成美好的记忆，留在这里。
 
+<p align="center">
+  <img src="./assets/preview.gif" alt="Glimmery 写作界面预览" width="720">
+</p>
+
 ## 功能
 
 这是一款追求极致沉浸式写作的 Web 应用，拥有极致简洁优雅的响应式界面，丰富的配色方案，支持 Markdown 格式与 Google Drive 云同步。
@@ -27,6 +31,18 @@
 
 - 白噪音 BGM
 - 打字音效
+
+<p align="center">
+  <img src="./assets/feature-font.png" alt="字体与排版设置" width="640">
+</p>
+
+<p align="center">
+  <img src="./assets/feature-theme.png" alt="配色主题" width="640">
+</p>
+
+<p align="center">
+  <img src="./assets/feature-custom-theme.png" alt="自定义配色" width="640">
+</p>
 
 ## 快速开始
 
