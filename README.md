@@ -94,6 +94,18 @@ npm run preview   # 本地预览，可选
 
 ### GitHub Pages（子路径 `/Glimmery/`）
 
+仓库已包含 GitHub Actions 工作流（`.github/workflows/deploy-pages.yml`），`main` 分支推送后会自动构建并发布。
+
+**首次启用（只需一次）**
+
+1. 打开 GitHub 仓库 → **Settings** → **Pages**
+2. **Build and deployment** → **Source** 选 **GitHub Actions**
+3. （可选）**Settings** → **Secrets and variables** → **Actions** → 新建 `VITE_GOOGLE_CLIENT_ID`，用于线上云同步
+
+推送 `main` 后访问：**https://titidatiti.github.io/Glimmery/**
+
+**本地手动构建**（调试时使用）：
+
 ```bash
 npm run build:pages
 ```
@@ -104,8 +116,6 @@ npm run build:pages
 VITE_BASE_PATH=/Glimmery/
 VITE_GOOGLE_CLIENT_ID=你的客户端ID.apps.googleusercontent.com
 ```
-
-将 `dist/` 内容发布到 Pages 即可。
 
 ### Google Drive 云同步（可选）
 
