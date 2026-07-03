@@ -7,6 +7,8 @@ import { resolveLineHeightPx } from './lineMetrics';
 export const ACTIVE_LINE_OVERLAY_CLASS = 'glimmery-active-line-overlay';
 export const ACTIVE_LINE_HOST_CLASS = 'glimmery-active-line-host';
 export const ACTIVE_LINE_REFRESH_EVENT = 'glimmery-active-line-refresh';
+export const ACTIVE_LINE_SUSPENDED_CLASS = 'glimmery-active-line-suspended';
+export const WRITING_TITLE_INPUT_CLASS = 'editorWritingTitle';
 /** 较默认 3px 细约 30% */
 export const GLIMMERY_CARET_WIDTH_PX = 2;
 
@@ -119,6 +121,26 @@ function findMainVirtualCaret(view: EditorView): HTMLElement | null {
   return cursor instanceof HTMLElement ? cursor : null;
 }
 
+/** 写作区标题 input（与 EditorAdapter 中 editorWritingTitle 对应） */
+export function findWritingTitleInput(view: EditorView): HTMLInputElement | null {
+  const surface = view.dom.closest('.editorWritingSurface');
+  if (!surface) return null;
+
+  const title = surface.querySelector(`.${WRITING_TITLE_INPUT_CLASS}`);
+  return title instanceof HTMLInputElement ? title : null;
+}
+
+export function isWritingTitleFocused(view: EditorView): boolean {
+  const title = findWritingTitleInput(view);
+  if (!title) return false;
+
+  return view.dom.ownerDocument.activeElement === title;
+}
+
+function setBodyCaretSuspended(view: EditorView, suspended: boolean) {
+  view.dom.classList.toggle(ACTIVE_LINE_SUSPENDED_CLASS, suspended);
+}
+
 export function measureCaretLineMetrics(
   view: EditorView,
   overlayHost: HTMLElement | null = null,
@@ -177,6 +199,14 @@ function createActiveLinePlugin() {
           return;
         }
 
+        if (isWritingTitleFocused(view)) {
+          hide();
+          setBodyCaretSuspended(view, true);
+          return;
+        }
+
+        setBodyCaretSuspended(view, false);
+
         const metrics = measureCaretLineMetrics(view, overlay.parentElement);
         if (!metrics) {
           hide();
@@ -225,9 +255,12 @@ function createActiveLinePlugin() {
       update();
 
       const ownerDoc = view.dom.ownerDocument;
+      const titleInput = findWritingTitleInput(view);
       ownerDoc.addEventListener('selectionchange', syncCaretAfterVirtualCursor);
       view.dom.addEventListener('focusin', scheduleUpdate);
       view.dom.addEventListener('focusout', scheduleUpdate);
+      titleInput?.addEventListener('focusin', scheduleUpdate);
+      titleInput?.addEventListener('focusout', scheduleUpdate);
       view.dom.addEventListener('compositionend', scheduleUpdate);
       view.dom.addEventListener('dragend', scheduleSettledUpdate);
       window.addEventListener('resize', scheduleUpdate);
@@ -249,6 +282,8 @@ function createActiveLinePlugin() {
           ownerDoc.removeEventListener('selectionchange', syncCaretAfterVirtualCursor);
           view.dom.removeEventListener('focusin', scheduleUpdate);
           view.dom.removeEventListener('focusout', scheduleUpdate);
+          titleInput?.removeEventListener('focusin', scheduleUpdate);
+          titleInput?.removeEventListener('focusout', scheduleUpdate);
           view.dom.removeEventListener('compositionend', scheduleUpdate);
           view.dom.removeEventListener('dragend', scheduleSettledUpdate);
           window.removeEventListener('resize', scheduleUpdate);
@@ -256,6 +291,7 @@ function createActiveLinePlugin() {
           ownerDoc.removeEventListener('dragend', scheduleSettledUpdate, true);
           view.dom.removeEventListener(ACTIVE_LINE_REFRESH_EVENT, scheduleSettledUpdate);
           view.dom.classList.remove('glimmery-active-line-editor');
+          view.dom.classList.remove(ACTIVE_LINE_SUSPENDED_CLASS);
           overlay.remove();
           host?.classList.remove(ACTIVE_LINE_HOST_CLASS);
         },

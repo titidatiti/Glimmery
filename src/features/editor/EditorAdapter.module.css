@@ -76,6 +76,14 @@
   caret-color: transparent !important;
 }
 
+.bodyEditor :global(.milkdown .ProseMirror.glimmery-active-line-suspended .prosemirror-virtual-cursor),
+.bodyEditor :global(.milkdown .ProseMirror.glimmery-active-line-suspended .prosemirror-virtual-cursor-left),
+.bodyEditor :global(.milkdown .ProseMirror.glimmery-active-line-suspended .prosemirror-virtual-cursor-right) {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  animation: none !important;
+}
+
 .bodyEditor :global(.milkdown-block-handle) {
   z-index: 20;
 }
