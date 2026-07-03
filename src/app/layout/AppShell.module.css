@@ -327,7 +327,7 @@
 /*
  * 手持端（竖屏窄宽 / 横屏矮视口）：shell 统一避让刘海，子区域不再重复叠加 safe-area
  */
-@media (max-width: 767px), (orientation: landscape) and (max-height: 500px), (orientation: portrait) and (max-width: 1024px) {
+@media (max-width: 767px), (orientation: landscape) and (max-height: 500px) {
   .shell.mobileShell {
     display: block;
     overflow: hidden;

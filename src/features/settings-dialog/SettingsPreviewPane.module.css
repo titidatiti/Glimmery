@@ -28,6 +28,7 @@
   display: none;
 }
 
+/* SETTINGS_COMPACT_PORTRAIT_QUERY：设置界面紧凑竖屏（含 iPad 竖屏） */
 @media (orientation: portrait) and (max-width: 1024px) {
   .pane {
     border-left: none;

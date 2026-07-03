@@ -23,6 +23,7 @@
   }
 }
 
+/* SETTINGS_COMPACT_PORTRAIT_QUERY */
 @media (orientation: portrait) and (max-width: 1024px) {
   .preview {
     max-width: 100%;

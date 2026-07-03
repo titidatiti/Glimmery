@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSettingsStore } from '@/core/settings';
-import { IconButton, useIsMobilePortraitLayout } from '@/ui';
+import { IconButton, useIsSettingsCompactPortrait } from '@/ui';
 import { AboutSection } from './AboutSection';
 import { PlaceholderSection } from './PlaceholderSection';
 import { SyncSection } from './SyncSection';
@@ -46,7 +46,7 @@ export function SettingsDialog() {
   const dialogRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<SettingsTabId>('theme');
   const [previewExpanded, setPreviewExpanded] = useState(true);
-  const isMobilePortrait = useIsMobilePortraitLayout();
+  const isSettingsCompactPortrait = useIsSettingsCompactPortrait();
 
   const showPreview = tabHasPreview(activeTab);
 
@@ -93,7 +93,7 @@ export function SettingsDialog() {
 
         <div
           className={`${styles.layout} ${showPreview ? styles.layoutWithPreview : ''} ${
-            showPreview && isMobilePortrait && !previewExpanded ? styles.layoutPreviewCollapsed : ''
+            showPreview && isSettingsCompactPortrait && !previewExpanded ? styles.layoutPreviewCollapsed : ''
           }`}
         >
           <nav className={styles.tabNav} aria-label="设置分类">
@@ -117,7 +117,7 @@ export function SettingsDialog() {
           {showPreview && (
             <div className={styles.previewSlot}>
               <SettingsPreviewPane
-                collapsible={isMobilePortrait}
+                collapsible={isSettingsCompactPortrait}
                 expanded={previewExpanded}
                 onExpandedChange={setPreviewExpanded}
               >

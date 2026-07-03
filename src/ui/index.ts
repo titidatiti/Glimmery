@@ -7,11 +7,12 @@ export {
   useMediaQuery,
   useIsMobileLayout,
   useIsMobilePortraitLayout,
+  useIsSettingsCompactPortrait,
   useIsPhoneLandscapeLayout,
   MOBILE_LAYOUT_QUERY,
   MOBILE_PORTRAIT_QUERY,
   PHONE_LANDSCAPE_QUERY,
-  TABLET_PORTRAIT_QUERY,
+  SETTINGS_COMPACT_PORTRAIT_QUERY,
 } from './hooks/useMediaQuery';
 export { useComposingInput } from './hooks/useComposingInput';
 

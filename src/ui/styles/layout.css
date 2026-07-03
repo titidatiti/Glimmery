@@ -19,8 +19,8 @@
   --layout-phone-landscape-max-height: 500px;
 
   /*
-   * 平板竖屏紧凑布局上限（与 TABLET_PORTRAIT_QUERY / MOBILE_PORTRAIT_QUERY 一致）
-   * iPad Air 竖屏约 820px，须纳入手机端 shell 与设置全屏排版。
+   * 设置界面紧凑竖屏上限（与 SETTINGS_COMPACT_PORTRAIT_QUERY 一致，仅 Settings 使用）
+   * iPad Air 竖屏约 820px。
    */
   --layout-tablet-portrait-max: 1024px;
 

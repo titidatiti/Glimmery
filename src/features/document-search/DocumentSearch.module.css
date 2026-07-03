@@ -40,7 +40,7 @@
   display: none;
 }
 
-@media (max-width: 767px), (orientation: landscape) and (max-height: 500px), (orientation: portrait) and (max-width: 1024px) {
+@media (max-width: 767px), (orientation: landscape) and (max-height: 500px) {
   .searchBar {
     padding-bottom: var(--spacing-sm);
   }

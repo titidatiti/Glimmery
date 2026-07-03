@@ -31,6 +31,7 @@
   align-content: start;
 }
 
+/* SETTINGS_COMPACT_PORTRAIT_QUERY */
 @media (orientation: portrait) and (max-width: 1024px) {
   .grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));

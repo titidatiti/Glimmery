@@ -16,7 +16,7 @@ function ruleBody(source: string, selector: string): string | null {
 }
 
 function mobileBlock(source: string): string {
-  const combined = /@media\s*\(\s*max-width:\s*767px\s*\)\s*,\s*\(\s*orientation:\s*landscape\s*\)\s*and\s*\(\s*max-height:\s*500px\s*\)\s*,\s*\(\s*orientation:\s*portrait\s*\)\s*and\s*\(\s*max-width:\s*1024px\s*\)\s*\{([\s\S]*)\}\s*$/.exec(
+  const combined = /@media\s*\(\s*max-width:\s*767px\s*\)\s*,\s*\(\s*orientation:\s*landscape\s*\)\s*and\s*\(\s*max-height:\s*500px\s*\)\s*\{([\s\S]*)\}\s*$/.exec(
     source,
   );
   if (combined) return combined[1];

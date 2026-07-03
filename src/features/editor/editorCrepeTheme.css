@@ -88,9 +88,9 @@
 
 /*
  * 手机竖屏：块手柄为 PC 悬停交互，隐藏后改用 / 斜杠菜单与 Markdown 语法。
- * 与 MOBILE_PORTRAIT_QUERY 对齐。
+ * 与 MOBILE_PORTRAIT_QUERY 对齐（不含 iPad 竖屏）。
  */
-@media (orientation: portrait) and (max-width: 1024px) {
+@media (max-width: 767px) and (orientation: portrait) {
   .glimmery-body-editor .milkdown-block-handle {
     display: none !important;
   }

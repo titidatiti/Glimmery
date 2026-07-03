@@ -315,7 +315,7 @@
 }
 
 /*
- * 手持端全屏：手机窄宽、横屏矮视口、或 iPad 等平板竖屏（宽 768–1024px）
+ * 设置界面全屏紧凑排版：手机、横屏矮视口、或 iPad 竖屏（仅 Settings，不影响主界面 shell）
  */
 @media (max-width: 767px), (orientation: landscape) and (max-height: 500px), (orientation: portrait) and (max-width: 1024px) {
   .backdrop {
