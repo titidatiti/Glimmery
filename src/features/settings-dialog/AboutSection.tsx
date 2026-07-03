@@ -1,6 +1,8 @@
+import { publicAssetUrl } from '@/lib';
+
 import styles from './AboutSection.module.css';
 
-const BRAND_ICON_SRC = '/icon.png';
+const BRAND_ICON_SRC = publicAssetUrl('icon.png');
 const GITHUB_URL = 'https://github.com/titidatiti/Glimmery';
 
 export function AboutSection() {

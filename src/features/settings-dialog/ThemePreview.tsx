@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { useSettingsStore, resolveEditorTypographyCssVars } from '@/core/settings';
 import { tokensToCssVariables, type ThemeTokens } from '@/core/themes';
+import { publicAssetUrl } from '@/lib';
 import styles from './ThemePreview.module.css';
 
 export interface ThemePreviewProps {
@@ -20,7 +21,7 @@ export function ThemePreview({ tokens, size = 'default' }: ThemePreviewProps) {
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
           <div className={styles.brandRow}>
-            <img className={styles.brandIcon} src="/icon.png" alt="" width={16} height={16} />
+            <img className={styles.brandIcon} src={publicAssetUrl('icon.png')} alt="" width={16} height={16} />
             <div className={styles.brand}>Glimmery</div>
           </div>
           <div className={styles.tagline}>Where every glimmer becomes memory.</div>

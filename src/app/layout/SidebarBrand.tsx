@@ -1,8 +1,9 @@
 import { useIsPhoneLandscapeLayout } from '@/ui';
+import { publicAssetUrl } from '@/lib';
 
 import styles from './SidebarBrand.module.css';
 
-const BRAND_ICON_SRC = '/icon.png';
+const BRAND_ICON_SRC = publicAssetUrl('icon.png');
 
 export function SidebarBrand() {
   const isPhoneLandscape = useIsPhoneLandscapeLayout();

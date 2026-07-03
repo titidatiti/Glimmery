@@ -2,20 +2,20 @@
   "name": "Glimmery",
   "short_name": "Glimmery",
   "description": "Where every glimmer becomes memory.",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#1e1e1e",
   "theme_color": "#1e1e1e",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "favicon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon.png",
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

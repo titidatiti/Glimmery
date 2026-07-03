@@ -38,3 +38,9 @@ export function formatUpdatedAt(iso: string): string {
     hour12: false,
   }).format(date);
 }
+
+/** public/ 目录下的静态资源 URL，兼容 GitHub Pages 等 subpath 部署 */
+export function publicAssetUrl(path: string): string {
+  const normalized = path.replace(/^\//, '');
+  return `${import.meta.env.BASE_URL}${normalized}`;
+}
