@@ -88,17 +88,6 @@
   z-index: 20;
 }
 
-/* 移动端正文全宽时，为左侧块手柄预留 gutter，避免按钮落在屏幕外 */
-@media (max-width: 767px), (orientation: landscape) and (max-height: 500px) {
-  .bodyEditor {
-    --glimmery-block-handle-gutter: 3rem;
-  }
-
-  .bodyEditor :global(.milkdown .ProseMirror) {
-    padding-left: var(--glimmery-block-handle-gutter);
-  }
-}
-
 .bodyEditor :global(.milkdown-slash-menu) {
   z-index: 30;
 }

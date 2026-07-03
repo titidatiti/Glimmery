@@ -36,9 +36,6 @@
 
   /* 设置对话框左侧 Tab 栏固定宽度（容纳「字体与排版」等最长标签） */
   --settings-tab-nav-width: 156px;
-
-  /* 块级 Markdown 手柄左侧留白（移动端由 EditorAdapter 覆盖） */
-  --glimmery-block-handle-gutter: 0px;
 }
 
 /* 可滚动内容区：水平内边距含安全区，禁止裁切交互元素描边 */
