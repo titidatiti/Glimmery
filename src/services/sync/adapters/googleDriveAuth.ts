@@ -23,11 +23,16 @@ interface GoogleUserInfoResponse {
   picture?: string;
 }
 
+interface GoogleOAuthClientError {
+  type?: string;
+  message?: string;
+}
+
 interface TokenClientConfig {
   client_id: string;
   scope: string;
   callback: (response: GoogleTokenResponse) => void;
-  error_callback?: (error: unknown) => void;
+  error_callback?: (error: GoogleOAuthClientError) => void;
 }
 
 interface GoogleTokenResponse {
@@ -75,6 +80,24 @@ export function loadGoogleIdentityScript(): Promise<void> {
     });
   }
   return gisScriptPromise;
+}
+
+/** 在用户点击「连接」前预加载 GIS，避免首次点击因脚本未就绪导致弹窗被拦截 */
+export function preloadGoogleIdentityScript(): void {
+  void loadGoogleIdentityScript().catch(() => undefined);
+}
+
+function formatOAuthClientError(error: GoogleOAuthClientError): Error {
+  if (error.type === 'popup_failed_to_open') {
+    return new Error('授权窗口未能打开，请再点一次「连接 Google 账号」');
+  }
+  if (error.type === 'popup_closed') {
+    return new Error('授权已取消');
+  }
+  if (error.message) {
+    return new Error(error.message);
+  }
+  return new Error('授权失败');
 }
 
 export class GoogleDriveAuth {
@@ -192,7 +215,7 @@ export class GoogleDriveAuth {
           });
         },
         error_callback: (error) => {
-          reject(error instanceof Error ? error : new Error('授权被取消'));
+          reject(formatOAuthClientError(error));
         },
       });
       client.requestAccessToken();

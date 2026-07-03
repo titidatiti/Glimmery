@@ -23,6 +23,7 @@ import {
 } from '@/core/settings/cloudBackupPreferences';
 import { useCloudSyncStore } from '@/core/sync';
 import { useServices } from '@/services/context';
+import { preloadGoogleIdentityScript } from '@/services/sync/adapters/googleDriveAuth';
 import type { SyncAccountProfile } from '@/services/sync';
 import styles from './SyncSection.module.css';
 
@@ -179,6 +180,12 @@ export function SyncSection() {
     void refreshAuth();
   }, [refreshAuth]);
 
+  useEffect(() => {
+    if (configured) {
+      preloadGoogleIdentityScript();
+    }
+  }, [configured]);
+
   const handleConnect = async () => {
     setError(null);
     setMessage(null);
@@ -331,6 +338,7 @@ export function SyncSection() {
             type="button"
             className={styles.connectButton}
             disabled={busy}
+            onPointerDown={() => preloadGoogleIdentityScript()}
             onClick={() => void handleConnect()}
           >
             连接 Google 账号
