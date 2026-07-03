@@ -123,8 +123,6 @@ export function measureCaretLineMetrics(
   view: EditorView,
   overlayHost: HTMLElement | null = null,
 ): SnappedLineMetrics | null {
-  if (!view.hasFocus()) return null;
-
   const { head } = view.state.selection;
   try {
     const coords = view.coordsAtPos(head);
@@ -179,11 +177,6 @@ function createActiveLinePlugin() {
           return;
         }
 
-        if (!view.hasFocus()) {
-          hide();
-          return;
-        }
-
         const metrics = measureCaretLineMetrics(view, overlay.parentElement);
         if (!metrics) {
           hide();
@@ -203,7 +196,9 @@ function createActiveLinePlugin() {
           overlay.style.height = `${height}px`;
           overlay.style.width = `${overlayWidth}px`;
           overlay.style.background = computeOverlayGradient(textWidth, overlayWidth);
-          syncVirtualCaret(view, { top: caretTop, height });
+          if (view.hasFocus()) {
+            syncVirtualCaret(view, { top: caretTop, height });
+          }
         } catch {
           hide();
         }

@@ -72,8 +72,8 @@
   z-index: 1;
 }
 
-.bodyEditor :global(.glimmery-active-line-host:not(:focus-within) .glimmery-active-line-overlay) {
-  display: none !important;
+.bodyEditor :global(.milkdown .ProseMirror.virtual-cursor-enabled) {
+  caret-color: transparent !important;
 }
 
 .bodyEditor :global(.milkdown-block-handle) {
@@ -140,7 +140,7 @@
 }
 
 .bodyEditor :global(.milkdown .ProseMirror-focused .prosemirror-virtual-cursor-animation:not(.prosemirror-virtual-cursor-left):not(.prosemirror-virtual-cursor-right)) {
-  animation: glimmery-caret-blink 1.05s step-end infinite !important;
+  animation: glimmery-caret-breathe 1.75s ease-in-out infinite !important;
   animation-delay: 0.5s;
 }
 
@@ -151,24 +151,39 @@
   box-shadow: inset 0 -2px 0 var(--color-caret);
 }
 
-/* 原生光标回退（非 virtual-cursor 场景） */
-.bodyEditor :global(.ProseMirror .ProseMirror-cursor),
-.bodyEditor :global(.ProseMirror-cursor) {
+/* 启用 virtual-cursor 时隐藏 ProseMirror 原生光标 widget，避免与虚拟光标叠影 */
+.bodyEditor :global(.milkdown .ProseMirror.virtual-cursor-enabled .ProseMirror-cursor),
+.bodyEditor :global(.milkdown .ProseMirror.virtual-cursor-enabled .ProseMirror-cursorwrapper) {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* 原生光标回退（仅非 virtual-cursor 场景） */
+.bodyEditor :global(.milkdown .ProseMirror:not(.virtual-cursor-enabled) .ProseMirror-cursor),
+.bodyEditor :global(.milkdown .ProseMirror:not(.virtual-cursor-enabled) .ProseMirror-cursorwrapper .ProseMirror-cursor) {
   border-left: none;
   width: var(--glimmery-caret-width);
   margin-left: calc(var(--glimmery-caret-width) / -2);
   background: var(--color-caret);
   border-radius: 1px;
-  animation: glimmery-caret-blink 1.05s step-end infinite;
+  animation: glimmery-caret-breathe 1.75s ease-in-out infinite;
 }
 
-@keyframes glimmery-caret-blink {
+/* 简谐明暗：短停留 + 长渐变，整体持续缓慢起伏 */
+@keyframes glimmery-caret-breathe {
   0%,
-  100% {
+  2% {
     opacity: 1;
   }
-  50% {
+  48% {
     opacity: 0;
+  }
+  52% {
+    opacity: 0;
+  }
+  98%,
+  100% {
+    opacity: 1;
   }
 }
 
