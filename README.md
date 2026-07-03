@@ -32,6 +32,8 @@
 - 白噪音 BGM
 - 打字音效
 
+## 效果预览
+
 <p align="center">
   <img src="./assets/feature-font.png" alt="字体与排版设置" width="640">
 </p>
