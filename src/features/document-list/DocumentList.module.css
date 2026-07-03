@@ -17,7 +17,7 @@
   overflow-y: auto;
 }
 
-@media (max-width: 767px), (orientation: landscape) and (max-height: 500px) {
+@media (max-width: 767px), (orientation: landscape) and (max-height: 500px), (orientation: portrait) and (max-width: 1024px) {
   .items {
     overscroll-behavior-y: contain;
   }

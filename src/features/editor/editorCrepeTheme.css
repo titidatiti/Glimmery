@@ -86,6 +86,16 @@
   fill: var(--color-text-body);
 }
 
+/*
+ * 手机竖屏：块手柄为 PC 悬停交互，隐藏后改用 / 斜杠菜单与 Markdown 语法。
+ * 与 MOBILE_PORTRAIT_QUERY 对齐。
+ */
+@media (orientation: portrait) and (max-width: 1024px) {
+  .glimmery-body-editor .milkdown-block-handle {
+    display: none !important;
+  }
+}
+
 /* 正文文字选区：背景与前景均来自主题 token */
 .glimmery-body-editor .milkdown .ProseMirror ::-moz-selection,
 .glimmery-body-editor .milkdown .ProseMirror *::-moz-selection {

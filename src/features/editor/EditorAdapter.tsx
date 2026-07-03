@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Crepe, CrepeFeature } from '@milkdown/crepe';
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react';
 import '@milkdown/crepe/theme/common/style.css';
-import { useComposingInput } from '@/ui';
+import { MOBILE_PORTRAIT_QUERY, useComposingInput } from '@/ui';
 import { glimmeryCodeMirrorTheme } from './codeMirrorTheme';
 import './editorCrepeTheme.css';
 import './editorCrepeOverrides.css';
@@ -10,6 +10,15 @@ import { activeLinePlugin } from './plugins/activeLinePlugin';
 import { blockDragFixPlugin } from './plugins/blockDragFixPlugin';
 import { blockHandleCrepeConfig } from './plugins/blockHandleConfig';
 import styles from './EditorAdapter.module.css';
+
+const MOBILE_PORTRAIT_BODY_PLACEHOLDER = '正文，输入 / 插入块类型';
+
+function resolveBodyPlaceholder(): string {
+  if (typeof window === 'undefined') return '正文';
+  return window.matchMedia(MOBILE_PORTRAIT_QUERY).matches
+    ? MOBILE_PORTRAIT_BODY_PLACEHOLDER
+    : '正文';
+}
 
 export interface EditorAdapterProps {
   title: string;
@@ -41,7 +50,7 @@ function BodyEditor({
         },
         featureConfigs: {
           [CrepeFeature.Placeholder]: {
-            text: '正文',
+            text: resolveBodyPlaceholder(),
           },
           [CrepeFeature.BlockEdit]: blockHandleCrepeConfig,
           [CrepeFeature.CodeMirror]: {

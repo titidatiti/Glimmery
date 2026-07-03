@@ -31,7 +31,7 @@
   align-content: start;
 }
 
-@media (max-width: 767px) {
+@media (orientation: portrait) and (max-width: 1024px) {
   .grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--spacing-sm);

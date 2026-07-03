@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeBlockFirstLineMetrics, insetBlockHandleAnchorRect } from './blockHandleConfig';
+import { computeBlockFirstLineMetrics } from './blockHandleConfig';
 
 describe('computeBlockFirstLineMetrics', () => {
   it('锚定在首行 line-height 区域', () => {
@@ -26,17 +26,5 @@ describe('computeBlockFirstLineMetrics', () => {
 
     expect(rect.height).toBe(28);
     expect(rect.bottom).toBe(108);
-  });
-});
-
-describe('insetBlockHandleAnchorRect', () => {
-  it('将锚点左缘内收，供移动端块手柄落在屏幕内', () => {
-    const rect = insetBlockHandleAnchorRect(
-      { top: 100, left: 16, right: 400, width: 384, height: 28, x: 16, y: 100, bottom: 128 },
-      44,
-    );
-
-    expect(rect.left).toBe(60);
-    expect(rect.width).toBe(340);
   });
 });

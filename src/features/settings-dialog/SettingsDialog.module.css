@@ -313,7 +313,7 @@
 /*
  * 手机端全屏：竖屏窄宽，或横屏矮视口（宽往往 >767px）
  */
-@media (max-width: 767px), (orientation: landscape) and (max-height: 500px) {
+@media (max-width: 767px), (orientation: landscape) and (max-height: 500px), (orientation: portrait) and (max-width: 1024px) {
   .backdrop {
     padding: 0;
     align-items: stretch;

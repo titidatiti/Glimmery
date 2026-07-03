@@ -23,7 +23,7 @@
   }
 }
 
-@media (max-width: 767px) {
+@media (orientation: portrait) and (max-width: 1024px) {
   .preview {
     max-width: 100%;
     padding: var(--spacing-md);

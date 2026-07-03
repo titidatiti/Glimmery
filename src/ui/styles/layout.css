@@ -6,8 +6,9 @@
   /* 8pt 基准网格 */
   --layout-grid-unit: 8px;
 
-  /* 移动端断点（与 Settings / AppShell 一致） */
+  /* 移动端断点（与 useMediaQuery.ts 常量一致） */
   --layout-mobile-max: 767px;
+  --layout-tablet-portrait-max: 1024px;
 
   /* iOS 刘海 / Home Indicator（须配合 index.html viewport-fit=cover） */
   --safe-area-top: env(safe-area-inset-top, 0px);
