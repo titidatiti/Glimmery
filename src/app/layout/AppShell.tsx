@@ -141,7 +141,7 @@ export function AppShell() {
         <div className={styles.writingArea}>
           {activeDocument && activeDocumentId && (
             <EditorAdapter
-              key={activeDocumentId}
+              key={`${activeDocumentId}:${activeDocument.updatedAt}`}
               title={activeDocument.title}
               initialContent={activeDocument.content}
               onTitleChange={handleTitleChange}

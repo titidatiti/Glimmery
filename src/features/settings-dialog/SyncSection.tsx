@@ -195,7 +195,7 @@ function ConflictPicker({
 
 export function SyncSection() {
   const { storage, sync } = useServices();
-  const initialize = useDocumentStore((s) => s.initialize);
+  const reloadFromStorage = useDocumentStore((s) => s.reloadFromStorage);
   const pendingCloudSync = useCloudSyncStore((s) => s.pendingCloudSync);
   const lastCloudBackupAt = useCloudSyncStore((s) => s.lastCloudBackupAt);
 
@@ -320,7 +320,7 @@ export function SyncSection() {
       const plan = planRestore(local, remote);
       if (plan.conflicts.length === 0) {
         const applied = await applyRestore(storage, plan, new Map());
-        await initialize(storage);
+        await reloadFromStorage(storage);
         useCloudSyncStore.getState().markSynced();
         setMessage(formatRestoreSummary(applied, plan.remoteThemes.length));
         return;
@@ -344,7 +344,7 @@ export function SyncSection() {
     setError(null);
     try {
       const applied = await applyRestore(storage, restorePlan, resolutions);
-      await initialize(storage);
+      await reloadFromStorage(storage);
       setRestorePlan(null);
       useCloudSyncStore.getState().markSynced();
       setMessage(formatRestoreSummary(applied, restorePlan.remoteThemes.length));

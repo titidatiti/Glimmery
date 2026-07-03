@@ -24,6 +24,8 @@ export interface DocumentStoreState {
   isLoading: boolean;
   error: string | null;
   initialize: (storage: StorageProvider) => Promise<void>;
+  /** 外部写入 storage 后刷新列表与当前文稿（如云端恢复），尽量保持当前选中的文稿 */
+  reloadFromStorage: (storage: StorageProvider) => Promise<void>;
   selectDocument: (storage: StorageProvider, id: string) => Promise<void>;
   createDocument: (storage: StorageProvider) => Promise<void>;
   renameDocument: (storage: StorageProvider, id: string, title: string) => Promise<void>;
@@ -72,6 +74,42 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
       set({
         isLoading: false,
         error: err instanceof Error ? err.message : '加载文稿失败',
+      });
+    }
+  },
+
+  reloadFromStorage: async (storage) => {
+    set({ error: null });
+    try {
+      let docs = await listDocuments(storage);
+      if (docs.length === 0) {
+        const created = await createNewDocument(storage);
+        set({
+          documents: [created],
+          activeDocumentId: created.id,
+          activeDocument: created,
+          hasUnsavedChanges: false,
+        });
+        return;
+      }
+
+      const sorted = sortDocumentsByUpdatedAt(docs);
+      const { activeDocumentId } = get();
+      const targetId =
+        activeDocumentId && sorted.some((doc) => doc.id === activeDocumentId)
+          ? activeDocumentId
+          : sorted[0].id;
+
+      const active = await loadDocument(storage, targetId);
+      set({
+        documents: sorted,
+        activeDocumentId: targetId,
+        activeDocument: active,
+        hasUnsavedChanges: false,
+      });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : '刷新文稿失败',
       });
     }
   },
