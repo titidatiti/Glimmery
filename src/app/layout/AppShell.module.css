@@ -395,6 +395,13 @@
     display: flex;
   }
 
+  /* 手机竖屏：点选文稿标题即可进入沉浸，隐藏侧栏沉浸按钮 */
+  @media (max-width: 767px) and (orientation: portrait) {
+    .sidebarFocusEnter {
+      display: none;
+    }
+  }
+
   .focusExit {
     display: none;
   }

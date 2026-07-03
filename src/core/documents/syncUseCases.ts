@@ -23,6 +23,60 @@ export interface RestorePlan {
   remoteActiveThemeId: string;
 }
 
+/** 上传备份前：云端比本地新、需用户确认才可覆盖 */
+export interface CloudBackupOverwriteWarning {
+  remoteOnlyCount: number;
+  newerRemoteConflictCount: number;
+  remoteOnlyThemeCount: number;
+}
+
+export function assessCloudBackupOverwrite(
+  local: BackupSnapshot,
+  remote: BackupSnapshot,
+): CloudBackupOverwriteWarning | null {
+  const remoteEmpty = remote.documents.length === 0 && remote.customThemes.length === 0;
+  if (remoteEmpty) return null;
+
+  const plan = planRestore(local.documents, remote);
+  const newerRemoteConflicts = plan.conflicts.filter(
+    (conflict) => conflict.remote.updatedAt > conflict.local.updatedAt,
+  );
+
+  const localThemeIds = new Set(local.customThemes.map((theme) => theme.id));
+  const remoteOnlyThemeCount = remote.customThemes.filter((theme) => !localThemeIds.has(theme.id)).length;
+
+  if (
+    plan.remoteOnly.length === 0 &&
+    newerRemoteConflicts.length === 0 &&
+    remoteOnlyThemeCount === 0
+  ) {
+    return null;
+  }
+
+  return {
+    remoteOnlyCount: plan.remoteOnly.length,
+    newerRemoteConflictCount: newerRemoteConflicts.length,
+    remoteOnlyThemeCount,
+  };
+}
+
+export function formatCloudBackupOverwritePrompt(warning: CloudBackupOverwriteWarning): string {
+  const lines = ['云端存在比本地新的内容，继续备份将用本地数据覆盖云端：'];
+
+  if (warning.remoteOnlyCount > 0) {
+    lines.push(`· ${warning.remoteOnlyCount} 篇仅存在于云端的文稿将被删除`);
+  }
+  if (warning.newerRemoteConflictCount > 0) {
+    lines.push(`· ${warning.newerRemoteConflictCount} 篇文稿的云端版本更新`);
+  }
+  if (warning.remoteOnlyThemeCount > 0) {
+    lines.push(`· ${warning.remoteOnlyThemeCount} 个仅存在于云端的自定义配色将被删除`);
+  }
+
+  lines.push('', '仍要用本地数据覆盖云端吗？');
+  return lines.join('\n');
+}
+
 export async function loadAllDocuments(storage: StorageProvider): Promise<DocumentData[]> {
   const metas = await storage.list();
   const docs = await Promise.all(metas.map((meta) => storage.load(meta.id)));

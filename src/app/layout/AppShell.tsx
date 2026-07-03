@@ -28,6 +28,7 @@ import { FocusIcon, useIsMobileLayout } from '@/ui';
 
 import { SidebarBrand } from './SidebarBrand';
 import { CloudBackupIndicator } from './CloudBackupIndicator';
+import { CloudSyncTrigger } from './CloudSyncTrigger';
 
 import styles from './AppShell.module.css';
 
@@ -127,6 +128,7 @@ export function AppShell() {
             <FocusIcon className={styles.sidebarFocusEnterIcon} />
             <span className={styles.sidebarFocusEnterLabel}>沉浸模式</span>
           </button>
+          <CloudSyncTrigger />
           <SettingsTrigger />
         </div>
       </div>

@@ -18,15 +18,17 @@ export {
   updateDocumentContent,
   updateDocumentTitle,
 } from './useCases';
-export type { SyncConflict, ConflictResolution, RestorePlan } from './syncUseCases';
+export type { SyncConflict, ConflictResolution, RestorePlan, CloudBackupOverwriteWarning } from './syncUseCases';
 export {
   loadAllDocuments,
   buildBackupSnapshot,
   planRestore,
+  assessCloudBackupOverwrite,
+  formatCloudBackupOverwritePrompt,
   backupAllDocuments,
   applyRestore,
   pullRemoteBackup,
   pullRemoteDocuments,
   formatRestoreSummary,
 } from './syncUseCases';
-export { performCloudBackup } from './cloudBackup';
+export { performCloudBackup, type PerformCloudBackupResult } from './cloudBackup';

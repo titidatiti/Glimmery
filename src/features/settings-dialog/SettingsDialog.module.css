@@ -195,6 +195,11 @@
   transform: rotate(45deg);
 }
 
+.trigger:hover .triggerIconStatic,
+.trigger:focus-visible .triggerIconStatic {
+  transform: none;
+}
+
 @media (orientation: landscape) and (max-height: 500px) {
   .trigger {
     margin-top: 0;

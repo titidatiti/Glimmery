@@ -12,6 +12,8 @@ import {
 import type { StorageProvider } from '@/services/storage';
 import type { SyncProvider } from '@/services/sync';
 
+const CLOUD_AHEAD_MESSAGE = '云端有较新的备份，请在侧栏或设置中确认后再上传';
+
 export function useAutoCloudBackup(storage: StorageProvider, sync: SyncProvider): void {
   const pendingCloudSync = useCloudSyncStore((s) => s.pendingCloudSync);
   const [intervalSec, setIntervalSec] = useState(loadCloudBackupIntervalSec);
@@ -22,7 +24,12 @@ export function useAutoCloudBackup(storage: StorageProvider, sync: SyncProvider)
   syncRef.current = sync;
 
   const runBackup = useCallback(async (): Promise<boolean> => {
-    return performCloudBackup(storageRef.current, syncRef.current);
+    const result = await performCloudBackup(storageRef.current, syncRef.current);
+    if (result.status === 'needs_confirmation') {
+      useCloudSyncStore.getState().setBackupError(CLOUD_AHEAD_MESSAGE);
+      return false;
+    }
+    return result.status === 'success' || result.status === 'skipped';
   }, []);
 
   useEffect(() => {

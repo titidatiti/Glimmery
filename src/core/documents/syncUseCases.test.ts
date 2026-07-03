@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_THEME_ID } from '@/core/themes';
 import type { DocumentData } from './types';
-import { formatRestoreSummary, planRestore } from './syncUseCases';
+import { formatRestoreSummary, planRestore, assessCloudBackupOverwrite } from './syncUseCases';
 import type { BackupSnapshot } from '@/services/sync';
 import { parseDriveBackupPayload } from '@/services/sync';
 
@@ -39,6 +39,39 @@ describe('planRestore', () => {
     const plan = planRestore([], snapshot([], [{ version: 1, id: 't1', name: '我的', tokens: {} as never }]));
     expect(plan.remoteThemes).toHaveLength(1);
     expect(plan.remoteActiveThemeId).toBe(DEFAULT_THEME_ID);
+  });
+});
+
+describe('assessCloudBackupOverwrite', () => {
+  it('空云端无需确认', () => {
+    const local = snapshot([doc('a', '2024-01-02T00:00:00.000Z')]);
+    expect(assessCloudBackupOverwrite(local, snapshot([]))).toBeNull();
+  });
+
+  it('云端独有文稿需确认', () => {
+    const local = snapshot([]);
+    const remote = snapshot([doc('b', '2024-01-01T00:00:00.000Z')]);
+    expect(assessCloudBackupOverwrite(local, remote)).toEqual({
+      remoteOnlyCount: 1,
+      newerRemoteConflictCount: 0,
+      remoteOnlyThemeCount: 0,
+    });
+  });
+
+  it('云端版本更新需确认', () => {
+    const local = snapshot([{ ...doc('a', '2024-01-02T00:00:00.000Z'), content: '本地' }]);
+    const remote = snapshot([{ ...doc('a', '2024-01-03T00:00:00.000Z'), content: '云端' }]);
+    expect(assessCloudBackupOverwrite(local, remote)).toEqual({
+      remoteOnlyCount: 0,
+      newerRemoteConflictCount: 1,
+      remoteOnlyThemeCount: 0,
+    });
+  });
+
+  it('本地版本更新无需确认', () => {
+    const local = snapshot([{ ...doc('a', '2024-01-04T00:00:00.000Z'), content: '本地' }]);
+    const remote = snapshot([{ ...doc('a', '2024-01-03T00:00:00.000Z'), content: '云端' }]);
+    expect(assessCloudBackupOverwrite(local, remote)).toBeNull();
   });
 });
 

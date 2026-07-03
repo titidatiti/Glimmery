@@ -8,6 +8,7 @@ import {
   planRestore,
   pullRemoteBackup,
   useDocumentStore,
+  type CloudBackupOverwriteWarning,
   type ConflictResolution,
   type RestorePlan,
   type SyncConflict,
@@ -86,6 +87,50 @@ function formatTime(iso: string): string {
   }
 }
 
+function BackupOverwritePrompt({
+  warning,
+  onConfirm,
+  onCancel,
+  disabled,
+}: {
+  warning: CloudBackupOverwriteWarning;
+  onConfirm: () => void;
+  onCancel: () => void;
+  disabled?: boolean;
+}) {
+  const details: string[] = [];
+  if (warning.remoteOnlyCount > 0) {
+    details.push(`${warning.remoteOnlyCount} 篇仅存在于云端的文稿将被删除`);
+  }
+  if (warning.newerRemoteConflictCount > 0) {
+    details.push(`${warning.newerRemoteConflictCount} 篇文稿的云端版本更新`);
+  }
+  if (warning.remoteOnlyThemeCount > 0) {
+    details.push(`${warning.remoteOnlyThemeCount} 个仅存在于云端的自定义配色将被删除`);
+  }
+
+  return (
+    <div className={styles.conflicts}>
+      <p className={styles.conflictsTitle}>
+        云端存在比本地新的内容，继续备份将用本地数据覆盖云端：
+      </p>
+      <ul className={styles.overwriteList}>
+        {details.map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
+      <div className={styles.bulkActions}>
+        <button type="button" className={styles.actionButtonPrimary} disabled={disabled} onClick={onConfirm}>
+          仍要覆盖云端
+        </button>
+        <button type="button" className={styles.bulkButton} disabled={disabled} onClick={onCancel}>
+          取消
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ConflictPicker({
   conflicts,
   resolutions,
@@ -160,6 +205,7 @@ export function SyncSection() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [restorePlan, setRestorePlan] = useState<RestorePlan | null>(null);
+  const [backupWarning, setBackupWarning] = useState<CloudBackupOverwriteWarning | null>(null);
   const [resolutions, setResolutions] = useState<Map<string, ConflictResolution>>(new Map());
   const [backupIntervalSec, setBackupIntervalSec] = useState(loadCloudBackupIntervalSec);
 
@@ -211,6 +257,7 @@ export function SyncSection() {
       setAuthenticated(false);
       setAccountProfile(null);
       setRestorePlan(null);
+      setBackupWarning(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : '退出失败');
     } finally {
@@ -218,16 +265,29 @@ export function SyncSection() {
     }
   };
 
-  const handleBackup = async () => {
+  const handleBackup = async (confirmedOverwrite = false) => {
     setBusy(true);
     setError(null);
     setMessage(null);
+    if (!confirmedOverwrite) {
+      setBackupWarning(null);
+    }
     try {
-      const ok = await performCloudBackup(storage, sync, { force: true });
-      if (!ok) {
-        throw new Error(useCloudSyncStore.getState().backupError ?? '备份失败');
+      const result = await performCloudBackup(storage, sync, {
+        force: true,
+        confirmedOverwrite,
+      });
+      if (result.status === 'needs_confirmation') {
+        setBackupWarning(result.warning);
+        return;
       }
-      setMessage('已备份到 Google Drive');
+      setBackupWarning(null);
+      if (result.status === 'failed') {
+        throw new Error(result.error);
+      }
+      if (result.status === 'success') {
+        setMessage('已备份到 Google Drive');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '备份失败');
     } finally {
@@ -444,6 +504,15 @@ export function SyncSection() {
           从云端恢复
         </button>
       </div>
+
+      {backupWarning && (
+        <BackupOverwritePrompt
+          warning={backupWarning}
+          disabled={busy}
+          onConfirm={() => void handleBackup(true)}
+          onCancel={() => setBackupWarning(null)}
+        />
+      )}
 
       {restorePlan && restorePlan.conflicts.length > 0 && (
         <>
