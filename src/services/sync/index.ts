@@ -1,4 +1,18 @@
-export type { SyncProvider, SyncResult, SyncAccountProfile, BackupSnapshot, CloudAuthSessionStatus } from './types';
+export type {
+  SyncProvider,
+  SyncResult,
+  SyncAccountProfile,
+  BackupSnapshot,
+  CloudAuthSessionStatus,
+  CloudRevisionInfo,
+  CloudRevisionSlot,
+  SyncPushOptions,
+  SyncPullOptions,
+  SyncPullResult,
+  CloudSyncSchemeStatus,
+  CloudSyncSchemeMigrationResult,
+  CloudSyncSchemeKind,
+} from './types';
 export {
   createDriveBackupPayload,
   parseDriveBackupPayload,

@@ -28,7 +28,7 @@ export function AboutSection() {
       <dl className={styles.meta}>
         <div className={styles.row}>
           <dt>版本</dt>
-          <dd>0.1.0</dd>
+          <dd>0.2.0</dd>
         </div>
         <div className={styles.row}>
           <dt>作者</dt>

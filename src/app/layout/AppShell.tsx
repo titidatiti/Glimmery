@@ -11,6 +11,10 @@ import { debounce, formatUpdatedAt } from '@/lib';
 import { useServices } from '@/services/context';
 
 import { useAutoCloudBackup } from '@/app/hooks/useAutoCloudBackup';
+import {
+  buildSchemeMigrationDialogMessage,
+  useStorageSchemeGate,
+} from '@/app/hooks/useStorageSchemeGate';
 import { useStartupCloudSync } from '@/app/hooks/useStartupCloudSync';
 import { useFocusGestures } from '@/app/hooks/useFocusGestures';
 import { useCloudSyncStore } from '@/core/sync';
@@ -30,6 +34,7 @@ import { FocusIcon, useIsMobileLayout } from '@/ui';
 import { SidebarBrand } from './SidebarBrand';
 import { CloudBackupIndicator } from './CloudBackupIndicator';
 import { CloudSyncTrigger } from './CloudSyncTrigger';
+import { StorageSchemeMigrationOverlay } from './StorageSchemeMigrationOverlay';
 
 import styles from './AppShell.module.css';
 
@@ -64,9 +69,15 @@ export function AppShell() {
   const isMobile = useIsMobileLayout();
   const isCloudBackingUp = useCloudSyncStore((s) => s.isCloudBackingUp);
 
-  useAutoCloudBackup(storage, sync);
+  const appInitDone = !isLoading;
+  const schemeGate = useStorageSchemeGate(storage, sync, appInitDone);
+  const cloudSyncEnabled = schemeGate.phase === 'ready' && !schemeGate.blockCloudSync;
 
-  const { ready: startupSyncReady, syncing: startupCloudSyncing } = useStartupCloudSync(storage, sync);
+  useAutoCloudBackup(storage, sync, { enabled: cloudSyncEnabled });
+
+  const { ready: startupSyncReady, syncing: startupCloudSyncing } = useStartupCloudSync(storage, sync, {
+    enabled: cloudSyncEnabled,
+  });
 
   useFocusGestures({
     enabled: !isMobile,
@@ -102,11 +113,66 @@ export function AppShell() {
     [updateContent, debouncedPersist],
   );
 
-  if (!startupSyncReady || (isLoading && !activeDocument)) {
+  if (
+    schemeGate.phase === 'local-prompt' ||
+    schemeGate.phase === 'cloud-prompt' ||
+    schemeGate.phase === 'cloud-reauth-prompt'
+  ) {
+    const isCloud = schemeGate.phase === 'cloud-prompt';
+    const isReauth = schemeGate.phase === 'cloud-reauth-prompt';
+    return (
+      <StorageSchemeMigrationOverlay
+        title={
+          isReauth
+            ? '需要重新登录 Google'
+            : isCloud
+              ? '云端数据结构已升级'
+              : '本地数据结构已升级'
+        }
+        message={buildSchemeMigrationDialogMessage(schemeGate)}
+        error={isReauth ? schemeGate.error : undefined}
+        onConfirm={() =>
+          void (isReauth
+            ? schemeGate.confirmCloudReauth()
+            : isCloud
+              ? schemeGate.confirmCloudMigration()
+              : schemeGate.confirmLocalMigration())
+        }
+        onDefer={isCloud || isReauth ? () => void schemeGate.deferCloudMigration() : undefined}
+        deferLabel="稍后（暂不使用云同步）"
+        confirmLabel={isReauth ? '重新登录' : undefined}
+      />
+    );
+  }
+
+  if (schemeGate.phase === 'failed') {
+    return (
+      <StorageSchemeMigrationOverlay
+        title="数据方案检查失败"
+        message="无法确认本地或云端数据结构版本。请重试；本地文稿不受影响。"
+        error={schemeGate.error}
+        onConfirm={() => schemeGate.retryCheck()}
+        confirmLabel="重试"
+      />
+    );
+  }
+
+  if (
+    !startupSyncReady ||
+    schemeGate.phase === 'checking' ||
+    schemeGate.phase === 'migrating' ||
+    (isLoading && !activeDocument)
+  ) {
     return (
       <div className={styles.loading}>
         <span className={styles.loadingText}>
-          {startupCloudSyncing ? '正在从云端同步…' : '微光汇聚中…'}
+          {schemeGate.phase === 'migrating'
+            ? '正在迁移数据…'
+            : startupCloudSyncing
+              ? '正在从云端同步…'
+              : schemeGate.phase === 'checking'
+                ? '正在检查数据版本…'
+                : '微光汇聚中…'}
         </span>
       </div>
     );
@@ -134,7 +200,7 @@ export function AppShell() {
             <FocusIcon className={styles.sidebarFocusEnterIcon} />
             <span className={styles.sidebarFocusEnterLabel}>沉浸模式</span>
           </button>
-          <CloudSyncTrigger />
+          <CloudSyncTrigger cloudMigrationBlocked={schemeGate.blockCloudSync} />
           <SettingsTrigger />
         </div>
       </div>

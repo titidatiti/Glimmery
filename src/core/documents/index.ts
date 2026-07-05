@@ -23,11 +23,14 @@ export {
   loadAllDocuments,
   buildBackupSnapshot,
   planRestore,
+  planRestoreWithManifest,
   assessCloudBackupOverwrite,
+  assessCloudBackupOverwriteFromManifest,
   formatCloudBackupOverwritePrompt,
   backupAllDocuments,
   applyRestore,
   pullRemoteBackup,
+  pullRemoteSyncData,
   pullRemoteDocuments,
   formatRestoreSummary,
   buildAutoRestoreResolutions,
@@ -37,3 +40,8 @@ export {
 } from './syncUseCases';
 export { performCloudBackup, type PerformCloudBackupResult } from './cloudBackup';
 export { performStartupCloudSync, type StartupCloudSyncResult } from './cloudStartupSync';
+export {
+  restoreDocumentFromCloudRevision,
+  restoreSettingsFromCloudRevision,
+} from './cloudRevisionUseCases';
+export { getSettingsUpdatedAtForSync } from './syncUseCases';

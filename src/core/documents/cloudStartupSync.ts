@@ -1,3 +1,4 @@
+import { isCloudSyncSchemeMigrationError, resolveCloudSyncErrorMessage } from '@/core/storage';
 import type { StorageProvider } from '@/services/storage';
 import type { SyncProvider } from '@/services/sync';
 import { useCloudSyncStore } from '@/core/sync';
@@ -6,12 +7,21 @@ import {
   buildAutoRestoreResolutions,
   loadAllDocuments,
   needsStartupRestore,
-  planRestore,
-  pullRemoteBackup,
+  planRestoreWithManifest,
+  pullRemoteSyncData,
 } from './syncUseCases';
 
 export type StartupCloudSyncResult =
-  | { status: 'skipped'; reason: 'not_configured' | 'not_authenticated' | 'empty_remote' | 'already_synced' | 'busy' }
+  | {
+      status: 'skipped';
+      reason:
+        | 'not_configured'
+        | 'not_authenticated'
+        | 'empty_remote'
+        | 'already_synced'
+        | 'busy'
+        | 'scheme_migration_required';
+    }
   | { status: 'success'; appliedDocs: number }
   | { status: 'failed'; error: string };
 
@@ -41,13 +51,21 @@ export async function performStartupCloudSync(
   cloudStore.setBackupError(null);
 
   try {
-    const remote = await pullRemoteBackup(sync);
-    if (remote.documents.length === 0 && remote.customThemes.length === 0) {
+    const { snapshot, manifest } = await pullRemoteSyncData(storage, sync);
+    const remoteEmpty =
+      Object.keys(manifest.documents).length === 0 && manifest.settings === null;
+    if (remoteEmpty) {
       return { status: 'skipped', reason: 'empty_remote' };
     }
 
     const local = await loadAllDocuments(storage);
-    const plan = planRestore(local, remote);
+    const plan = planRestoreWithManifest(
+      local,
+      manifest,
+      snapshot.documents,
+      snapshot.customThemes,
+      snapshot.activeThemeId,
+    );
     const resolutions = buildAutoRestoreResolutions(plan);
 
     if (!needsStartupRestore(plan, resolutions)) {
@@ -59,7 +77,11 @@ export async function performStartupCloudSync(
 
     return { status: 'success', appliedDocs };
   } catch (error) {
-    const message = error instanceof Error ? error.message : '启动同步失败';
+    if (isCloudSyncSchemeMigrationError(error)) {
+      cloudStore.setBackupError(resolveCloudSyncErrorMessage(error, '启动同步失败'));
+      return { status: 'skipped', reason: 'scheme_migration_required' };
+    }
+    const message = resolveCloudSyncErrorMessage(error, '启动同步失败');
     cloudStore.setBackupError(message);
     return { status: 'failed', error: message };
   } finally {

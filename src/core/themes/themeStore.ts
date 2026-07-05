@@ -15,6 +15,7 @@ import { generateId } from '@/lib';
 
 const THEME_STORAGE_KEY = 'glimmery:active-theme';
 const CUSTOM_THEMES_KEY = 'glimmery:custom-themes';
+const SETTINGS_UPDATED_AT_KEY = 'glimmery:settings-updated-at';
 
 /** 旧版主题 id 迁移 */
 const LEGACY_THEME_IDS: Record<string, string> = {
@@ -88,11 +89,17 @@ function buildCustomTheme(
 export function exportThemeBackupState(): {
   customThemes: SerializedTheme[];
   activeThemeId: string;
+  updatedAt: string;
 } {
   const state = useThemeStore.getState();
+  let updatedAt = new Date(0).toISOString();
+  if (typeof localStorage !== 'undefined') {
+    updatedAt = localStorage.getItem(SETTINGS_UPDATED_AT_KEY) ?? updatedAt;
+  }
   return {
     customThemes: state.themes.filter((t) => !t.isBuiltin).map(serializeTheme),
     activeThemeId: state.activeThemeId,
+    updatedAt,
   };
 }
 
@@ -116,7 +123,10 @@ export function applyThemeBackupState(
   });
 }
 
-function markThemeCloudPending(): void {
+function touchSettingsUpdatedAt(): void {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(SETTINGS_UPDATED_AT_KEY, new Date().toISOString());
+  }
   useCloudSyncStore.getState().markPending();
 }
 
@@ -140,6 +150,7 @@ export const useThemeStore = create<ThemeStoreState>((set, get) => {
       const theme = resolveTheme(id, get().themes.filter((t) => !t.isBuiltin));
       localStorage.setItem(THEME_STORAGE_KEY, theme.id);
       set({ activeThemeId: theme.id, activeTheme: theme, previewTokens: null });
+      touchSettingsUpdatedAt();
     },
 
     setPreviewTokens: (tokens) => set({ previewTokens: tokens }),
@@ -151,7 +162,7 @@ export const useThemeStore = create<ThemeStoreState>((set, get) => {
       saveCustomThemesToLocal(themes);
       localStorage.setItem(THEME_STORAGE_KEY, theme.id);
       set({ themes, activeThemeId: theme.id, activeTheme: theme, previewTokens: null });
-      markThemeCloudPending();
+      touchSettingsUpdatedAt();
       return theme;
     },
 
@@ -174,7 +185,7 @@ export const useThemeStore = create<ThemeStoreState>((set, get) => {
         activeTheme: isActive ? updated : get().activeTheme,
         previewTokens: null,
       });
-      markThemeCloudPending();
+      touchSettingsUpdatedAt();
     },
 
     deleteCustomTheme: (id) => {
@@ -183,7 +194,7 @@ export const useThemeStore = create<ThemeStoreState>((set, get) => {
 
       const themes = get().themes.filter((t) => t.id !== id);
       saveCustomThemesToLocal(themes);
-      markThemeCloudPending();
+      touchSettingsUpdatedAt();
 
       if (get().activeThemeId === id) {
         const fallback = getBuiltinTheme(DEFAULT_THEME_ID) ?? BUILTIN_THEMES[0];

@@ -1,14 +1,15 @@
+import { resolveCloudSyncErrorMessage } from '@/core/storage';
 import type { StorageProvider } from '@/services/storage';
 import type { SyncProvider } from '@/services/sync';
 import { useCloudSyncStore } from '@/core/sync';
 import {
-  assessCloudBackupOverwrite,
+  assessCloudBackupOverwriteFromManifest,
   backupAllDocuments,
   buildBackupSnapshot,
-  pullRemoteBackup,
+  getSettingsUpdatedAtForSync,
   type CloudBackupOverwriteWarning,
 } from '@/core/documents/syncUseCases';
-
+import { parseRemoteManifestJson } from '@/services/sync/drive/manifestSyncPlan';
 export type { CloudBackupOverwriteWarning };
 
 export type PerformCloudBackupResult =
@@ -50,15 +51,26 @@ export async function performCloudBackup(
 
   try {
     if (!options?.confirmedOverwrite) {
-      const remote = await pullRemoteBackup(sync);
+      const manifestJson = await sync.fetchRemoteManifest();
       const local = await buildBackupSnapshot(storage);
-      const warning = assessCloudBackupOverwrite(local, remote);
-      if (warning) {
-        return { status: 'needs_confirmation', warning };
+      if (manifestJson) {
+        const manifest = parseRemoteManifestJson(manifestJson);
+        if (manifest) {
+          const warning = assessCloudBackupOverwriteFromManifest(
+            local,
+            manifest,
+            getSettingsUpdatedAtForSync(),
+          );
+          if (warning) {
+            return { status: 'needs_confirmation', warning };
+          }
+        }
       }
     }
 
-    const result = await backupAllDocuments(storage, sync);
+    const result = await backupAllDocuments(storage, sync, {
+      force: options?.confirmedOverwrite,
+    });
     if (result.success) {
       store.markSynced();
       return { status: 'success' };
@@ -67,7 +79,7 @@ export async function performCloudBackup(
     store.setBackupError(error);
     return { status: 'failed', error };
   } catch (error) {
-    const message = error instanceof Error ? error.message : '云端备份失败';
+    const message = resolveCloudSyncErrorMessage(error, '云端备份失败');
     store.setBackupError(message);
     return { status: 'failed', error: message };
   } finally {

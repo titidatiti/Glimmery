@@ -22,14 +22,16 @@ export interface StartupCloudSyncState {
 export function useStartupCloudSync(
   storage: StorageProvider,
   sync: SyncProvider,
+  options?: { enabled?: boolean },
 ): StartupCloudSyncState {
+  const enabled = options?.enabled ?? true;
   const isLoading = useDocumentStore((s) => s.isLoading);
   const reloadFromStorage = useDocumentStore((s) => s.reloadFromStorage);
   const [ready, setReady] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    if (isLoading || ready) return;
+    if (!enabled || isLoading || ready) return;
 
     if (!claimStartupCloudSyncRun()) {
       setReady(true);
@@ -61,7 +63,7 @@ export function useStartupCloudSync(
     return () => {
       cancelled = true;
     };
-  }, [isLoading, ready, storage, sync, reloadFromStorage]);
+  }, [enabled, isLoading, ready, storage, sync, reloadFromStorage]);
 
   return { ready, syncing };
 }

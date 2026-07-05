@@ -3,6 +3,7 @@ import {
   formatCloudBackupOverwritePrompt,
   performCloudBackup,
 } from '@/core/documents';
+import { CLOUD_SYNC_SCHEME_MIGRATION_REQUIRED } from '@/core/storage';
 import { useCloudSyncStore, clearCloudSyncSessionExpiredNotice } from '@/core/sync';
 import { formatUpdatedAt } from '@/lib';
 import { useServices } from '@/services/context';
@@ -11,16 +12,25 @@ import { CloudIcon } from '@/ui/icons/CloudIcon';
 import settingsStyles from '@/features/settings-dialog/SettingsDialog.module.css';
 import styles from './CloudSyncTrigger.module.css';
 
+export interface CloudSyncTriggerProps {
+  /** 云端数据结构待迁移或用户本会话暂缓迁移 */
+  cloudMigrationBlocked?: boolean;
+}
+
 function resolveStatusLine(input: {
   configured: boolean;
   isBackingUp: boolean;
   authenticated: boolean | null;
   sessionExpired: boolean;
+  cloudMigrationBlocked: boolean;
   lastCloudBackupAt: string | null;
   pendingCloudSync: boolean;
 }): { text: string; tone: 'default' | 'pending' | 'error' } {
   if (!input.configured) {
     return { text: '登录状态：未登录', tone: 'default' };
+  }
+  if (input.cloudMigrationBlocked) {
+    return { text: '需完成数据迁移', tone: 'error' };
   }
   if (input.isBackingUp) {
     return { text: '正在同步…', tone: 'default' };
@@ -43,7 +53,7 @@ function resolveStatusLine(input: {
   return { text: `最近同步时间：${syncedAt}`, tone: 'default' };
 }
 
-export function CloudSyncTrigger() {
+export function CloudSyncTrigger({ cloudMigrationBlocked = false }: CloudSyncTriggerProps) {
   const { storage, sync } = useServices();
   const isBackingUp = useCloudSyncStore((s) => s.isCloudBackingUp);
   const pendingCloudSync = useCloudSyncStore((s) => s.pendingCloudSync);
@@ -89,12 +99,13 @@ export function CloudSyncTrigger() {
   };
 
   const handleClick = async () => {
-    if (!configured || isBackingUp) return;
+    if (!configured || isBackingUp || cloudMigrationBlocked) return;
 
     try {
       if (!(await sync.isAuthenticated())) {
         await sync.authenticate();
         clearCloudSyncSessionExpiredNotice();
+        window.dispatchEvent(new Event('glimmery-cloud-auth-restored'));
       }
       await runBackup(false);
     } catch {
@@ -111,6 +122,7 @@ export function CloudSyncTrigger() {
         isBackingUp,
         authenticated,
         sessionExpired,
+        cloudMigrationBlocked,
         lastCloudBackupAt,
         pendingCloudSync,
       }),
@@ -119,6 +131,7 @@ export function CloudSyncTrigger() {
       isBackingUp,
       authenticated,
       sessionExpired,
+      cloudMigrationBlocked,
       lastCloudBackupAt,
       pendingCloudSync,
     ],
@@ -126,13 +139,15 @@ export function CloudSyncTrigger() {
 
   const hint = !configured
     ? '未配置云同步（需 VITE_GOOGLE_CLIENT_ID）'
-    : sessionExpired
-      ? CLOUD_SYNC_SESSION_EXPIRED_MESSAGE
-      : backupError
-        ? backupError
-        : authenticated
-          ? '点击立即备份到 Google Drive'
-          : '点击连接 Google 并备份';
+    : cloudMigrationBlocked
+      ? `${CLOUD_SYNC_SCHEME_MIGRATION_REQUIRED}。请刷新页面并完成迁移对话框。`
+      : sessionExpired
+        ? CLOUD_SYNC_SESSION_EXPIRED_MESSAGE
+        : backupError
+          ? backupError
+          : authenticated
+            ? '点击立即备份到 Google Drive'
+            : '点击连接 Google 并备份';
 
   const statusClassName =
     status.tone === 'pending'
@@ -146,7 +161,7 @@ export function CloudSyncTrigger() {
       type="button"
       className={`${settingsStyles.trigger} ${styles.trigger}`}
       onClick={() => void handleClick()}
-      disabled={!configured || isBackingUp}
+      disabled={!configured || isBackingUp || cloudMigrationBlocked}
       title={hint}
       aria-label={`云同步，${status.text}`}
     >

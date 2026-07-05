@@ -5,8 +5,8 @@ import {
   formatRestoreSummary,
   loadAllDocuments,
   performCloudBackup,
-  planRestore,
-  pullRemoteBackup,
+  planRestoreWithManifest,
+  pullRemoteSyncData,
   useDocumentStore,
   type CloudBackupOverwriteWarning,
   type ConflictResolution,
@@ -26,6 +26,7 @@ import { useCloudSyncStore, clearCloudSyncSessionExpiredNotice } from '@/core/sy
 import { useServices } from '@/services/context';
 import { preloadGoogleIdentityScript } from '@/services/sync/adapters/googleDriveAuth';
 import { CLOUD_SYNC_SESSION_EXPIRED_MESSAGE, type SyncAccountProfile } from '@/services/sync';
+import { CloudRevisionPanel } from './CloudRevisionPanel';
 import styles from './SyncSection.module.css';
 
 function accountInitial(profile: SyncAccountProfile): string {
@@ -318,13 +319,21 @@ export function SyncSection() {
     setMessage(null);
     setRestorePlan(null);
     try {
-      const remote = await pullRemoteBackup(sync);
-      if (remote.documents.length === 0 && remote.customThemes.length === 0) {
+      const { snapshot, manifest } = await pullRemoteSyncData(storage, sync);
+      const remoteEmpty =
+        Object.keys(manifest.documents).length === 0 && manifest.settings === null;
+      if (remoteEmpty) {
         setMessage('云端暂无备份');
         return;
       }
       const local = await loadAllDocuments(storage);
-      const plan = planRestore(local, remote);
+      const plan = planRestoreWithManifest(
+        local,
+        manifest,
+        snapshot.documents,
+        snapshot.customThemes,
+        snapshot.activeThemeId,
+      );
       if (plan.conflicts.length === 0) {
         const applied = await applyRestore(storage, plan, new Map());
         await reloadFromStorage(storage);
@@ -545,6 +554,8 @@ export function SyncSection() {
           </button>
         </>
       )}
+
+      <CloudRevisionPanel disabled={busy} />
     </div>
   );
 }

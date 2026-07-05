@@ -14,7 +14,12 @@ import type { SyncProvider } from '@/services/sync';
 
 const CLOUD_AHEAD_MESSAGE = '云端有较新的备份，请在侧栏或设置中确认后再上传';
 
-export function useAutoCloudBackup(storage: StorageProvider, sync: SyncProvider): void {
+export function useAutoCloudBackup(
+  storage: StorageProvider,
+  sync: SyncProvider,
+  options?: { enabled?: boolean },
+): void {
+  const enabled = options?.enabled ?? true;
   const pendingCloudSync = useCloudSyncStore((s) => s.pendingCloudSync);
   const [intervalSec, setIntervalSec] = useState(loadCloudBackupIntervalSec);
   const storageRef = useRef(storage);
@@ -45,14 +50,14 @@ export function useAutoCloudBackup(storage: StorageProvider, sync: SyncProvider)
   }, []);
 
   useEffect(() => {
-    if (!pendingCloudSync || !sync.isConfigured()) return;
+    if (!enabled || !pendingCloudSync || !sync.isConfigured()) return;
 
     const tick = window.setInterval(() => {
       void runBackup();
     }, clampCloudBackupIntervalSec(intervalSec) * 1000);
 
     return () => window.clearInterval(tick);
-  }, [pendingCloudSync, sync, runBackup, intervalSec]);
+  }, [enabled, pendingCloudSync, sync, runBackup, intervalSec]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {

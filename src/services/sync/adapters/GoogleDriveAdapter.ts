@@ -1,30 +1,31 @@
 import type { StorageKeyValue } from '@/services/storage';
-import {
-  createDriveBackupPayload,
-  emptyBackupSnapshot,
-  parseDriveBackupPayload,
-} from '../backupPayload';
-import {
-  DRIVE_BACKUP_FILENAME,
-  GOOGLE_DRIVE_SCOPE_ERROR_PATTERN,
-  INSUFFICIENT_DRIVE_SCOPE_MESSAGE,
-} from '../constants';
-import type { BackupSnapshot, SyncProvider, SyncResult, SyncAccountProfile } from '../types';
-import { GoogleDriveAuth } from './googleDriveAuth';
 
-const DRIVE_FILES_URL = 'https://www.googleapis.com/drive/v3/files';
-const DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
+import { GoogleDriveAuth } from './googleDriveAuth';
+import { emptyBackupSnapshot } from '../backupPayload';
+import type {
+  BackupSnapshot,
+  CloudRevisionInfo,
+  CloudRevisionSlot,
+  SyncAccountProfile,
+  SyncProvider,
+  SyncPushOptions,
+  SyncResult,
+} from '../types';
+import { GoogleDriveFileStore } from '../drive/googleDriveFileStore';
+import { GoogleDriveSyncV3 } from '../drive/googleDriveSyncV3';
 
 export class GoogleDriveAdapter implements SyncProvider {
   readonly id = 'google-drive';
 
   private readonly auth: GoogleDriveAuth;
+  private readonly syncV3: GoogleDriveSyncV3;
 
   constructor(
     kv: StorageKeyValue,
     private readonly clientId: string,
   ) {
     this.auth = new GoogleDriveAuth(kv, clientId);
+    this.syncV3 = new GoogleDriveSyncV3(new GoogleDriveFileStore(this.auth));
   }
 
   isConfigured(): boolean {
@@ -51,37 +52,13 @@ export class GoogleDriveAdapter implements SyncProvider {
     await this.auth.signOut();
   }
 
-  async push(snapshot: BackupSnapshot): Promise<SyncResult> {
+  async push(snapshot: BackupSnapshot, options?: SyncPushOptions): Promise<SyncResult> {
     try {
-      const token = await this.requireDriveToken();
-      const body = JSON.stringify(createDriveBackupPayload(snapshot));
-      const fileId = await this.findBackupFileId(token);
-
-      if (fileId) {
-        await this.driveFetch(`${DRIVE_UPLOAD_URL}/${fileId}?uploadType=media`, token, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body,
-        });
-      } else {
-        const metadata = {
-          name: DRIVE_BACKUP_FILENAME,
-          mimeType: 'application/json',
-          parents: ['appDataFolder'],
-        };
-        const form = new FormData();
-        form.append(
-          'metadata',
-          new Blob([JSON.stringify(metadata)], { type: 'application/json' }),
-        );
-        form.append('file', new Blob([body], { type: 'application/json' }));
-        await this.driveFetch(`${DRIVE_UPLOAD_URL}?uploadType=multipart`, token, {
-          method: 'POST',
-          body: form,
-        });
-      }
-
-      return { success: true, pushed: snapshot.documents.length, pulled: 0 };
+      return await this.syncV3.pushSnapshot(
+        snapshot,
+        options?.settingsUpdatedAt ?? new Date(0).toISOString(),
+        { force: options?.force },
+      );
     } catch (error) {
       return {
         success: false,
@@ -92,68 +69,73 @@ export class GoogleDriveAdapter implements SyncProvider {
     }
   }
 
-  async pull(): Promise<BackupSnapshot> {
-    const token = await this.requireDriveToken();
-    const fileId = await this.findBackupFileId(token);
-    if (!fileId) return emptyBackupSnapshot();
-
-    const response = await this.driveFetch(`${DRIVE_FILES_URL}/${fileId}?alt=media`, token);
-    const text = await response.text();
-    return parseDriveBackupPayload(JSON.parse(text) as unknown);
-  }
-
-  private async requireDriveToken(): Promise<string> {
-    let token = await this.auth.getAccessToken();
-    if (!token) {
-      token = await this.auth.requestAccessToken({ prompt: 'consent' });
+  async pull(options?: import('../types').SyncPullOptions): Promise<import('../types').SyncPullResult> {
+    try {
+      return await this.syncV3.pullSnapshot(options);
+    } catch {
+      return {
+        snapshot: emptyBackupSnapshot(),
+        remoteManifestJson: JSON.stringify({
+          version: 3,
+          updatedAt: new Date(0).toISOString(),
+          documents: {},
+          settings: null,
+        }),
+        documentsFetched: 0,
+      };
     }
-    return token;
   }
 
-  private async findBackupFileId(token: string): Promise<string | null> {
-    const query = encodeURIComponent(`name='${DRIVE_BACKUP_FILENAME}' and trashed=false`);
-    const response = await this.driveFetch(
-      `${DRIVE_FILES_URL}?spaces=appDataFolder&q=${query}&fields=files(id)&pageSize=1`,
-      token,
-    );
-    const data = (await response.json()) as { files?: { id: string }[] };
-    return data.files?.[0]?.id ?? null;
-  }
-
-  private async driveFetch(
-    url: string,
-    token: string,
-    init: RequestInit = {},
-    allowScopeRetry = true,
-  ): Promise<Response> {
-    const headers = new Headers(init.headers);
-    headers.set('Authorization', `Bearer ${token}`);
-    const response = await fetch(url, { ...init, headers });
-    if (!response.ok) {
-      let message = `Drive API 错误 (${response.status})`;
-      try {
-        const err = (await response.json()) as { error?: { message?: string } };
-        if (err.error?.message) message = err.error.message;
-      } catch {
-        /* ignore */
-      }
-
-      if (
-        allowScopeRetry &&
-        response.status === 403 &&
-        GOOGLE_DRIVE_SCOPE_ERROR_PATTERN.test(message)
-      ) {
-        await this.auth.signOut();
-        const freshToken = await this.auth.requestAccessToken({ prompt: 'consent' });
-        return this.driveFetch(url, freshToken, init, false);
-      }
-
-      if (GOOGLE_DRIVE_SCOPE_ERROR_PATTERN.test(message)) {
-        throw new Error(INSUFFICIENT_DRIVE_SCOPE_MESSAGE);
-      }
-
-      throw new Error(message);
+  async fetchRemoteManifest(): Promise<string | null> {
+    try {
+      return await this.syncV3.fetchRemoteManifestJson();
+    } catch {
+      return null;
     }
-    return response;
+  }
+
+  async detectCloudSyncScheme(): Promise<import('../types').CloudSyncSchemeStatus> {
+    return this.syncV3.detectCloudSyncScheme();
+  }
+
+  async migrateCloudSyncScheme(): Promise<import('../types').CloudSyncSchemeMigrationResult> {
+    return this.syncV3.migrateCloudSyncScheme();
+  }
+
+  async listDocumentRevisions(documentId: string): Promise<CloudRevisionInfo[]> {
+    try {
+      return await this.syncV3.listDocumentRevisions(documentId);
+    } catch {
+      return [];
+    }
+  }
+
+  async pullDocumentRevision(
+    documentId: string,
+    slot: CloudRevisionSlot,
+  ): Promise<import('@/core/documents').DocumentData | null> {
+    try {
+      return await this.syncV3.pullDocumentRevision(documentId, slot);
+    } catch {
+      return null;
+    }
+  }
+
+  async listSettingsRevisions(): Promise<CloudRevisionInfo[]> {
+    try {
+      return await this.syncV3.listSettingsRevisions();
+    } catch {
+      return [];
+    }
+  }
+
+  async pullSettingsRevision(
+    slot: CloudRevisionSlot,
+  ): Promise<Pick<BackupSnapshot, 'customThemes' | 'activeThemeId'> | null> {
+    try {
+      return await this.syncV3.pullSettingsRevision(slot);
+    } catch {
+      return null;
+    }
   }
 }

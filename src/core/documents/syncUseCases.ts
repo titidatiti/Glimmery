@@ -1,8 +1,14 @@
 import type { StorageProvider } from '@/services/storage';
+import type { StorageKeyValue } from '@/services/storage';
 import type { BackupSnapshot, SyncProvider } from '@/services/sync';
+import type { DriveManifest } from '@/services/sync/drive/driveLayout';
+import { parseRemoteManifestJson } from '@/services/sync/drive/manifestSyncPlan';
+import {
+  loadRemoteManifestCacheJson,
+  saveRemoteManifestCacheJson,
+} from '@/core/storage';
 import { applyThemeBackupState, exportThemeBackupState } from '@/core/themes/themeStore';
 import type { DocumentData } from './types';
-
 export interface SyncConflict {
   id: string;
   local: DocumentData;
@@ -38,12 +44,69 @@ export function assessCloudBackupOverwrite(
   if (remoteEmpty) return null;
 
   const plan = planRestore(local.documents, remote);
+  return assessCloudBackupOverwriteFromPlan(plan, local);
+}
+
+/** 仅基于 manifest 索引判断上传是否会覆盖较新的云端内容（无需下载文稿正文） */
+export function assessCloudBackupOverwriteFromManifest(
+  local: BackupSnapshot,
+  remoteManifest: DriveManifest,
+  localSettingsUpdatedAt: string,
+): CloudBackupOverwriteWarning | null {
+  const remoteEmpty =
+    Object.keys(remoteManifest.documents).length === 0 && remoteManifest.settings === null;
+  if (remoteEmpty) return null;
+
+  const localById = new Map(local.documents.map((doc) => [doc.id, doc]));
+  let remoteOnlyCount = 0;
+  let newerRemoteConflictCount = 0;
+
+  for (const [id, entry] of Object.entries(remoteManifest.documents)) {
+    const localDoc = localById.get(id);
+    if (!localDoc) {
+      remoteOnlyCount += 1;
+      continue;
+    }
+    if (entry.updatedAt > localDoc.updatedAt) {
+      newerRemoteConflictCount += 1;
+    }
+  }
+
+  let remoteOnlyThemeCount = 0;
+  if (
+    remoteManifest.settings &&
+    localSettingsUpdatedAt < remoteManifest.settings.updatedAt
+  ) {
+    remoteOnlyThemeCount = 1;
+  }
+
+  if (
+    remoteOnlyCount === 0 &&
+    newerRemoteConflictCount === 0 &&
+    remoteOnlyThemeCount === 0
+  ) {
+    return null;
+  }
+
+  return {
+    remoteOnlyCount,
+    newerRemoteConflictCount,
+    remoteOnlyThemeCount,
+  };
+}
+
+function assessCloudBackupOverwriteFromPlan(
+  plan: RestorePlan,
+  local: BackupSnapshot,
+): CloudBackupOverwriteWarning | null {
   const newerRemoteConflicts = plan.conflicts.filter(
     (conflict) => conflict.remote.updatedAt > conflict.local.updatedAt,
   );
 
   const localThemeIds = new Set(local.customThemes.map((theme) => theme.id));
-  const remoteOnlyThemeCount = remote.customThemes.filter((theme) => !localThemeIds.has(theme.id)).length;
+  const remoteOnlyThemeCount = plan.remoteThemes.filter(
+    (theme) => !localThemeIds.has(theme.id),
+  ).length;
 
   if (
     plan.remoteOnly.length === 0 &&
@@ -89,6 +152,33 @@ export async function buildBackupSnapshot(storage: StorageProvider): Promise<Bac
   return { documents, customThemes, activeThemeId };
 }
 
+export function getSettingsUpdatedAtForSync(): string {
+  return exportThemeBackupState().updatedAt;
+}
+
+export async function backupAllDocuments(
+  storage: StorageProvider,
+  sync: SyncProvider,
+  options?: { force?: boolean },
+): Promise<{ success: boolean; pushed: number; error?: string }> {
+  const snapshot = await buildBackupSnapshot(storage);
+  const { updatedAt } = exportThemeBackupState();
+  const result = await sync.push(snapshot, { settingsUpdatedAt: updatedAt, force: options?.force });
+
+  if (result.success) {
+    const manifestJson = await sync.fetchRemoteManifest();
+    if (manifestJson) {
+      await saveRemoteManifestCacheJson(storageAsKv(storage), manifestJson);
+    }
+  }
+
+  return { success: result.success, pushed: result.pushed, error: result.error };
+}
+
+function storageAsKv(storage: StorageProvider): StorageKeyValue {
+  return storage as unknown as StorageKeyValue;
+}
+
 export function planRestore(local: DocumentData[], remote: BackupSnapshot): RestorePlan {
   const localById = new Map(local.map((doc) => [doc.id, doc]));
   const remoteById = new Map(remote.documents.map((doc) => [doc.id, doc]));
@@ -125,6 +215,62 @@ export function planRestore(local: DocumentData[], remote: BackupSnapshot): Rest
     toApplyFromRemote,
     remoteThemes: remote.customThemes,
     remoteActiveThemeId: remote.activeThemeId,
+  };
+}
+
+/**
+ * 增量拉取后的恢复计划：以 manifest 为云端全集，仅对已下载的正文做冲突比对。
+ */
+export function planRestoreWithManifest(
+  local: DocumentData[],
+  remoteManifest: DriveManifest,
+  pulledRemoteDocs: DocumentData[],
+  remoteThemes: BackupSnapshot['customThemes'],
+  remoteActiveThemeId: string,
+): RestorePlan {
+  const localById = new Map(local.map((doc) => [doc.id, doc]));
+  const pulledById = new Map(pulledRemoteDocs.map((doc) => [doc.id, doc]));
+  const conflicts: SyncConflict[] = [];
+  const remoteOnly: DocumentData[] = [];
+  const toApplyFromRemote: DocumentData[] = [];
+
+  for (const [id, entry] of Object.entries(remoteManifest.documents)) {
+    const localDoc = localById.get(id);
+    if (!localDoc) {
+      const remoteDoc = pulledById.get(id);
+      if (remoteDoc) {
+        remoteOnly.push(remoteDoc);
+        toApplyFromRemote.push(remoteDoc);
+      }
+      continue;
+    }
+    if (localDoc.updatedAt === entry.updatedAt) {
+      continue;
+    }
+    const remoteDoc = pulledById.get(id);
+    if (!remoteDoc) {
+      continue;
+    }
+    if (
+      localDoc.title === remoteDoc.title &&
+      localDoc.content === remoteDoc.content &&
+      localDoc.createdAt === remoteDoc.createdAt
+    ) {
+      continue;
+    }
+    conflicts.push({ id, local: localDoc, remote: remoteDoc });
+  }
+
+  const manifestIds = new Set(Object.keys(remoteManifest.documents));
+  const localOnly = local.filter((doc) => !manifestIds.has(doc.id));
+
+  return {
+    conflicts,
+    remoteOnly,
+    localOnly,
+    toApplyFromRemote,
+    remoteThemes,
+    remoteActiveThemeId,
   };
 }
 
@@ -186,15 +332,6 @@ export function needsStartupRestore(
   return hasThemeRestoreChanges(plan);
 }
 
-export async function backupAllDocuments(
-  storage: StorageProvider,
-  sync: SyncProvider,
-): Promise<{ success: boolean; pushed: number; error?: string }> {
-  const snapshot = await buildBackupSnapshot(storage);
-  const result = await sync.push(snapshot);
-  return { success: result.success, pushed: result.pushed, error: result.error };
-}
-
 export async function applyRestore(
   storage: StorageProvider,
   plan: RestorePlan,
@@ -220,13 +357,44 @@ export async function applyRestore(
   return applied;
 }
 
-export async function pullRemoteBackup(sync: SyncProvider): Promise<BackupSnapshot> {
-  return sync.pull();
+export async function pullRemoteSyncData(
+  storage: StorageProvider,
+  sync: SyncProvider,
+  options?: { full?: boolean },
+): Promise<{ snapshot: BackupSnapshot; manifest: DriveManifest }> {
+  const kv = storageAsKv(storage);
+  const result = await sync.pull({
+    localDocumentMetas: await storage.list(),
+    localSettingsUpdatedAt: getSettingsUpdatedAtForSync(),
+    cachedRemoteManifestJson: await loadRemoteManifestCacheJson(kv),
+    full: options?.full,
+  });
+  await saveRemoteManifestCacheJson(kv, result.remoteManifestJson);
+  const manifest =
+    parseRemoteManifestJson(result.remoteManifestJson) ?? {
+      version: 3,
+      updatedAt: new Date(0).toISOString(),
+      documents: {},
+      settings: null,
+    };
+  return { snapshot: result.snapshot, manifest };
+}
+
+export async function pullRemoteBackup(
+  storage: StorageProvider,
+  sync: SyncProvider,
+  options?: { full?: boolean },
+): Promise<BackupSnapshot> {
+  const { snapshot } = await pullRemoteSyncData(storage, sync, options);
+  return snapshot;
 }
 
 /** @deprecated 使用 pullRemoteBackup */
-export async function pullRemoteDocuments(sync: SyncProvider): Promise<DocumentData[]> {
-  const snapshot = await pullRemoteBackup(sync);
+export async function pullRemoteDocuments(
+  storage: StorageProvider,
+  sync: SyncProvider,
+): Promise<DocumentData[]> {
+  const snapshot = await pullRemoteBackup(storage, sync);
   return snapshot.documents;
 }
 

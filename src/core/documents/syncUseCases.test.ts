@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_THEME_ID } from '@/core/themes';
 import type { DocumentData } from './types';
-import { formatRestoreSummary, planRestore, assessCloudBackupOverwrite, buildAutoRestoreResolutions, needsStartupRestore } from './syncUseCases';
+import { formatRestoreSummary, planRestore, planRestoreWithManifest, assessCloudBackupOverwrite, assessCloudBackupOverwriteFromManifest, buildAutoRestoreResolutions, needsStartupRestore } from './syncUseCases';
+import type { DriveManifest } from '@/services/sync/drive/driveLayout';
 import type { BackupSnapshot } from '@/services/sync';
 import { parseDriveBackupPayload } from '@/services/sync';
 
@@ -72,6 +73,54 @@ describe('needsStartupRestore', () => {
     const plan = planRestore([d], snapshot([{ ...d }]));
     const resolutions = buildAutoRestoreResolutions(plan);
     expect(needsStartupRestore(plan, resolutions)).toBe(false);
+  });
+});
+
+describe('planRestoreWithManifest', () => {
+  const emptyManifest: DriveManifest = {
+    version: 3,
+    updatedAt: '2020-01-01T00:00:00.000Z',
+    documents: {},
+    settings: null,
+  };
+
+  it('manifest 有而本地无的文稿归入 remoteOnly', () => {
+    const remoteDoc = doc('b', '2024-01-01T00:00:00.000Z');
+    const manifest: DriveManifest = {
+      ...emptyManifest,
+      documents: { b: { updatedAt: remoteDoc.updatedAt } },
+    };
+    const plan = planRestoreWithManifest([], manifest, [remoteDoc], [], DEFAULT_THEME_ID);
+    expect(plan.remoteOnly).toHaveLength(1);
+  });
+
+  it('updatedAt 相同的不同步', () => {
+    const d = doc('a', '2024-01-01T00:00:00.000Z');
+    const manifest: DriveManifest = {
+      ...emptyManifest,
+      documents: { a: { updatedAt: d.updatedAt } },
+    };
+    const plan = planRestoreWithManifest([d], manifest, [], [], DEFAULT_THEME_ID);
+    expect(plan.conflicts).toHaveLength(0);
+    expect(plan.remoteOnly).toHaveLength(0);
+  });
+});
+
+describe('assessCloudBackupOverwriteFromManifest', () => {
+  it('manifest 显示云端较新时需确认', () => {
+    const local = snapshot([doc('a', '2024-01-02T00:00:00.000Z')]);
+    const manifest: DriveManifest = {
+      version: 3,
+      updatedAt: '2020-01-01T00:00:00.000Z',
+      documents: { a: { updatedAt: '2024-01-05T00:00:00.000Z' } },
+      settings: null,
+    };
+    const warning = assessCloudBackupOverwriteFromManifest(
+      local,
+      manifest,
+      '2024-01-01T00:00:00.000Z',
+    );
+    expect(warning?.newerRemoteConflictCount).toBe(1);
   });
 });
 
