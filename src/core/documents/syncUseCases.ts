@@ -128,6 +128,64 @@ export function planRestore(local: DocumentData[], remote: BackupSnapshot): Rest
   };
 }
 
+/** 启动拉取：同 ID 冲突时采用 updatedAt 较新的版本 */
+export function buildAutoRestoreResolutions(plan: RestorePlan): Map<string, ConflictResolution> {
+  const resolutions = new Map<string, ConflictResolution>();
+  for (const conflict of plan.conflicts) {
+    resolutions.set(
+      conflict.id,
+      conflict.remote.updatedAt > conflict.local.updatedAt ? 'use-remote' : 'keep-local',
+    );
+  }
+  return resolutions;
+}
+
+export function countAppliedRestoreDocs(
+  plan: RestorePlan,
+  resolutions: Map<string, ConflictResolution>,
+): number {
+  let applied = plan.remoteOnly.length;
+  for (const conflict of plan.conflicts) {
+    if (resolutions.get(conflict.id) === 'use-remote') {
+      applied += 1;
+    }
+  }
+  return applied;
+}
+
+function serializeThemeForCompare(theme: BackupSnapshot['customThemes'][number]): string {
+  return JSON.stringify(theme);
+}
+
+/** 云端配色与本地不同，且 applyRestore 会写入时返回 true */
+export function hasThemeRestoreChanges(plan: RestorePlan): boolean {
+  if (plan.remoteThemes.length === 0) return false;
+
+  const local = exportThemeBackupState();
+  if (plan.remoteThemes.length !== local.customThemes.length) return true;
+
+  const localById = new Map(
+    local.customThemes.map((theme) => [theme.id, serializeThemeForCompare(theme)]),
+  );
+  for (const remoteTheme of plan.remoteThemes) {
+    const localSerialized = localById.get(remoteTheme.id);
+    if (localSerialized !== serializeThemeForCompare(remoteTheme)) {
+      return true;
+    }
+  }
+
+  if (plan.remoteActiveThemeId === local.activeThemeId) return false;
+  return plan.remoteThemes.some((theme) => theme.id === plan.remoteActiveThemeId);
+}
+
+export function needsStartupRestore(
+  plan: RestorePlan,
+  resolutions: Map<string, ConflictResolution>,
+): boolean {
+  if (countAppliedRestoreDocs(plan, resolutions) > 0) return true;
+  return hasThemeRestoreChanges(plan);
+}
+
 export async function backupAllDocuments(
   storage: StorageProvider,
   sync: SyncProvider,

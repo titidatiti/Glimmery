@@ -1,4 +1,4 @@
-export type { SyncProvider, SyncResult, SyncAccountProfile, BackupSnapshot } from './types';
+export type { SyncProvider, SyncResult, SyncAccountProfile, BackupSnapshot, CloudAuthSessionStatus } from './types';
 export {
   createDriveBackupPayload,
   parseDriveBackupPayload,
@@ -10,4 +10,5 @@ export {
   DRIVE_BACKUP_FILENAME,
   DRIVE_BACKUP_VERSION,
   DRIVE_APPDATA_SCOPE,
+  CLOUD_SYNC_SESSION_EXPIRED_MESSAGE,
 } from './constants';

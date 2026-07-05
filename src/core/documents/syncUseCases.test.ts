@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_THEME_ID } from '@/core/themes';
 import type { DocumentData } from './types';
-import { formatRestoreSummary, planRestore, assessCloudBackupOverwrite } from './syncUseCases';
+import { formatRestoreSummary, planRestore, assessCloudBackupOverwrite, buildAutoRestoreResolutions, needsStartupRestore } from './syncUseCases';
 import type { BackupSnapshot } from '@/services/sync';
 import { parseDriveBackupPayload } from '@/services/sync';
 
@@ -39,6 +39,39 @@ describe('planRestore', () => {
     const plan = planRestore([], snapshot([], [{ version: 1, id: 't1', name: '我的', tokens: {} as never }]));
     expect(plan.remoteThemes).toHaveLength(1);
     expect(plan.remoteActiveThemeId).toBe(DEFAULT_THEME_ID);
+  });
+});
+
+describe('buildAutoRestoreResolutions', () => {
+  it('云端较新时采用云端版本', () => {
+    const local = [{ ...doc('a', '2024-01-02T00:00:00.000Z'), content: '本地' }];
+    const remote = snapshot([{ ...doc('a', '2024-01-03T00:00:00.000Z'), content: '云端' }]);
+    const plan = planRestore(local, remote);
+    const resolutions = buildAutoRestoreResolutions(plan);
+    expect(resolutions.get('a')).toBe('use-remote');
+  });
+
+  it('本地较新时保留本地', () => {
+    const local = [{ ...doc('a', '2024-01-04T00:00:00.000Z'), content: '本地' }];
+    const remote = snapshot([{ ...doc('a', '2024-01-03T00:00:00.000Z'), content: '云端' }]);
+    const plan = planRestore(local, remote);
+    const resolutions = buildAutoRestoreResolutions(plan);
+    expect(resolutions.get('a')).toBe('keep-local');
+  });
+});
+
+describe('needsStartupRestore', () => {
+  it('仅有云端新文稿时需要拉取', () => {
+    const plan = planRestore([], snapshot([doc('b', '2024-01-01T00:00:00.000Z')]));
+    const resolutions = buildAutoRestoreResolutions(plan);
+    expect(needsStartupRestore(plan, resolutions)).toBe(true);
+  });
+
+  it('完全一致时无需拉取', () => {
+    const d = doc('a', '2024-01-01T00:00:00.000Z');
+    const plan = planRestore([d], snapshot([{ ...d }]));
+    const resolutions = buildAutoRestoreResolutions(plan);
+    expect(needsStartupRestore(plan, resolutions)).toBe(false);
   });
 });
 

@@ -26,6 +26,16 @@
   .deleteBtn {
     touch-action: auto;
   }
+
+  /* 触屏无 hover：当前选中文稿固定显示删除 */
+  .docRowActive .deleteBtn {
+    opacity: 0.55;
+  }
+
+  .docRowActive .deleteBtn:active {
+    opacity: 1;
+    transform: scale(1.05);
+  }
 }
 
 .item {

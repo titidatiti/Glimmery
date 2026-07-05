@@ -135,6 +135,30 @@ export class GoogleDriveAuth {
     return (await this.getAccessToken()) !== null;
   }
 
+  /**
+   * 只读检查登录态，不清除 token。
+   * expired：token 过期、scope 不足，或 token 已清但仍有账号 profile 缓存。
+   */
+  async getAuthSessionStatus(): Promise<'none' | 'active' | 'expired'> {
+    const stored = await this.loadStoredToken();
+    if (stored) {
+      if (!includesDriveAppDataScope(stored.scope)) {
+        return 'expired';
+      }
+      if (Date.now() < stored.expiresAt - 60_000) {
+        return 'active';
+      }
+      return 'expired';
+    }
+
+    const profile = await this.loadStoredProfile();
+    if (profile) {
+      return 'expired';
+    }
+
+    return 'none';
+  }
+
   async getAccountProfile(): Promise<SyncAccountProfile | null> {
     const token = await this.getAccessToken();
     if (!token) {

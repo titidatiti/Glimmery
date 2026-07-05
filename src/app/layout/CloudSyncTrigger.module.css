@@ -1,0 +1,34 @@
+.trigger {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.title {
+  font-weight: 500;
+  line-height: var(--line-height-tight);
+}
+
+.status {
+  font-size: calc(var(--sidebar-font-size-sm) - 1px);
+  font-weight: 400;
+  color: var(--color-sidebar-text-muted);
+  line-height: var(--line-height-tight);
+  word-break: break-word;
+}
+
+.statusPending {
+  color: var(--color-accent);
+}
+
+.statusError {
+  color: var(--color-danger, #e57373);
+}

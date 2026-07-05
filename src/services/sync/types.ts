@@ -21,11 +21,16 @@ export interface BackupSnapshot {
   activeThemeId: string;
 }
 
+/** Google 云同步登录态（只读探测，不触发 OAuth 弹窗） */
+export type CloudAuthSessionStatus = 'none' | 'active' | 'expired';
+
 export interface SyncProvider {
   readonly id: string;
   /** 是否已配置（如 env 中有 Client ID） */
   isConfigured(): boolean;
   isAuthenticated(): Promise<boolean>;
+  /** 区分「从未登录」与「曾登录但 token 已过期」；未配置时返回 none */
+  getAuthSessionStatus(): Promise<CloudAuthSessionStatus>;
   /** 已登录时返回 Google 账号信息；未登录或未配置时返回 null */
   getAccountProfile(): Promise<SyncAccountProfile | null>;
   authenticate(): Promise<void>;

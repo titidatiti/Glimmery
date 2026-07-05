@@ -11,6 +11,7 @@ import { debounce, formatUpdatedAt } from '@/lib';
 import { useServices } from '@/services/context';
 
 import { useAutoCloudBackup } from '@/app/hooks/useAutoCloudBackup';
+import { useStartupCloudSync } from '@/app/hooks/useStartupCloudSync';
 import { useFocusGestures } from '@/app/hooks/useFocusGestures';
 import { useCloudSyncStore } from '@/core/sync';
 
@@ -65,6 +66,8 @@ export function AppShell() {
 
   useAutoCloudBackup(storage, sync);
 
+  const { ready: startupSyncReady, syncing: startupCloudSyncing } = useStartupCloudSync(storage, sync);
+
   useFocusGestures({
     enabled: !isMobile,
     focusMode,
@@ -99,10 +102,12 @@ export function AppShell() {
     [updateContent, debouncedPersist],
   );
 
-  if (isLoading && !activeDocument) {
+  if (!startupSyncReady || (isLoading && !activeDocument)) {
     return (
       <div className={styles.loading}>
-        <span className={styles.loadingText}>微光汇聚中…</span>
+        <span className={styles.loadingText}>
+          {startupCloudSyncing ? '正在从云端同步…' : '微光汇聚中…'}
+        </span>
       </div>
     );
   }

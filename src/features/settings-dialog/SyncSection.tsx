@@ -22,10 +22,10 @@ import {
   saveCloudBackupIntervalSec,
   notifyCloudBackupIntervalChanged,
 } from '@/core/settings/cloudBackupPreferences';
-import { useCloudSyncStore } from '@/core/sync';
+import { useCloudSyncStore, clearCloudSyncSessionExpiredNotice } from '@/core/sync';
 import { useServices } from '@/services/context';
 import { preloadGoogleIdentityScript } from '@/services/sync/adapters/googleDriveAuth';
-import type { SyncAccountProfile } from '@/services/sync';
+import { CLOUD_SYNC_SESSION_EXPIRED_MESSAGE, type SyncAccountProfile } from '@/services/sync';
 import styles from './SyncSection.module.css';
 
 function accountInitial(profile: SyncAccountProfile): string {
@@ -200,6 +200,7 @@ export function SyncSection() {
   const lastCloudBackupAt = useCloudSyncStore((s) => s.lastCloudBackupAt);
 
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [accountProfile, setAccountProfile] = useState<SyncAccountProfile | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -214,10 +215,13 @@ export function SyncSection() {
   const refreshAuth = useCallback(async () => {
     if (!configured) {
       setAuthenticated(false);
+      setSessionExpired(false);
       setAccountProfile(null);
       return;
     }
-    const authed = await sync.isAuthenticated();
+    const session = await sync.getAuthSessionStatus();
+    setSessionExpired(session === 'expired');
+    const authed = session === 'active';
     setAuthenticated(authed);
     setAccountProfile(authed ? await sync.getAccountProfile() : null);
   }, [configured, sync]);
@@ -239,7 +243,9 @@ export function SyncSection() {
     try {
       await sync.authenticate();
       setAuthenticated(true);
+      setSessionExpired(false);
       setAccountProfile(await sync.getAccountProfile());
+      clearCloudSyncSessionExpiredNotice();
       setMessage('已连接 Google 账号');
     } catch (err) {
       setError(err instanceof Error ? err.message : '连接失败');
@@ -255,6 +261,7 @@ export function SyncSection() {
     try {
       await sync.signOut();
       setAuthenticated(false);
+      setSessionExpired(false);
       setAccountProfile(null);
       setRestorePlan(null);
       setBackupWarning(null);
@@ -388,11 +395,16 @@ export function SyncSection() {
         <p className={styles.lead}>
         文稿与自定义配色将加密备份至 Google Drive 应用专用空间，本地始终为主副本。
       </p>
+        {sessionExpired && (
+          <p className={styles.noticeError}>{CLOUD_SYNC_SESSION_EXPIRED_MESSAGE}</p>
+        )}
         {error && <p className={styles.noticeError}>{error}</p>}
         {message && <p className={styles.noticeSuccess}>{message}</p>}
         <div className={styles.connectCard}>
           <p className={styles.connectHint}>
-            连接 Google 账号后，可自动或手动将文稿备份到云端，并在多设备间恢复。
+            {sessionExpired
+              ? '请重新连接 Google 账号以恢复云同步与自动备份。'
+              : '连接 Google 账号后，可自动或手动将文稿备份到云端，并在多设备间恢复。'}
           </p>
           <button
             type="button"
@@ -401,7 +413,7 @@ export function SyncSection() {
             onPointerDown={() => preloadGoogleIdentityScript()}
             onClick={() => void handleConnect()}
           >
-            连接 Google 账号
+            {sessionExpired ? '重新连接 Google 账号' : '连接 Google 账号'}
           </button>
         </div>
       </div>

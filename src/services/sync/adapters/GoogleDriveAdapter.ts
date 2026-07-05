@@ -35,6 +35,10 @@ export class GoogleDriveAdapter implements SyncProvider {
     return this.auth.isAuthenticated();
   }
 
+  async getAuthSessionStatus(): Promise<'none' | 'active' | 'expired'> {
+    return this.auth.getAuthSessionStatus();
+  }
+
   async getAccountProfile(): Promise<SyncAccountProfile | null> {
     return this.auth.getAccountProfile();
   }

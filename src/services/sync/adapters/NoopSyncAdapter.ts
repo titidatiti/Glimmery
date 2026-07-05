@@ -12,6 +12,10 @@ export class NoopSyncAdapter implements SyncProvider {
     return false;
   }
 
+  async getAuthSessionStatus(): Promise<'none' | 'active' | 'expired'> {
+    return 'none';
+  }
+
   async getAccountProfile(): Promise<SyncAccountProfile | null> {
     return null;
   }

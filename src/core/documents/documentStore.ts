@@ -45,7 +45,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
   activeDocumentEditorEpoch: 0,
   hasUnsavedChanges: false,
   searchQuery: '',
-  isLoading: false,
+  isLoading: true,
   error: null,
 
   initialize: async (storage) => {

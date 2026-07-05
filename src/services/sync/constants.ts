@@ -29,6 +29,10 @@ export const GOOGLE_DRIVE_SCOPE_ERROR_PATTERN = /insufficient authentication sco
 export const KV_GOOGLE_DRIVE_TOKEN = 'sync:google-drive:token';
 export const KV_GOOGLE_DRIVE_PROFILE = 'sync:google-drive:profile';
 
+/** 曾连接 Google 但 access token 已失效（需重新授权） */
+export const CLOUD_SYNC_SESSION_EXPIRED_MESSAGE =
+  '云同步登录已过期，需要重新登录 Google 账号。请打开「设置 → 云同步」重新连接。';
+
 export interface DriveBackupPayload {
   version: number;
   exportedAt: string;

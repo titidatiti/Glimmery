@@ -1,5 +1,25 @@
 import { create } from 'zustand';
 
+const LAST_CLOUD_BACKUP_AT_KEY = 'glimmery-last-cloud-backup-at';
+
+function loadLastCloudBackupAt(): string | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    return localStorage.getItem(LAST_CLOUD_BACKUP_AT_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function persistLastCloudBackupAt(iso: string): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(LAST_CLOUD_BACKUP_AT_KEY, iso);
+  } catch {
+    /* quota / private mode */
+  }
+}
+
 export interface CloudSyncStoreState {
   /** 本地有尚未成功备份到云端的内容 */
   pendingCloudSync: boolean;
@@ -15,17 +35,20 @@ export interface CloudSyncStoreState {
 export const useCloudSyncStore = create<CloudSyncStoreState>((set) => ({
   pendingCloudSync: false,
   isCloudBackingUp: false,
-  lastCloudBackupAt: null,
+  lastCloudBackupAt: loadLastCloudBackupAt(),
   backupError: null,
 
   markPending: () => set({ pendingCloudSync: true, backupError: null }),
 
-  markSynced: () =>
+  markSynced: () => {
+    const lastCloudBackupAt = new Date().toISOString();
+    persistLastCloudBackupAt(lastCloudBackupAt);
     set({
       pendingCloudSync: false,
       backupError: null,
-      lastCloudBackupAt: new Date().toISOString(),
-    }),
+      lastCloudBackupAt,
+    });
+  },
 
   setBackingUp: (value) => set({ isCloudBackingUp: value }),
 

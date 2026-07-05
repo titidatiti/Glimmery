@@ -30,5 +30,10 @@ export {
   pullRemoteBackup,
   pullRemoteDocuments,
   formatRestoreSummary,
+  buildAutoRestoreResolutions,
+  countAppliedRestoreDocs,
+  hasThemeRestoreChanges,
+  needsStartupRestore,
 } from './syncUseCases';
 export { performCloudBackup, type PerformCloudBackupResult } from './cloudBackup';
+export { performStartupCloudSync, type StartupCloudSyncResult } from './cloudStartupSync';
