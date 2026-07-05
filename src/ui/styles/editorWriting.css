@@ -4,6 +4,10 @@
   width: 100%;
   font-family: var(--editor-font-family, var(--font-sans));
   color: var(--color-text-body);
+  /*
+   * 为舒适滚动预留底部空间，与 --editor-comfort-scroll-padding-bottom 联动。
+   */
+  padding-bottom: var(--editor-comfort-scroll-padding-bottom, 38vh);
 }
 
 .editorWritingTitle {

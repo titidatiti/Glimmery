@@ -5,6 +5,7 @@ import {
   saveEditorTypographyPreferences,
   clampFontSizeScale,
   clampEditorWidthScale,
+  clampComfortScrollAnchorPercent,
   type EditorFontFamilyId,
   type EditorLineHeightId,
   type EditorTypographyPreferences,
@@ -27,6 +28,7 @@ export interface SettingsStoreState {
   setEditorFontSizeScale: (fontSizeScale: number) => void;
   setEditorWidthScale: (editorWidthScale: number) => void;
   setEditorLineHeight: (lineHeightId: EditorLineHeightId) => void;
+  setComfortScrollAnchorPercent: (comfortScrollAnchorPercent: number) => void;
 }
 
 function persistEditorTypography(preferences: EditorTypographyPreferences): void {
@@ -82,6 +84,15 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
 
   setEditorLineHeight: (lineHeightId) => {
     const editorTypography = { ...get().editorTypography, lineHeightId };
+    persistEditorTypography(editorTypography);
+    set({ editorTypography });
+  },
+
+  setComfortScrollAnchorPercent: (comfortScrollAnchorPercent) => {
+    const editorTypography = {
+      ...get().editorTypography,
+      comfortScrollAnchorPercent: clampComfortScrollAnchorPercent(comfortScrollAnchorPercent),
+    };
     persistEditorTypography(editorTypography);
     set({ editorTypography });
   },

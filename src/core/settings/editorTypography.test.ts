@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_EDITOR_TYPOGRAPHY,
   EDITOR_FONT_FAMILY_PRESETS,
+  getComfortScrollAnchorLabel,
   parseEditorTypographyPreferences,
+  resolveComfortScrollBottomPadding,
   resolveEditorTypographyCssVars,
   resolveEditorWidth,
   resolveFontSizes,
@@ -21,6 +23,7 @@ describe('EDITOR_FONT_FAMILY_PRESETS', () => {
       fontSizeScale: 40,
       editorWidthScale: 50,
       lineHeightId: 'comfortable',
+      comfortScrollAnchorPercent: 62,
     });
 
     expect(vars['--editor-font-family']).toContain('Consolas');
@@ -50,12 +53,15 @@ describe('resolveEditorTypographyCssVars', () => {
       fontSizeScale: 62,
       editorWidthScale: 50,
       lineHeightId: 'relaxed',
+      comfortScrollAnchorPercent: 62,
     });
 
     expect(vars['--editor-font-size-body']).toBe('25px');
     expect(vars['--editor-line-height-body']).toBe('1.9');
     expect(vars['--editor-font-family']).toContain('Georgia');
     expect(vars['--shell-max-width']).toBe('880px');
+    expect(vars['--editor-comfort-scroll-anchor-percent']).toBe('62');
+    expect(vars['--editor-comfort-scroll-padding-bottom']).toBe('38vh');
   });
 
   it('uses custom font stack when selected', () => {
@@ -65,6 +71,7 @@ describe('resolveEditorTypographyCssVars', () => {
       fontSizeScale: 55,
       editorWidthScale: 100,
       lineHeightId: 'comfortable',
+      comfortScrollAnchorPercent: 62,
     });
 
     expect(vars['--editor-font-family']).toBe('Comic Sans MS, cursive');
@@ -98,5 +105,26 @@ describe('parseEditorTypographyPreferences', () => {
 
   it('migrates legacy fontSizeId', () => {
     expect(parseEditorTypographyPreferences({ fontSizeId: 'large' }).fontSizeScale).toBe(62);
+  });
+
+  it('parses comfort scroll anchor percent', () => {
+    expect(parseEditorTypographyPreferences({ comfortScrollAnchorPercent: 55 }).comfortScrollAnchorPercent).toBe(
+      55,
+    );
+    expect(parseEditorTypographyPreferences({ comfortScrollAnchorPercent: 999 }).comfortScrollAnchorPercent).toBe(
+      80,
+    );
+  });
+});
+
+describe('comfort scroll helpers', () => {
+  it('labels anchor position', () => {
+    expect(getComfortScrollAnchorLabel(45)).toBe('偏上');
+    expect(getComfortScrollAnchorLabel(62)).toBe('适中');
+    expect(getComfortScrollAnchorLabel(75)).toBe('偏下');
+  });
+
+  it('derives bottom padding from anchor', () => {
+    expect(resolveComfortScrollBottomPadding(62)).toBe('38vh');
   });
 });

@@ -8,6 +8,7 @@ import './editorCrepeTheme.css';
 import './editorCrepeOverrides.css';
 import { activeLinePlugin } from './plugins/activeLinePlugin';
 import { blockDragFixPlugin } from './plugins/blockDragFixPlugin';
+import { comfortScrollPlugin } from './plugins/comfortScrollPlugin';
 import { blockHandleCrepeConfig } from './plugins/blockHandleConfig';
 import styles from './EditorAdapter.module.css';
 
@@ -60,6 +61,7 @@ function BodyEditor({
       });
 
       crepe.editor.use(activeLinePlugin);
+      crepe.editor.use(comfortScrollPlugin);
       crepe.editor.use(blockDragFixPlugin);
       crepe.on((listener) => {
         listener.markdownUpdated((_ctx, markdown, prevMarkdown) => {

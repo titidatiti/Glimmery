@@ -2,6 +2,8 @@ import {
   useSettingsStore,
   EDITOR_FONT_FAMILY_PRESETS,
   EDITOR_LINE_HEIGHT_PRESETS,
+  EDITOR_COMFORT_SCROLL_ANCHOR_MAX,
+  EDITOR_COMFORT_SCROLL_ANCHOR_MIN,
   getEditorWidthLabel,
   getFontSizeLabel,
   resolveEditorWidth,
@@ -18,6 +20,7 @@ export function TypographySection() {
   const setEditorFontSizeScale = useSettingsStore((s) => s.setEditorFontSizeScale);
   const setEditorWidthScale = useSettingsStore((s) => s.setEditorWidthScale);
   const setEditorLineHeight = useSettingsStore((s) => s.setEditorLineHeight);
+  const setComfortScrollAnchorPercent = useSettingsStore((s) => s.setComfortScrollAnchorPercent);
 
   const sizes = resolveFontSizes(editorTypography.fontSizeScale);
   const sizeLabel = getFontSizeLabel(editorTypography.fontSizeScale);
@@ -121,6 +124,27 @@ export function TypographySection() {
             </button>
           ))}
         </div>
+      </fieldset>
+
+      <fieldset className={styles.fieldset}>
+        <legend className={styles.legend}>写作滚动位置</legend>
+        <div className={styles.sliderRow}>
+          <span className={styles.sliderMark}>靠上</span>
+          <input
+            className={styles.slider}
+            type="range"
+            min={EDITOR_COMFORT_SCROLL_ANCHOR_MIN}
+            max={EDITOR_COMFORT_SCROLL_ANCHOR_MAX}
+            step={1}
+            value={editorTypography.comfortScrollAnchorPercent}
+            onChange={(e) => setComfortScrollAnchorPercent(Number(e.target.value))}
+            aria-valuetext={`距顶部 ${editorTypography.comfortScrollAnchorPercent}%`}
+          />
+          <span className={styles.sliderMark}>靠下</span>
+        </div>
+        <p className={styles.sliderValue}>
+          输入时光标行保持在距顶部 {editorTypography.comfortScrollAnchorPercent}%
+        </p>
       </fieldset>
     </div>
   );

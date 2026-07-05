@@ -11,12 +11,16 @@ export type EditorFontFamilyId =
 
 export type EditorLineHeightId = 'compact' | 'comfortable' | 'relaxed';
 
+/** 持续输入时光标行在编辑区视口内距顶部的目标位置（百分比，40–80） */
+export type EditorComfortScrollAnchorPercent = number;
+
 export interface EditorTypographyPreferences {
   fontFamilyId: EditorFontFamilyId;
   customFontFamily: string;
   fontSizeScale: number;
   editorWidthScale: number;
   lineHeightId: EditorLineHeightId;
+  comfortScrollAnchorPercent: EditorComfortScrollAnchorPercent;
 }
 
 export interface EditorTypographyOption<T extends string> {
@@ -100,12 +104,18 @@ export const EDITOR_WIDTH_MAX = 1200;
 /** 默认约 880px，较原 720px 更适合大屏 */
 export const EDITOR_WIDTH_DEFAULT_SCALE = 50;
 
+/** 默认 62% */
+export const EDITOR_COMFORT_SCROLL_ANCHOR_MIN = 40;
+export const EDITOR_COMFORT_SCROLL_ANCHOR_MAX = 80;
+export const EDITOR_COMFORT_SCROLL_ANCHOR_DEFAULT = 62;
+
 export const DEFAULT_EDITOR_TYPOGRAPHY: EditorTypographyPreferences = {
   fontFamilyId: 'sans',
   customFontFamily: '',
   fontSizeScale: EDITOR_FONT_SIZE_DEFAULT_SCALE,
   editorWidthScale: EDITOR_WIDTH_DEFAULT_SCALE,
   lineHeightId: 'comfortable',
+  comfortScrollAnchorPercent: EDITOR_COMFORT_SCROLL_ANCHOR_DEFAULT,
 };
 
 export const EDITOR_TYPOGRAPHY_STORAGE_KEY = 'glimmery:editor-typography';
@@ -126,6 +136,29 @@ export function clampFontSizeScale(scale: number): number {
 
 export function clampEditorWidthScale(scale: number): number {
   return clampFontSizeScale(scale);
+}
+
+export function clampComfortScrollAnchorPercent(percent: number): number {
+  return Math.min(
+    EDITOR_COMFORT_SCROLL_ANCHOR_MAX,
+    Math.max(EDITOR_COMFORT_SCROLL_ANCHOR_MIN, Math.round(percent)),
+  );
+}
+
+export function resolveComfortScrollAnchorRatio(percent: number): number {
+  return clampComfortScrollAnchorPercent(percent) / 100;
+}
+
+export function resolveComfortScrollBottomPadding(percent: number): string {
+  const clamped = clampComfortScrollAnchorPercent(percent);
+  return `${100 - clamped}vh`;
+}
+
+export function getComfortScrollAnchorLabel(percent: number): string {
+  const clamped = clampComfortScrollAnchorPercent(percent);
+  if (clamped <= 50) return '偏上';
+  if (clamped >= 68) return '偏下';
+  return '适中';
 }
 
 export function resolveEditorWidth(scale: number): string {
@@ -195,6 +228,12 @@ export function resolveEditorTypographyCssVars(
     '--editor-title-body-gap': '32px',
     '--editor-paragraph-gap': '0.85em',
     '--shell-max-width': resolveEditorWidth(preferences.editorWidthScale),
+    '--editor-comfort-scroll-anchor-percent': String(
+      clampComfortScrollAnchorPercent(preferences.comfortScrollAnchorPercent),
+    ),
+    '--editor-comfort-scroll-padding-bottom': resolveComfortScrollBottomPadding(
+      preferences.comfortScrollAnchorPercent,
+    ),
   };
 }
 
@@ -238,7 +277,22 @@ export function parseEditorTypographyPreferences(
     ? (data.lineHeightId as EditorLineHeightId)
     : DEFAULT_EDITOR_TYPOGRAPHY.lineHeightId;
 
-  return { fontFamilyId, customFontFamily, fontSizeScale, editorWidthScale, lineHeightId };
+  let comfortScrollAnchorPercent = DEFAULT_EDITOR_TYPOGRAPHY.comfortScrollAnchorPercent;
+  if (
+    typeof data.comfortScrollAnchorPercent === 'number' &&
+    Number.isFinite(data.comfortScrollAnchorPercent)
+  ) {
+    comfortScrollAnchorPercent = clampComfortScrollAnchorPercent(data.comfortScrollAnchorPercent);
+  }
+
+  return {
+    fontFamilyId,
+    customFontFamily,
+    fontSizeScale,
+    editorWidthScale,
+    lineHeightId,
+    comfortScrollAnchorPercent,
+  };
 }
 
 export function loadEditorTypographyPreferences(): EditorTypographyPreferences {
