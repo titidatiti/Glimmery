@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_THEME_ID } from '@/core/themes';
 import type { DriveManifest } from './driveLayout';
 import {
   manifestChangedDocumentIds,
   planManifestPull,
   remoteManifestsEqual,
+  shouldUploadSettingsForSync,
 } from './manifestSyncPlan';
 
 function manifest(
@@ -73,5 +75,35 @@ describe('manifestSyncPlan', () => {
     const a = manifest({ x: '1' });
     const b = { ...a, updatedAt: '2099-01-01T00:00:00.000Z' };
     expect(remoteManifestsEqual(a, b)).toBe(true);
+  });
+
+  it('无自定义主题且云端无设置索引时不重复上传设置', () => {
+    const snapshot = { customThemes: [], activeThemeId: DEFAULT_THEME_ID };
+    const emptyManifest = manifest({});
+    expect(
+      shouldUploadSettingsForSync(snapshot, emptyManifest, '2024-01-01T00:00:00.000Z', false),
+    ).toBe(false);
+  });
+
+  it('有自定义主题且云端无设置索引时需上传', () => {
+    const snapshot = {
+      customThemes: [{ version: 1 as const, id: 't1', name: '夜', tokens: {} as never }],
+      activeThemeId: 't1',
+    };
+    expect(
+      shouldUploadSettingsForSync(snapshot, manifest({}), '2024-01-01T00:00:00.000Z', false),
+    ).toBe(true);
+  });
+
+  it('设置 updatedAt 较新时需上传', () => {
+    const snapshot = { customThemes: [], activeThemeId: DEFAULT_THEME_ID };
+    expect(
+      shouldUploadSettingsForSync(
+        snapshot,
+        manifest({}, '2024-06-01T00:00:00.000Z'),
+        '2024-07-01T00:00:00.000Z',
+        false,
+      ),
+    ).toBe(true);
   });
 });

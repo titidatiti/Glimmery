@@ -4,7 +4,7 @@ import {
   performCloudBackup,
 } from '@/core/documents';
 import { CLOUD_SYNC_SCHEME_MIGRATION_REQUIRED } from '@/core/storage';
-import { useCloudSyncStore, clearCloudSyncSessionExpiredNotice } from '@/core/sync';
+import { useCloudSyncStore, clearCloudSyncSessionExpiredNotice, CLOUD_SYNC_SIDEBAR_TITLE, formatCloudSyncSidebarSubtitle } from '@/core/sync';
 import { formatUpdatedAt } from '@/lib';
 import { useServices } from '@/services/context';
 import { CLOUD_SYNC_SESSION_EXPIRED_MESSAGE } from '@/services/sync';
@@ -20,6 +20,7 @@ export interface CloudSyncTriggerProps {
 function resolveStatusLine(input: {
   configured: boolean;
   isBackingUp: boolean;
+  syncProgress: { completed: number; total: number } | null;
   authenticated: boolean | null;
   sessionExpired: boolean;
   cloudMigrationBlocked: boolean;
@@ -33,7 +34,10 @@ function resolveStatusLine(input: {
     return { text: '需完成数据迁移', tone: 'error' };
   }
   if (input.isBackingUp) {
-    return { text: '正在同步…', tone: 'default' };
+    return {
+      text: formatCloudSyncSidebarSubtitle(input.syncProgress),
+      tone: 'default' as const,
+    };
   }
   if (input.authenticated === null) {
     return { text: '正在检查登录状态…', tone: 'default' };
@@ -56,6 +60,7 @@ function resolveStatusLine(input: {
 export function CloudSyncTrigger({ cloudMigrationBlocked = false }: CloudSyncTriggerProps) {
   const { storage, sync } = useServices();
   const isBackingUp = useCloudSyncStore((s) => s.isCloudBackingUp);
+  const syncProgress = useCloudSyncStore((s) => s.syncProgress);
   const pendingCloudSync = useCloudSyncStore((s) => s.pendingCloudSync);
   const lastCloudBackupAt = useCloudSyncStore((s) => s.lastCloudBackupAt);
   const backupError = useCloudSyncStore((s) => s.backupError);
@@ -120,6 +125,7 @@ export function CloudSyncTrigger({ cloudMigrationBlocked = false }: CloudSyncTri
       resolveStatusLine({
         configured,
         isBackingUp,
+        syncProgress,
         authenticated,
         sessionExpired,
         cloudMigrationBlocked,
@@ -129,6 +135,7 @@ export function CloudSyncTrigger({ cloudMigrationBlocked = false }: CloudSyncTri
     [
       configured,
       isBackingUp,
+      syncProgress,
       authenticated,
       sessionExpired,
       cloudMigrationBlocked,
@@ -163,11 +170,15 @@ export function CloudSyncTrigger({ cloudMigrationBlocked = false }: CloudSyncTri
       onClick={() => void handleClick()}
       disabled={!configured || isBackingUp || cloudMigrationBlocked}
       title={hint}
-      aria-label={`云同步，${status.text}`}
+      aria-label={
+        isBackingUp
+          ? `${CLOUD_SYNC_SIDEBAR_TITLE} ${formatCloudSyncSidebarSubtitle(syncProgress)}`
+          : `云同步，${status.text}`
+      }
     >
       <CloudIcon className={`${settingsStyles.triggerIcon} ${settingsStyles.triggerIconStatic}`} />
       <span className={styles.body}>
-        <span className={styles.title}>{isBackingUp ? '云同步中…' : '云同步'}</span>
+        <span className={styles.title}>{isBackingUp ? CLOUD_SYNC_SIDEBAR_TITLE : '云同步'}</span>
         <span className={statusClassName}>{status.text}</span>
       </span>
     </button>

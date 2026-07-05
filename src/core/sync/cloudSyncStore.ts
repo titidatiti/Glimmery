@@ -24,17 +24,26 @@ export interface CloudSyncStoreState {
   /** 本地有尚未成功备份到云端的内容 */
   pendingCloudSync: boolean;
   isCloudBackingUp: boolean;
+  /** 当前同步已完成的文件数 / 总文件数（文稿 + 用户设置） */
+  syncProgress: CloudSyncProgress | null;
   lastCloudBackupAt: string | null;
   backupError: string | null;
   markPending: () => void;
   markSynced: () => void;
   setBackingUp: (value: boolean) => void;
+  setSyncProgress: (progress: CloudSyncProgress | null) => void;
   setBackupError: (error: string | null) => void;
+}
+
+export interface CloudSyncProgress {
+  completed: number;
+  total: number;
 }
 
 export const useCloudSyncStore = create<CloudSyncStoreState>((set) => ({
   pendingCloudSync: false,
   isCloudBackingUp: false,
+  syncProgress: null,
   lastCloudBackupAt: loadLastCloudBackupAt(),
   backupError: null,
 
@@ -50,10 +59,16 @@ export const useCloudSyncStore = create<CloudSyncStoreState>((set) => ({
     });
   },
 
-  setBackingUp: (value) => set({ isCloudBackingUp: value }),
+  setBackingUp: (value) => set({ isCloudBackingUp: value, syncProgress: null }),
+
+  setSyncProgress: (progress) => set({ syncProgress: progress }),
 
   setBackupError: (error) => set({ backupError: error }),
 }));
+
+export function reportCloudSyncFileProgress(completed: number, total: number): void {
+  useCloudSyncStore.getState().setSyncProgress({ completed, total });
+}
 
 type BackupExecutor = () => Promise<boolean>;
 

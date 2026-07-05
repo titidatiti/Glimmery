@@ -27,6 +27,12 @@ export interface CloudRevisionInfo {
   slot: CloudRevisionSlot;
   updatedAt: string;
   label: string;
+  /** 上传该版本时的本机名称 */
+  clientName?: string;
+}
+
+export interface SyncProgressCallback {
+  (completed: number, total: number): void;
 }
 
 export interface SyncPushOptions {
@@ -35,6 +41,7 @@ export interface SyncPushOptions {
   force?: boolean;
   /** 写入 manifest 的客户端名称（修改者） */
   clientName?: string;
+  onProgress?: SyncProgressCallback;
 }
 
 export interface SyncMigrateOptions {
@@ -49,6 +56,7 @@ export interface SyncPullOptions {
   cachedRemoteManifestJson?: string | null;
   /** 拉取 manifest 中全部文稿（手动恢复等） */
   full?: boolean;
+  onProgress?: SyncProgressCallback;
 }
 
 export interface SyncPullResult {

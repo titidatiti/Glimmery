@@ -57,7 +57,7 @@ export class GoogleDriveAdapter implements SyncProvider {
       return await this.syncV3.pushSnapshot(
         snapshot,
         options?.settingsUpdatedAt ?? new Date(0).toISOString(),
-        { force: options?.force, clientName: options?.clientName },
+        { force: options?.force, clientName: options?.clientName, onProgress: options?.onProgress },
       );
     } catch (error) {
       return {

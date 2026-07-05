@@ -1,9 +1,13 @@
+import { APP_VERSION } from '@/app/version';
+import { parseChangelog } from '@/lib/parseChangelog';
 import { publicAssetUrl } from '@/lib';
 
+import changelogRaw from '../../../CHANGELOG.md?raw';
 import styles from './AboutSection.module.css';
 
 const BRAND_ICON_SRC = publicAssetUrl('icon.png');
 const GITHUB_URL = 'https://github.com/titidatiti/Glimmery';
+const CHANGELOG_RELEASES = parseChangelog(changelogRaw);
 
 export function AboutSection() {
   return (
@@ -28,7 +32,7 @@ export function AboutSection() {
       <dl className={styles.meta}>
         <div className={styles.row}>
           <dt>版本</dt>
-          <dd>0.2.0</dd>
+          <dd>{APP_VERSION}</dd>
         </div>
         <div className={styles.row}>
           <dt>作者</dt>
@@ -48,6 +52,36 @@ export function AboutSection() {
           </dd>
         </div>
       </dl>
+
+      <section className={styles.changelog} aria-labelledby="about-changelog-heading">
+        <h4 id="about-changelog-heading" className={styles.changelogHeading}>
+          更新日志
+        </h4>
+        <div className={styles.changelogScroll}>
+          {CHANGELOG_RELEASES.map((release) => (
+            <article key={release.version} className={styles.release}>
+              <header className={styles.releaseHeader}>
+                <h5 className={styles.releaseVersion}>v{release.version}</h5>
+                {release.date && (
+                  <time className={styles.releaseDate} dateTime={release.date}>
+                    {release.date}
+                  </time>
+                )}
+              </header>
+              {release.sections.map((section) => (
+                <div key={`${release.version}-${section.title}`} className={styles.releaseSection}>
+                  <p className={styles.releaseSectionTitle}>{section.title}</p>
+                  <ul className={styles.releaseList}>
+                    {section.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

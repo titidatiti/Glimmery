@@ -1,5 +1,7 @@
 import type { DocumentMeta } from '@/core/documents';
+import { DEFAULT_THEME_ID } from '@/core/themes';
 
+import type { BackupSnapshot } from '../types';
 import type { DriveManifest } from './driveLayout';
 
 export interface ManifestPullPlan {
@@ -127,6 +129,31 @@ export function planManifestPull(
     fetchSettings,
     skipDocumentReads,
   };
+}
+
+export function hasSyncableThemePayload(
+  snapshot: Pick<BackupSnapshot, 'customThemes' | 'activeThemeId'>,
+): boolean {
+  return snapshot.customThemes.length > 0 || snapshot.activeThemeId !== DEFAULT_THEME_ID;
+}
+
+/** 是否需上传用户设置文件（无自定义主题且云端无设置索引时不重复上传） */
+export function shouldUploadSettingsForSync(
+  snapshot: Pick<BackupSnapshot, 'customThemes' | 'activeThemeId'>,
+  manifest: DriveManifest,
+  settingsUpdatedAt: string,
+  force: boolean,
+): boolean {
+  const hasLocalThemeData = hasSyncableThemePayload(snapshot);
+  const remoteSettingsAt = manifest.settings?.updatedAt ?? '';
+
+  if (force) {
+    return hasLocalThemeData || manifest.settings !== null;
+  }
+  if (!manifest.settings) {
+    return hasLocalThemeData;
+  }
+  return settingsUpdatedAt > remoteSettingsAt;
 }
 
 export function buildRemoteManifestFromSnapshot(

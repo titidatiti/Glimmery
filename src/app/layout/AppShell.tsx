@@ -22,7 +22,7 @@ import {
 } from '@/app/hooks/useStorageSchemeGate';
 import { useStartupCloudSync } from '@/app/hooks/useStartupCloudSync';
 import { useFocusGestures } from '@/app/hooks/useFocusGestures';
-import { useCloudSyncStore } from '@/core/sync';
+import { CLOUD_SYNC_PULL_LABELS, formatCloudSyncActiveLabel, useCloudSyncStore } from '@/core/sync';
 
 import { MobilePanelScroller } from '@/app/mobile-panels';
 
@@ -73,6 +73,7 @@ export function AppShell() {
 
   const isMobile = useIsMobileLayout();
   const isCloudBackingUp = useCloudSyncStore((s) => s.isCloudBackingUp);
+  const syncProgress = useCloudSyncStore((s) => s.syncProgress);
 
   const appInitDone = !isLoading;
   const schemeGate = useStorageSchemeGate(storage, sync, appInitDone);
@@ -205,7 +206,7 @@ export function AppShell() {
           {schemeGate.phase === 'migrating'
             ? '正在迁移数据…'
             : startupCloudSyncing
-              ? '正在从云端同步…'
+              ? formatCloudSyncActiveLabel(CLOUD_SYNC_PULL_LABELS, syncProgress)
               : schemeGate.phase === 'checking'
                 ? '正在检查数据版本…'
                 : '微光汇聚中…'}

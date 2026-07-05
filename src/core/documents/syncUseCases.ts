@@ -9,6 +9,7 @@ import {
 } from '@/core/storage';
 import { applyThemeBackupState, exportThemeBackupState } from '@/core/themes/themeStore';
 import { loadSyncClientName } from '@/core/settings/syncClientName';
+import { reportCloudSyncFileProgress } from '@/core/sync';
 import type { DocumentData } from './types';
 export interface SyncConflict {
   id: string;
@@ -219,6 +220,7 @@ export async function backupAllDocuments(
     settingsUpdatedAt: updatedAt,
     force: options?.force,
     clientName: loadSyncClientName(),
+    onProgress: reportCloudSyncFileProgress,
   });
 
   if (result.success) {
@@ -430,6 +432,7 @@ export async function pullRemoteSyncData(
     localSettingsUpdatedAt: getSettingsUpdatedAtForSync(),
     cachedRemoteManifestJson: await loadRemoteManifestCacheJson(kv),
     full: options?.full,
+    onProgress: reportCloudSyncFileProgress,
   });
   await saveRemoteManifestCacheJson(kv, result.remoteManifestJson);
   const manifest =
