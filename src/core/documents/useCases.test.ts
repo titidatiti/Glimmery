@@ -66,6 +66,12 @@ describe('updateDocumentTitle', () => {
     const updated = updateDocumentTitle(doc, '新标题');
     expect(updated.title).toBe('新标题');
   });
+
+  it('允许空标题，不在编辑时强制写入默认名', () => {
+    const doc = createDocument('旧标题', '');
+    const updated = updateDocumentTitle(doc, '');
+    expect(updated.title).toBe('');
+  });
 });
 
 describe('createDocument', () => {

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { StorageProvider } from '@/services/storage';
 import { scheduleCloudBackupIfPending, useCloudSyncStore } from '@/core/sync';
 import type { DocumentData, DocumentMeta } from './types';
-import { formatDocumentTitle, sortDocumentsByUpdatedAt } from './types';
+import { sortDocumentsByUpdatedAt } from './types';
 import {
   createNewDocument,
   deleteDocument,
@@ -227,7 +227,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
   updateTitle: (title) => {
     const { activeDocument } = get();
     if (!activeDocument) return;
-    if (formatDocumentTitle(title) === activeDocument.title) return;
+    if (title === activeDocument.title) return;
     set({
       activeDocument: updateDocumentTitle(activeDocument, title),
       hasUnsavedChanges: true,

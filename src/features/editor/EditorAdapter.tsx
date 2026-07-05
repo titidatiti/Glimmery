@@ -6,9 +6,11 @@ import { MOBILE_PORTRAIT_QUERY, useComposingInput } from '@/ui';
 import { glimmeryCodeMirrorTheme } from './codeMirrorTheme';
 import './editorCrepeTheme.css';
 import './editorCrepeOverrides.css';
+import { DEFAULT_DOCUMENT_TITLE } from '@/core/documents';
 import { activeLinePlugin } from './plugins/activeLinePlugin';
 import { blockDragFixPlugin } from './plugins/blockDragFixPlugin';
 import { comfortScrollPlugin } from './plugins/comfortScrollPlugin';
+import { titleNavigationPlugin } from './plugins/titleNavigationPlugin';
 import { blockHandleCrepeConfig } from './plugins/blockHandleConfig';
 import styles from './EditorAdapter.module.css';
 
@@ -62,6 +64,7 @@ function BodyEditor({
 
       crepe.editor.use(activeLinePlugin);
       crepe.editor.use(comfortScrollPlugin);
+      crepe.editor.use(titleNavigationPlugin);
       crepe.editor.use(blockDragFixPlugin);
       crepe.on((listener) => {
         listener.markdownUpdated((_ctx, markdown, prevMarkdown) => {
@@ -98,6 +101,15 @@ export function EditorAdapter({
 }: EditorAdapterProps) {
   const titleInput = useComposingInput(title, onTitleChange);
 
+  const focusBodyFromTitle = (input: HTMLInputElement) => {
+    const proseMirror = input
+      .closest('.editorWritingSurface')
+      ?.querySelector('.ProseMirror');
+    if (proseMirror instanceof HTMLElement) {
+      proseMirror.focus();
+    }
+  };
+
   return (
     <div className="editorWritingSurface">
       <input
@@ -107,7 +119,24 @@ export function EditorAdapter({
         onChange={titleInput.onChange}
         onCompositionStart={titleInput.onCompositionStart}
         onCompositionEnd={titleInput.onCompositionEnd}
-        placeholder="标题"
+        onKeyDown={(event) => {
+          if (readOnly) return;
+          if (
+            event.key !== 'ArrowDown' ||
+            event.shiftKey ||
+            event.altKey ||
+            event.metaKey ||
+            event.ctrlKey
+          ) {
+            return;
+          }
+          const input = event.currentTarget;
+          if (input.selectionStart !== input.value.length) return;
+          if (input.selectionEnd !== input.value.length) return;
+          event.preventDefault();
+          focusBodyFromTitle(input);
+        }}
+        placeholder={DEFAULT_DOCUMENT_TITLE}
         aria-label="文稿标题"
       />
       <MilkdownProvider>

@@ -1,6 +1,6 @@
 import { generateId } from '@/lib';
 
-/** 空标题时的展示与持久化回退名 */
+/** 空标题时在侧栏、工具栏等展示处的回退名（不写入编辑框） */
 export const DEFAULT_DOCUMENT_TITLE = '未命名文稿';
 
 export interface DocumentMeta {
@@ -14,7 +14,7 @@ export interface DocumentData extends DocumentMeta {
   content: string;
 }
 
-/** 统一的标题展示逻辑：去空白，空则回退默认名 */
+/** 统一的标题展示逻辑：去空白，空则回退默认名（仅用于展示，不用于编辑框 value） */
 export function formatDocumentTitle(title: string): string {
   return title.trim() || DEFAULT_DOCUMENT_TITLE;
 }
