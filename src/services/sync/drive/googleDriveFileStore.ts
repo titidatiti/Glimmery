@@ -1,6 +1,7 @@
 import {
   GOOGLE_DRIVE_SCOPE_ERROR_PATTERN,
   INSUFFICIENT_DRIVE_SCOPE_MESSAGE,
+  CLOUD_SYNC_SESSION_EXPIRED_MESSAGE,
 } from '../constants';
 import type { GoogleDriveAuth } from '../adapters/googleDriveAuth';
 import { isGlimmeryDriveFile } from './driveLayout';
@@ -89,9 +90,9 @@ export class GoogleDriveFileStore {
   }
 
   private async requireToken(): Promise<string> {
-    let token = await this.auth.getAccessToken();
+    const token = await this.auth.getAccessToken();
     if (!token) {
-      token = await this.auth.requestAccessToken({ prompt: 'consent' });
+      throw new Error(CLOUD_SYNC_SESSION_EXPIRED_MESSAGE);
     }
     return token;
   }
@@ -106,6 +107,7 @@ export class GoogleDriveFileStore {
     token: string,
     init: RequestInit = {},
     allowScopeRetry = true,
+    allowAuthRetry = true,
   ): Promise<Response> {
     const headers = new Headers(init.headers);
     headers.set('Authorization', `Bearer ${token}`);
@@ -119,6 +121,14 @@ export class GoogleDriveFileStore {
         /* ignore */
       }
 
+      if (allowAuthRetry && response.status === 401) {
+        await this.auth.clearStoredToken();
+        const freshToken = await this.auth.getAccessToken();
+        if (freshToken) {
+          return this.driveFetch(url, freshToken, init, allowScopeRetry, false);
+        }
+      }
+
       if (
         allowScopeRetry &&
         response.status === 403 &&
@@ -126,7 +136,7 @@ export class GoogleDriveFileStore {
       ) {
         await this.auth.signOut();
         const freshToken = await this.auth.requestAccessToken({ prompt: 'consent' });
-        return this.driveFetch(url, freshToken, init, false);
+        return this.driveFetch(url, freshToken, init, false, false);
       }
 
       if (GOOGLE_DRIVE_SCOPE_ERROR_PATTERN.test(message)) {

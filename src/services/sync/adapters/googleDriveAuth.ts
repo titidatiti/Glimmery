@@ -8,7 +8,7 @@ import {
   KV_GOOGLE_DRIVE_TOKEN,
 } from '../constants';
 
-interface StoredToken {
+export interface StoredGoogleToken {
   accessToken: string;
   expiresAt: number;
   scope?: string;
@@ -66,6 +66,18 @@ declare global {
 const GIS_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 const USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo';
 
+/** 到期前 1 分钟即视为需要续期 */
+export const GOOGLE_TOKEN_EXPIRY_BUFFER_MS = 60_000;
+
+export const GOOGLE_TOKEN_DEFAULT_EXPIRES_IN_SEC = 3600;
+
+export type GoogleTokenPrompt = 'none' | 'consent' | 'select_account';
+
+export interface RequestAccessTokenOptions {
+  /** 首次连接用 consent；过期续期用 none（静默，不弹窗） */
+  prompt?: GoogleTokenPrompt;
+}
+
 let gisScriptPromise: Promise<void> | null = null;
 
 export function loadGoogleIdentityScript(): Promise<void> {
@@ -93,6 +105,27 @@ export function preloadGoogleIdentityScript(): void {
   void loadGoogleIdentityScript().catch(() => undefined);
 }
 
+export function isStoredGoogleTokenFresh(
+  stored: StoredGoogleToken,
+  now = Date.now(),
+  bufferMs = GOOGLE_TOKEN_EXPIRY_BUFFER_MS,
+): boolean {
+  return now < stored.expiresAt - bufferMs;
+}
+
+export function buildStoredGoogleToken(
+  accessToken: string,
+  expiresInSec: number,
+  scope: string | undefined,
+  now = Date.now(),
+): StoredGoogleToken {
+  return {
+    accessToken,
+    expiresAt: now + expiresInSec * 1000,
+    scope,
+  };
+}
+
 function formatOAuthClientError(error: GoogleOAuthClientError): Error {
   if (error.type === 'popup_failed_to_open') {
     return new Error('授权窗口未能打开，请再点一次「连接 Google 账号」');
@@ -106,12 +139,13 @@ function formatOAuthClientError(error: GoogleOAuthClientError): Error {
   return new Error('授权失败');
 }
 
-export interface RequestAccessTokenOptions {
-  /** 首次连接或 scope 不足时传 consent，强制展示完整权限 */
-  prompt?: 'consent' | 'select_account';
+function formatTokenResponseError(response: GoogleTokenResponse): Error {
+  return new Error(response.error_description ?? response.error ?? '授权失败');
 }
 
 export class GoogleDriveAuth {
+  private silentRefreshInFlight: Promise<string> | null = null;
+
   constructor(
     private readonly kv: StorageKeyValue,
     private readonly clientId: string,
@@ -119,16 +153,25 @@ export class GoogleDriveAuth {
 
   async getAccessToken(): Promise<string | null> {
     const stored = await this.loadStoredToken();
-    if (!stored) return null;
-    if (!includesDriveAppDataScope(stored.scope)) {
-      await this.clearStoredCredentials();
+    if (stored) {
+      if (!includesDriveAppDataScope(stored.scope)) {
+        await this.clearStoredToken();
+        return null;
+      }
+      if (isStoredGoogleTokenFresh(stored)) {
+        return stored.accessToken;
+      }
+    }
+
+    if (!(await this.hasPriorConnection(stored))) {
       return null;
     }
-    if (Date.now() < stored.expiresAt - 60_000) {
-      return stored.accessToken;
+
+    try {
+      return await this.refreshAccessTokenSilently();
+    } catch {
+      return null;
     }
-    await this.clearStoredCredentials();
-    return null;
   }
 
   async isAuthenticated(): Promise<boolean> {
@@ -136,23 +179,18 @@ export class GoogleDriveAuth {
   }
 
   /**
-   * 只读检查登录态，不清除 token。
-   * expired：token 过期、scope 不足，或 token 已清但仍有账号 profile 缓存。
+   * 只读检查登录态；过期时会尝试静默续期，不弹授权窗。
    */
   async getAuthSessionStatus(): Promise<'none' | 'active' | 'expired'> {
     const stored = await this.loadStoredToken();
-    if (stored) {
-      if (!includesDriveAppDataScope(stored.scope)) {
-        return 'expired';
-      }
-      if (Date.now() < stored.expiresAt - 60_000) {
-        return 'active';
-      }
+    if (stored && !includesDriveAppDataScope(stored.scope)) {
       return 'expired';
     }
 
-    const profile = await this.loadStoredProfile();
-    if (profile) {
+    const token = await this.getAccessToken();
+    if (token) return 'active';
+
+    if (await this.hasPriorConnection(stored)) {
       return 'expired';
     }
 
@@ -160,13 +198,12 @@ export class GoogleDriveAuth {
   }
 
   async getAccountProfile(): Promise<SyncAccountProfile | null> {
+    const cached = await this.loadStoredProfile();
     const token = await this.getAccessToken();
     if (!token) {
-      await this.kv.removeItem(KV_GOOGLE_DRIVE_PROFILE);
-      return null;
+      return cached;
     }
 
-    const cached = await this.loadStoredProfile();
     if (cached) return cached;
 
     try {
@@ -174,15 +211,20 @@ export class GoogleDriveAuth {
       await this.kv.setItem(KV_GOOGLE_DRIVE_PROFILE, JSON.stringify(profile));
       return profile;
     } catch {
-      return null;
+      return cached;
     }
   }
 
-  private async loadStoredToken(): Promise<StoredToken | null> {
+  private async hasPriorConnection(stored: StoredGoogleToken | null): Promise<boolean> {
+    if (stored) return true;
+    return (await this.loadStoredProfile()) !== null;
+  }
+
+  private async loadStoredToken(): Promise<StoredGoogleToken | null> {
     const raw = await this.kv.getItem(KV_GOOGLE_DRIVE_TOKEN);
     if (!raw) return null;
     try {
-      return JSON.parse(raw) as StoredToken;
+      return JSON.parse(raw) as StoredGoogleToken;
     } catch {
       return null;
     }
@@ -232,6 +274,18 @@ export class GoogleDriveAuth {
     }
   }
 
+  async refreshAccessTokenSilently(): Promise<string> {
+    if (this.silentRefreshInFlight) {
+      return this.silentRefreshInFlight;
+    }
+
+    this.silentRefreshInFlight = this.requestAccessToken({ prompt: 'none' }).finally(() => {
+      this.silentRefreshInFlight = null;
+    });
+
+    return this.silentRefreshInFlight;
+  }
+
   async requestAccessToken(options?: RequestAccessTokenOptions): Promise<string> {
     await loadGoogleIdentityScript();
     const oauth2 = window.google?.accounts?.oauth2;
@@ -245,19 +299,18 @@ export class GoogleDriveAuth {
         scope: GOOGLE_DRIVE_OAUTH_SCOPES,
         callback: (response) => {
           if (response.error || !response.access_token) {
-            reject(new Error(response.error_description ?? response.error ?? '授权失败'));
+            reject(formatTokenResponseError(response));
             return;
           }
           if (!includesDriveAppDataScope(response.scope)) {
             reject(new Error(INSUFFICIENT_DRIVE_SCOPE_MESSAGE));
             return;
           }
-          const expiresIn = response.expires_in ?? 3600;
-          const stored: StoredToken = {
-            accessToken: response.access_token,
-            expiresAt: Date.now() + expiresIn * 1000,
-            scope: response.scope,
-          };
+          const stored = buildStoredGoogleToken(
+            response.access_token,
+            response.expires_in ?? GOOGLE_TOKEN_DEFAULT_EXPIRES_IN_SEC,
+            response.scope,
+          );
           void this.kv.setItem(KV_GOOGLE_DRIVE_TOKEN, JSON.stringify(stored)).then(async () => {
             await this.persistProfile(response.access_token!);
             resolve(response.access_token!);
@@ -271,7 +324,7 @@ export class GoogleDriveAuth {
     });
   }
 
-  private async clearStoredCredentials(): Promise<void> {
+  async clearStoredToken(): Promise<void> {
     await this.kv.removeItem(KV_GOOGLE_DRIVE_TOKEN);
   }
 
