@@ -18,10 +18,13 @@ export type DriveRevisionSlot = 'current' | 1 | 2 | 3;
 
 export interface DriveManifestDocumentEntry {
   updatedAt: string;
+  /** 最近一次上传该条目的客户端名称 */
+  clientName?: string;
 }
 
 export interface DriveManifestSettingsEntry {
   updatedAt: string;
+  clientName?: string;
 }
 
 export interface DriveManifest {

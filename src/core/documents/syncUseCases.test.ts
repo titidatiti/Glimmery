@@ -104,6 +104,19 @@ describe('planRestoreWithManifest', () => {
     expect(plan.conflicts).toHaveLength(0);
     expect(plan.remoteOnly).toHaveLength(0);
   });
+
+  it('冲突时携带 manifest 中的修改者名称', () => {
+    const local = [{ ...doc('a', '2024-01-02T00:00:00.000Z'), content: '本地' }];
+    const remote = [{ ...doc('a', '2024-01-03T00:00:00.000Z'), content: '云端' }];
+    const manifest: DriveManifest = {
+      ...emptyManifest,
+      documents: { a: { updatedAt: remote[0].updatedAt, clientName: '工作电脑' } },
+    };
+    const plan = planRestoreWithManifest(local, manifest, remote, [], DEFAULT_THEME_ID);
+    expect(plan.conflicts).toHaveLength(1);
+    expect(plan.conflicts[0]?.remoteClientName).toBe('工作电脑');
+    expect(plan.conflicts[0]?.localClientName).toBeTruthy();
+  });
 });
 
 describe('assessCloudBackupOverwriteFromManifest', () => {
@@ -112,7 +125,9 @@ describe('assessCloudBackupOverwriteFromManifest', () => {
     const manifest: DriveManifest = {
       version: 3,
       updatedAt: '2020-01-01T00:00:00.000Z',
-      documents: { a: { updatedAt: '2024-01-05T00:00:00.000Z' } },
+      documents: {
+        a: { updatedAt: '2024-01-05T00:00:00.000Z', clientName: 'MacBook Pro' },
+      },
       settings: null,
     };
     const warning = assessCloudBackupOverwriteFromManifest(
@@ -121,6 +136,14 @@ describe('assessCloudBackupOverwriteFromManifest', () => {
       '2024-01-01T00:00:00.000Z',
     );
     expect(warning?.newerRemoteConflictCount).toBe(1);
+    expect(warning?.newerRemoteDocuments).toEqual([
+      {
+        id: 'a',
+        title: 't',
+        remoteUpdatedAt: '2024-01-05T00:00:00.000Z',
+        remoteClientName: 'MacBook Pro',
+      },
+    ]);
   });
 });
 
@@ -137,6 +160,7 @@ describe('assessCloudBackupOverwrite', () => {
       remoteOnlyCount: 1,
       newerRemoteConflictCount: 0,
       remoteOnlyThemeCount: 0,
+      newerRemoteDocuments: [],
     });
   });
 
@@ -147,6 +171,14 @@ describe('assessCloudBackupOverwrite', () => {
       remoteOnlyCount: 0,
       newerRemoteConflictCount: 1,
       remoteOnlyThemeCount: 0,
+      newerRemoteDocuments: [
+        {
+          id: 'a',
+          title: 't',
+          remoteUpdatedAt: '2024-01-03T00:00:00.000Z',
+          remoteClientName: undefined,
+        },
+      ],
     });
   });
 

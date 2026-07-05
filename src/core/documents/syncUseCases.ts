@@ -8,11 +8,16 @@ import {
   saveRemoteManifestCacheJson,
 } from '@/core/storage';
 import { applyThemeBackupState, exportThemeBackupState } from '@/core/themes/themeStore';
+import { loadSyncClientName } from '@/core/settings/syncClientName';
 import type { DocumentData } from './types';
 export interface SyncConflict {
   id: string;
   local: DocumentData;
   remote: DocumentData;
+  /** manifest 中记录的云端修改者 */
+  remoteClientName?: string;
+  /** 当前本机名称（用于对比展示） */
+  localClientName?: string;
 }
 
 export type ConflictResolution = 'keep-local' | 'use-remote';
@@ -30,10 +35,24 @@ export interface RestorePlan {
 }
 
 /** 上传备份前：云端比本地新、需用户确认才可覆盖 */
+export interface CloudBackupOverwriteDocumentDetail {
+  id: string;
+  title: string;
+  remoteUpdatedAt: string;
+  remoteClientName?: string;
+}
+
+export interface CloudBackupOverwriteSettingsDetail {
+  remoteUpdatedAt: string;
+  remoteClientName?: string;
+}
+
 export interface CloudBackupOverwriteWarning {
   remoteOnlyCount: number;
   newerRemoteConflictCount: number;
   remoteOnlyThemeCount: number;
+  newerRemoteDocuments: CloudBackupOverwriteDocumentDetail[];
+  remoteSettings?: CloudBackupOverwriteSettingsDetail;
 }
 
 export function assessCloudBackupOverwrite(
@@ -60,6 +79,7 @@ export function assessCloudBackupOverwriteFromManifest(
   const localById = new Map(local.documents.map((doc) => [doc.id, doc]));
   let remoteOnlyCount = 0;
   let newerRemoteConflictCount = 0;
+  const newerRemoteDocuments: CloudBackupOverwriteDocumentDetail[] = [];
 
   for (const [id, entry] of Object.entries(remoteManifest.documents)) {
     const localDoc = localById.get(id);
@@ -69,15 +89,26 @@ export function assessCloudBackupOverwriteFromManifest(
     }
     if (entry.updatedAt > localDoc.updatedAt) {
       newerRemoteConflictCount += 1;
+      newerRemoteDocuments.push({
+        id,
+        title: localDoc.title,
+        remoteUpdatedAt: entry.updatedAt,
+        remoteClientName: entry.clientName,
+      });
     }
   }
 
   let remoteOnlyThemeCount = 0;
+  let remoteSettings: CloudBackupOverwriteSettingsDetail | undefined;
   if (
     remoteManifest.settings &&
     localSettingsUpdatedAt < remoteManifest.settings.updatedAt
   ) {
     remoteOnlyThemeCount = 1;
+    remoteSettings = {
+      remoteUpdatedAt: remoteManifest.settings.updatedAt,
+      remoteClientName: remoteManifest.settings.clientName,
+    };
   }
 
   if (
@@ -92,6 +123,8 @@ export function assessCloudBackupOverwriteFromManifest(
     remoteOnlyCount,
     newerRemoteConflictCount,
     remoteOnlyThemeCount,
+    newerRemoteDocuments,
+    remoteSettings,
   };
 }
 
@@ -120,6 +153,12 @@ function assessCloudBackupOverwriteFromPlan(
     remoteOnlyCount: plan.remoteOnly.length,
     newerRemoteConflictCount: newerRemoteConflicts.length,
     remoteOnlyThemeCount,
+    newerRemoteDocuments: newerRemoteConflicts.map((conflict) => ({
+      id: conflict.id,
+      title: conflict.local.title,
+      remoteUpdatedAt: conflict.remote.updatedAt,
+      remoteClientName: conflict.remoteClientName,
+    })),
   };
 }
 
@@ -131,9 +170,22 @@ export function formatCloudBackupOverwritePrompt(warning: CloudBackupOverwriteWa
   }
   if (warning.newerRemoteConflictCount > 0) {
     lines.push(`· ${warning.newerRemoteConflictCount} 篇文稿的云端版本更新`);
+    for (const doc of warning.newerRemoteDocuments) {
+      const client = doc.remoteClientName?.trim();
+      const clientPart = client ? `，来自 ${client}` : '';
+      lines.push(`  - ${doc.title || '无标题'}（${doc.remoteUpdatedAt}${clientPart}）`);
+    }
   }
   if (warning.remoteOnlyThemeCount > 0) {
-    lines.push(`· ${warning.remoteOnlyThemeCount} 个仅存在于云端的自定义配色将被删除`);
+    let line = `· ${warning.remoteOnlyThemeCount} 个仅存在于云端的自定义配色将被删除`;
+    const settings = warning.remoteSettings;
+    if (settings) {
+      const client = settings.remoteClientName?.trim();
+      line += `（云端 ${settings.remoteUpdatedAt}`;
+      if (client) line += `，来自 ${client}`;
+      line += '）';
+    }
+    lines.push(line);
   }
 
   lines.push('', '仍要用本地数据覆盖云端吗？');
@@ -163,7 +215,11 @@ export async function backupAllDocuments(
 ): Promise<{ success: boolean; pushed: number; error?: string }> {
   const snapshot = await buildBackupSnapshot(storage);
   const { updatedAt } = exportThemeBackupState();
-  const result = await sync.push(snapshot, { settingsUpdatedAt: updatedAt, force: options?.force });
+  const result = await sync.push(snapshot, {
+    settingsUpdatedAt: updatedAt,
+    force: options?.force,
+    clientName: loadSyncClientName(),
+  });
 
   if (result.success) {
     const manifestJson = await sync.fetchRemoteManifest();
@@ -258,7 +314,13 @@ export function planRestoreWithManifest(
     ) {
       continue;
     }
-    conflicts.push({ id, local: localDoc, remote: remoteDoc });
+    conflicts.push({
+      id,
+      local: localDoc,
+      remote: remoteDoc,
+      remoteClientName: entry.clientName,
+      localClientName: loadSyncClientName(),
+    });
   }
 
   const manifestIds = new Set(Object.keys(remoteManifest.documents));

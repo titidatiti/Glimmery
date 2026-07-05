@@ -13,6 +13,7 @@ import {
   markCloudSchemeCurrent,
   migrateLocalStorageScheme,
 } from '@/core/storage';
+import { loadSyncClientName } from '@/core/settings/syncClientName';
 import type { StorageProvider } from '@/services/storage';
 import type { StorageKeyValue } from '@/services/storage';
 import type { CloudSyncSchemeStatus, SyncProvider } from '@/services/sync';
@@ -144,7 +145,7 @@ export function useStorageSchemeGate(
     setPhase('migrating');
     setError(null);
     try {
-      await sync.migrateCloudSyncScheme();
+      await sync.migrateCloudSyncScheme({ clientName: loadSyncClientName() });
       await markCloudSchemeCurrent(kv);
       setCloudStatus(null);
       await finishReady(false);

@@ -128,16 +128,14 @@ export function CloudRevisionPanel({ disabled }: { disabled?: boolean }) {
   };
 
   return (
-    <div className={styles.block}>
+    <div className={styles.panel}>
       <p className={styles.subheading}>云端版本历史</p>
-      <p className={styles.fieldHint}>
-        每次同步前，云端会自动保留当前文稿与设置各 3 个历史版本，可从下方恢复到本地。
-      </p>
+      <p className={styles.fieldHint}>各保留 3 个历史版本，可恢复至本地。</p>
 
       {error && <p className={styles.noticeError}>{error}</p>}
       {message && <p className={styles.noticeSuccess}>{message}</p>}
 
-      <div className={styles.infoGroup}>
+      <div className={styles.settingRow}>
         <span className={styles.itemLabel}>文稿</span>
         <select
           className={styles.revisionSelect}
@@ -156,13 +154,13 @@ export function CloudRevisionPanel({ disabled }: { disabled?: boolean }) {
             ))
           )}
         </select>
-        {renderRevisionList(docRevisions, restoreDocument, 'doc')}
       </div>
+      {renderRevisionList(docRevisions, restoreDocument, 'doc')}
 
-      <div className={styles.infoGroup}>
-        <span className={styles.itemLabel}>用户设置（自定义主题等）</span>
-        {renderRevisionList(settingsRevisions, restoreSettings, 'settings')}
-      </div>
+      <div className={styles.panelDivider} aria-hidden="true" />
+
+      <span className={styles.itemLabel}>用户设置</span>
+      {renderRevisionList(settingsRevisions, restoreSettings, 'settings')}
     </div>
   );
 }

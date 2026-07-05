@@ -67,7 +67,7 @@ export class NoopSyncAdapter implements SyncProvider {
     return { kind: 'empty', version: null, targetVersion: 3 };
   }
 
-  async migrateCloudSyncScheme(): Promise<CloudSyncSchemeMigrationResult> {
+  async migrateCloudSyncScheme(_options?: import('../types').SyncMigrateOptions): Promise<CloudSyncSchemeMigrationResult> {
     return { fromVersion: 0, toVersion: 3 };
   }
 

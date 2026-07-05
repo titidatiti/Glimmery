@@ -48,7 +48,9 @@ export class GoogleDriveSyncV3 {
     });
   }
 
-  async migrateCloudSyncScheme(): Promise<CloudSyncSchemeMigrationResult> {
+  async migrateCloudSyncScheme(options?: {
+    clientName?: string;
+  }): Promise<CloudSyncSchemeMigrationResult> {
     return this.files.withToken(async (token) => {
       await this.files.refreshIndex(token);
       const before = await detectCloudSyncSchemeFromStore(this.files, token);
@@ -59,7 +61,7 @@ export class GoogleDriveSyncV3 {
         };
       }
       const fromVersion = before.version ?? 0;
-      await this.migrateLegacyToV3(token);
+      await this.migrateLegacyToV3(token, options?.clientName);
       return { fromVersion, toVersion: DRIVE_SYNC_LAYOUT_VERSION };
     });
   }
@@ -136,13 +138,14 @@ export class GoogleDriveSyncV3 {
   async pushSnapshot(
     snapshot: BackupSnapshot,
     settingsUpdatedAt: string,
-    options?: { force?: boolean },
+    options?: { force?: boolean; clientName?: string },
   ): Promise<SyncResult> {
     return this.files.withToken(async (token) => {
       await this.files.refreshIndex(token);
       await this.assertCloudSchemeCurrent(token);
 
       const manifest = await this.loadManifest(token);
+      const clientName = options?.clientName?.trim();
       let pushed = 0;
       const force = options?.force === true;
 
@@ -152,7 +155,7 @@ export class GoogleDriveSyncV3 {
           continue;
         }
         await this.writeDocumentWithHistory(token, doc);
-        manifest.documents[doc.id] = { updatedAt: doc.updatedAt };
+        manifest.documents[doc.id] = this.manifestEntry(doc.updatedAt, clientName);
         pushed += 1;
       }
 
@@ -163,7 +166,7 @@ export class GoogleDriveSyncV3 {
           customThemes: snapshot.customThemes,
           activeThemeId: snapshot.activeThemeId,
         });
-        manifest.settings = { updatedAt: settingsUpdatedAt };
+        manifest.settings = this.manifestEntry(settingsUpdatedAt, clientName);
         pushed += 1;
       }
 
@@ -251,6 +254,15 @@ export class GoogleDriveSyncV3 {
     }
   }
 
+  private manifestEntry(updatedAt: string, clientName?: string) {
+    const entry = { updatedAt };
+    const name = clientName?.trim();
+    if (name) {
+      return { ...entry, clientName: name };
+    }
+    return entry;
+  }
+
   private async assertCloudSchemeCurrent(token: string): Promise<void> {
     const status = await detectCloudSyncSchemeFromStore(this.files, token);
     if (status.kind === 'legacy' || status.kind === 'outdated') {
@@ -258,7 +270,7 @@ export class GoogleDriveSyncV3 {
     }
   }
 
-  private async migrateLegacyToV3(token: string): Promise<void> {
+  private async migrateLegacyToV3(token: string, clientName?: string): Promise<void> {
     if (this.files.has(DRIVE_MANIFEST_FILENAME)) {
       const raw = await this.files.read(token, DRIVE_MANIFEST_FILENAME);
       if (raw) {
@@ -299,15 +311,19 @@ export class GoogleDriveSyncV3 {
       false,
     );
 
+    const trimmedClientName = clientName?.trim();
     const manifest: DriveManifest = {
       version: 3,
       updatedAt: new Date().toISOString(),
       documents: Object.fromEntries(
-        legacy.documents.map((doc) => [doc.id, { updatedAt: doc.updatedAt }]),
+        legacy.documents.map((doc) => [
+          doc.id,
+          this.manifestEntry(doc.updatedAt, trimmedClientName),
+        ]),
       ),
       settings:
         legacy.customThemes.length > 0 || legacy.activeThemeId !== DEFAULT_THEME_ID
-          ? { updatedAt: settingsUpdatedAt }
+          ? this.manifestEntry(settingsUpdatedAt, trimmedClientName)
           : null,
     };
     await this.files.write(token, DRIVE_MANIFEST_FILENAME, JSON.stringify(manifest));

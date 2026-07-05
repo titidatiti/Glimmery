@@ -2,6 +2,7 @@ import { resolveCloudSyncErrorMessage } from '@/core/storage';
 import type { StorageProvider } from '@/services/storage';
 import type { SyncProvider } from '@/services/sync';
 import { useCloudSyncStore } from '@/core/sync';
+import { useDocumentStore } from '@/core/documents/documentStore';
 import {
   assessCloudBackupOverwriteFromManifest,
   backupAllDocuments,
@@ -10,6 +11,7 @@ import {
   type CloudBackupOverwriteWarning,
 } from '@/core/documents/syncUseCases';
 import { parseRemoteManifestJson } from '@/services/sync/drive/manifestSyncPlan';
+
 export type { CloudBackupOverwriteWarning };
 
 export type PerformCloudBackupResult =
@@ -85,4 +87,42 @@ export async function performCloudBackup(
   } finally {
     store.setBackingUp(false);
   }
+}
+
+export interface PerformSaveShortcutOptions {
+  /** 为 false 时仅落盘本地（如云同步被迁移 gate 阻断） */
+  cloudEnabled?: boolean;
+  confirmedOverwrite?: boolean;
+}
+
+export type PerformSaveShortcutResult =
+  | PerformCloudBackupResult
+  | { status: 'local_only' }
+  | { status: 'no_document' };
+
+/**
+ * Ctrl/Cmd+S：立即保存当前文稿，再执行与手动备份相同的全量云同步（含冲突确认）。
+ */
+export async function performSaveShortcut(
+  storage: StorageProvider,
+  sync: SyncProvider,
+  options?: PerformSaveShortcutOptions,
+): Promise<PerformSaveShortcutResult> {
+  const cloudEnabled = options?.cloudEnabled ?? true;
+  const docStore = useDocumentStore.getState();
+
+  if (!docStore.activeDocumentId) {
+    return { status: 'no_document' };
+  }
+
+  await docStore.persistActiveDocument(storage);
+
+  if (!cloudEnabled) {
+    return { status: 'local_only' };
+  }
+
+  return performCloudBackup(storage, sync, {
+    force: true,
+    confirmedOverwrite: options?.confirmedOverwrite,
+  });
 }

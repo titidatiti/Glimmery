@@ -33,6 +33,13 @@ export interface SyncPushOptions {
   settingsUpdatedAt: string;
   /** 忽略云端较新时间戳，强制上传（用户已确认） */
   force?: boolean;
+  /** 写入 manifest 的客户端名称（修改者） */
+  clientName?: string;
+}
+
+export interface SyncMigrateOptions {
+  /** 迁移写入 manifest 时使用的客户端名称 */
+  clientName?: string;
 }
 
 export interface SyncPullOptions {
@@ -88,7 +95,7 @@ export interface SyncProvider {
   /** 探测云端同步布局版本（只读） */
   detectCloudSyncScheme(): Promise<CloudSyncSchemeStatus>;
   /** 将云端旧版备份迁移至当前布局版本 */
-  migrateCloudSyncScheme(): Promise<CloudSyncSchemeMigrationResult>;
+  migrateCloudSyncScheme(options?: SyncMigrateOptions): Promise<CloudSyncSchemeMigrationResult>;
   listDocumentRevisions(documentId: string): Promise<CloudRevisionInfo[]>;
   pullDocumentRevision(
     documentId: string,

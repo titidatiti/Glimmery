@@ -7,6 +7,7 @@ export type {
   CloudRevisionInfo,
   CloudRevisionSlot,
   SyncPushOptions,
+  SyncMigrateOptions,
   SyncPullOptions,
   SyncPullResult,
   CloudSyncSchemeStatus,

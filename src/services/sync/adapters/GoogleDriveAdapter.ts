@@ -57,7 +57,7 @@ export class GoogleDriveAdapter implements SyncProvider {
       return await this.syncV3.pushSnapshot(
         snapshot,
         options?.settingsUpdatedAt ?? new Date(0).toISOString(),
-        { force: options?.force },
+        { force: options?.force, clientName: options?.clientName },
       );
     } catch (error) {
       return {
@@ -98,8 +98,8 @@ export class GoogleDriveAdapter implements SyncProvider {
     return this.syncV3.detectCloudSyncScheme();
   }
 
-  async migrateCloudSyncScheme(): Promise<import('../types').CloudSyncSchemeMigrationResult> {
-    return this.syncV3.migrateCloudSyncScheme();
+  async migrateCloudSyncScheme(options?: import('../types').SyncMigrateOptions): Promise<import('../types').CloudSyncSchemeMigrationResult> {
+    return this.syncV3.migrateCloudSyncScheme(options);
   }
 
   async listDocumentRevisions(documentId: string): Promise<CloudRevisionInfo[]> {

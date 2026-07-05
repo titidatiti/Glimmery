@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useDocumentStore, formatDocumentTitle } from '@/core/documents';
 
@@ -11,6 +11,11 @@ import { debounce, formatUpdatedAt } from '@/lib';
 import { useServices } from '@/services/context';
 
 import { useAutoCloudBackup } from '@/app/hooks/useAutoCloudBackup';
+import { useSaveShortcut } from '@/app/hooks/useSaveShortcut';
+import {
+  formatCloudBackupOverwritePrompt,
+  performSaveShortcut,
+} from '@/core/documents';
 import {
   buildSchemeMigrationDialogMessage,
   useStorageSchemeGate,
@@ -96,6 +101,37 @@ export function AppShell() {
       }, autoSaveDelayMs || DEFAULT_SETTINGS.autoSaveDelayMs),
     [persistActiveDocument, storage, autoSaveDelayMs],
   );
+
+  const debouncedPersistRef = useRef(debouncedPersist);
+  debouncedPersistRef.current = debouncedPersist;
+
+  const handleSaveShortcut = useCallback(
+    async (confirmedOverwrite = false) => {
+      debouncedPersistRef.current.cancel();
+      const result = await performSaveShortcut(storage, sync, {
+        cloudEnabled: cloudSyncEnabled,
+        confirmedOverwrite,
+      });
+
+      if (result.status === 'needs_confirmation') {
+        const confirmed = window.confirm(formatCloudBackupOverwritePrompt(result.warning));
+        if (confirmed) {
+          await handleSaveShortcut(true);
+        }
+        return;
+      }
+
+      if (result.status === 'failed') {
+        useCloudSyncStore.getState().setBackupError(result.error);
+      }
+    },
+    [storage, sync, cloudSyncEnabled],
+  );
+
+  useSaveShortcut({
+    enabled: schemeGate.phase === 'ready',
+    onSave: handleSaveShortcut,
+  });
 
   const handleTitleChange = useCallback(
     (title: string) => {

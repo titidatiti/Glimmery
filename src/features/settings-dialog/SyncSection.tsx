@@ -22,6 +22,11 @@ import {
   saveCloudBackupIntervalSec,
   notifyCloudBackupIntervalChanged,
 } from '@/core/settings/cloudBackupPreferences';
+import {
+  formatSyncClientLabel,
+  loadSyncClientName,
+  saveSyncClientName,
+} from '@/core/settings/syncClientName';
 import { useCloudSyncStore, clearCloudSyncSessionExpiredNotice } from '@/core/sync';
 import { useServices } from '@/services/context';
 import { preloadGoogleIdentityScript } from '@/services/sync/adapters/googleDriveAuth';
@@ -99,25 +104,36 @@ function BackupOverwritePrompt({
   onCancel: () => void;
   disabled?: boolean;
 }) {
-  const details: string[] = [];
+  const lines: { key: string; text: string }[] = [];
+
   if (warning.remoteOnlyCount > 0) {
-    details.push(`${warning.remoteOnlyCount} 篇仅存在于云端的文稿将被删除`);
+    lines.push({
+      key: 'remote-only',
+      text: `${warning.remoteOnlyCount} 篇仅云端的文稿将被删除`,
+    });
   }
-  if (warning.newerRemoteConflictCount > 0) {
-    details.push(`${warning.newerRemoteConflictCount} 篇文稿的云端版本更新`);
+  for (const doc of warning.newerRemoteDocuments) {
+    lines.push({
+      key: doc.id,
+      text: `${formatDocumentTitle(doc.title)}：云端 ${formatTime(doc.remoteUpdatedAt)} · ${formatSyncClientLabel(doc.remoteClientName)}`,
+    });
   }
   if (warning.remoteOnlyThemeCount > 0) {
-    details.push(`${warning.remoteOnlyThemeCount} 个仅存在于云端的自定义配色将被删除`);
+    const settings = warning.remoteSettings;
+    lines.push({
+      key: 'themes',
+      text: settings
+        ? `自定义配色：云端 ${formatTime(settings.remoteUpdatedAt)} · ${formatSyncClientLabel(settings.remoteClientName)}`
+        : `${warning.remoteOnlyThemeCount} 个仅云端的配色将被删除`,
+    });
   }
 
   return (
     <div className={styles.conflicts}>
-      <p className={styles.conflictsTitle}>
-        云端存在比本地新的内容，继续备份将用本地数据覆盖云端：
-      </p>
+      <p className={styles.conflictsTitle}>云端有更新，继续备份将覆盖：</p>
       <ul className={styles.overwriteList}>
-        {details.map((line) => (
-          <li key={line}>{line}</li>
+        {lines.map((line) => (
+          <li key={line.key}>{line.text}</li>
         ))}
       </ul>
       <div className={styles.bulkActions}>
@@ -150,7 +166,7 @@ function ConflictPicker({
   return (
     <div className={styles.conflicts}>
       <p className={styles.conflictsTitle}>
-        发现 {conflicts.length} 篇文稿本地与云端版本不一致，请选择保留哪一版：
+        {conflicts.length} 篇文稿版本不一致，请选择保留：
       </p>
       <div className={styles.bulkActions}>
         <button type="button" className={styles.bulkButton} onClick={() => setAll('use-remote')}>
@@ -163,11 +179,22 @@ function ConflictPicker({
       {conflicts.map((conflict) => (
         <div key={conflict.id} className={styles.conflictItem}>
           <p className={styles.conflictName}>{formatDocumentTitle(conflict.local.title)}</p>
-          <p className={styles.conflictMeta}>
-            本地更新：{formatTime(conflict.local.updatedAt)}
-            <br />
-            云端更新：{formatTime(conflict.remote.updatedAt)}
-          </p>
+          <dl className={styles.conflictCompare}>
+            <div className={styles.conflictCompareRow}>
+              <dt>本地</dt>
+              <dd>
+                {formatTime(conflict.local.updatedAt)} ·{' '}
+                {formatSyncClientLabel(conflict.localClientName)}
+              </dd>
+            </div>
+            <div className={styles.conflictCompareRow}>
+              <dt>云端</dt>
+              <dd>
+                {formatTime(conflict.remote.updatedAt)} ·{' '}
+                {formatSyncClientLabel(conflict.remoteClientName)}
+              </dd>
+            </div>
+          </dl>
           <div className={styles.conflictChoices}>
             <label className={styles.choice}>
               <input
@@ -210,6 +237,7 @@ export function SyncSection() {
   const [backupWarning, setBackupWarning] = useState<CloudBackupOverwriteWarning | null>(null);
   const [resolutions, setResolutions] = useState<Map<string, ConflictResolution>>(new Map());
   const [backupIntervalSec, setBackupIntervalSec] = useState(loadCloudBackupIntervalSec);
+  const [clientName, setClientName] = useState(loadSyncClientName);
 
   const configured = sync.isConfigured();
 
@@ -388,9 +416,6 @@ export function SyncSection() {
   if (authenticated === null) {
     return (
       <div className={styles.section}>
-        <p className={styles.lead}>
-        文稿与自定义配色将加密备份至 Google Drive 应用专用空间，本地始终为主副本。
-      </p>
         <div className={styles.accountCardLoading} aria-busy="true">
           <p className={styles.accountPlaceholder}>正在检查登录状态…</p>
         </div>
@@ -401,9 +426,6 @@ export function SyncSection() {
   if (!authenticated) {
     return (
       <div className={styles.section}>
-        <p className={styles.lead}>
-        文稿与自定义配色将加密备份至 Google Drive 应用专用空间，本地始终为主副本。
-      </p>
         {sessionExpired && (
           <p className={styles.noticeError}>{CLOUD_SYNC_SESSION_EXPIRED_MESSAGE}</p>
         )}
@@ -412,8 +434,8 @@ export function SyncSection() {
         <div className={styles.connectCard}>
           <p className={styles.connectHint}>
             {sessionExpired
-              ? '请重新连接 Google 账号以恢复云同步与自动备份。'
-              : '连接 Google 账号后，可自动或手动将文稿备份到云端，并在多设备间恢复。'}
+              ? '请重新登录以恢复云同步。'
+              : '登录后可自动或手动备份，并在多设备间恢复。'}
           </p>
           <button
             type="button"
@@ -431,15 +453,10 @@ export function SyncSection() {
 
   return (
     <div className={styles.section}>
-      <p className={styles.lead}>
-        文稿与自定义配色将加密备份至 Google Drive 应用专用空间，本地始终为主副本。
-      </p>
-
       {error && <p className={styles.noticeError}>{error}</p>}
       {message && <p className={styles.noticeSuccess}>{message}</p>}
 
-      <div className={styles.block}>
-        <p className={styles.subheading}>已连接 Google 账号</p>
+      <div className={styles.panel}>
         {accountProfile ? (
           <AccountCard
             profile={accountProfile}
@@ -453,7 +470,7 @@ export function SyncSection() {
             </span>
             <div className={styles.accountBody}>
               <p className={styles.accountName}>Google 账号</p>
-              <p className={styles.accountEmail}>已授权，正在读取账号信息…</p>
+              <p className={styles.accountEmail}>正在读取账号信息…</p>
             </div>
             <button
               type="button"
@@ -465,29 +482,49 @@ export function SyncSection() {
             </button>
           </div>
         )}
-      </div>
 
-      <div className={styles.block}>
-        <div className={styles.infoGroup}>
-          <p className={styles.subheading}>最近备份</p>
-          <p className={styles.infoValue}>
-            {lastCloudBackupAt ? formatTime(lastCloudBackupAt) : '尚无记录'}
-          </p>
-        </div>
-        <div className={styles.infoGroup}>
-          <p className={styles.subheading}>本地修改</p>
-          <p
-            className={`${styles.infoValue} ${pendingCloudSync ? styles.infoValuePending : ''}`}
-          >
-            {pendingCloudSync ? '待同步至云端' : '已全部同步'}
-          </p>
-        </div>
-      </div>
+        <div className={styles.panelDivider} aria-hidden="true" />
 
-      <div className={styles.block}>
-        <p className={styles.subheading}>自动备份</p>
+        <div className={styles.statusGrid}>
+          <div className={styles.statusCell}>
+            <span className={styles.statusLabel}>最近备份</span>
+            <span className={styles.statusValue}>
+              {lastCloudBackupAt ? formatTime(lastCloudBackupAt) : '尚无记录'}
+            </span>
+          </div>
+          <div className={styles.statusCell}>
+            <span className={styles.statusLabel}>本地状态</span>
+            <span
+              className={`${styles.statusValue} ${pendingCloudSync ? styles.statusValuePending : ''}`}
+            >
+              {pendingCloudSync ? '待同步' : '已同步'}
+            </span>
+          </div>
+        </div>
+
+        <div className={styles.panelDivider} aria-hidden="true" />
+
         <div className={styles.settingRow}>
-          <span className={styles.itemLabel}>备份间隔</span>
+          <label className={styles.itemLabel} htmlFor="sync-client-name">
+            本机名称
+          </label>
+          <input
+            id="sync-client-name"
+            type="text"
+            className={styles.clientNameInput}
+            value={clientName}
+            maxLength={64}
+            disabled={busy}
+            placeholder="用于标记修改者"
+            title="上传至云端时在 manifest 中标记修改者，便于多设备辨认"
+            aria-label="云同步本机名称"
+            onChange={(e) => setClientName(e.target.value)}
+            onBlur={() => setClientName(saveSyncClientName(clientName))}
+          />
+        </div>
+
+        <div className={styles.settingRow}>
+          <span className={styles.itemLabel}>自动备份</span>
           <div className={styles.settingControl}>
             <input
               type="number"
@@ -502,28 +539,25 @@ export function SyncSection() {
             <span className={styles.settingUnit}>秒</span>
           </div>
         </div>
-        <p className={styles.fieldHint}>
-          有未同步修改时按间隔自动备份；切换文稿时也会尝试同步。备份进行时在编辑区右下角显示「正在云同步」。离开页面前若仍有待同步内容，浏览器会提示确认。
-        </p>
-      </div>
 
-      <div className={styles.actionGrid}>
-        <button
-          type="button"
-          className={styles.actionButtonPrimary}
-          disabled={busy}
-          onClick={() => void handleBackup()}
-        >
-          立即备份
-        </button>
-        <button
-          type="button"
-          className={styles.actionButton}
-          disabled={busy}
-          onClick={() => void handleStartRestore()}
-        >
-          从云端恢复
-        </button>
+        <div className={styles.actionGrid}>
+          <button
+            type="button"
+            className={styles.actionButtonPrimary}
+            disabled={busy}
+            onClick={() => void handleBackup()}
+          >
+            立即备份
+          </button>
+          <button
+            type="button"
+            className={styles.actionButton}
+            disabled={busy}
+            onClick={() => void handleStartRestore()}
+          >
+            从云端恢复
+          </button>
+        </div>
       </div>
 
       {backupWarning && (

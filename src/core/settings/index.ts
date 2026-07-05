@@ -21,5 +21,21 @@ export {
   type EditorTypographyPreferences,
 } from './editorTypography';
 export { applyEditorTypographyVars, bootstrapEditorTypographyVars } from './applyEditorTypographyVars';
+export {
+  DEFAULT_CLOUD_BACKUP_INTERVAL_SEC,
+  clampCloudBackupIntervalSec,
+  loadCloudBackupIntervalSec,
+  saveCloudBackupIntervalSec,
+  notifyCloudBackupIntervalChanged,
+  MIN_CLOUD_BACKUP_INTERVAL_SEC,
+  MAX_CLOUD_BACKUP_INTERVAL_SEC,
+} from './cloudBackupPreferences';
+export {
+  formatSyncClientLabel,
+  generateDefaultSyncClientName,
+  loadSyncClientName,
+  saveSyncClientName,
+  MAX_SYNC_CLIENT_NAME_LENGTH,
+} from './syncClientName';
 export { useSettingsStore } from './settingsStore';
 export type { SettingsStoreState } from './settingsStore';

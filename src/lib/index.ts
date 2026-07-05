@@ -12,14 +12,24 @@ export function generateId(): string {
 export function debounce<T extends (...args: Parameters<T>) => void>(
   fn: T,
   delayMs: number,
-): (...args: Parameters<T>) => void {
+): ((...args: Parameters<T>) => void) & { cancel: () => void } {
   let timer: ReturnType<typeof setTimeout> | undefined;
-  return (...args: Parameters<T>) => {
+  const debounced = (...args: Parameters<T>) => {
     if (timer !== undefined) {
       clearTimeout(timer);
     }
-    timer = setTimeout(() => fn(...args), delayMs);
+    timer = setTimeout(() => {
+      timer = undefined;
+      fn(...args);
+    }, delayMs);
   };
+  debounced.cancel = () => {
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+  };
+  return debounced;
 }
 
 export function nowIso(): string {

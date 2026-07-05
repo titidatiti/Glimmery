@@ -38,7 +38,12 @@ export {
   hasThemeRestoreChanges,
   needsStartupRestore,
 } from './syncUseCases';
-export { performCloudBackup, type PerformCloudBackupResult } from './cloudBackup';
+export {
+  performCloudBackup,
+  performSaveShortcut,
+  type PerformCloudBackupResult,
+  type PerformSaveShortcutResult,
+} from './cloudBackup';
 export { performStartupCloudSync, type StartupCloudSyncResult } from './cloudStartupSync';
 export {
   restoreDocumentFromCloudRevision,
