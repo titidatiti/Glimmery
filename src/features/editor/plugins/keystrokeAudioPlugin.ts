@@ -49,6 +49,7 @@ function isKeystrokeKey(e: KeyboardEvent): boolean {
 function dispatchKeystrokeEvent(view: EditorView, e: KeyboardEvent) {
   view.dom.dispatchEvent(
     new CustomEvent(GLIMMERY_KEYSTROKE_EVENT, {
+      bubbles: true,
       detail: {
         key: e.key,
         code: e.code,
