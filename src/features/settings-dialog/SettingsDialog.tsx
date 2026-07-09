@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSettingsStore } from '@/core/settings';
 import { IconButton, useIsSettingsCompactPortrait } from '@/ui';
 import { AboutSection } from './AboutSection';
-import { PlaceholderSection } from './PlaceholderSection';
+import { AudioSection } from './AudioSection';
 import { SyncSection } from './SyncSection';
 import { SettingsPreviewPane } from './SettingsPreviewPane';
 import { SETTINGS_TABS, tabHasPreview, type SettingsTabId } from './settingsTabs';
@@ -19,12 +19,7 @@ function SettingsPanel({ tab }: { tab: SettingsTabId }) {
     case 'typography':
       return <TypographySection />;
     case 'audio':
-      return (
-        <PlaceholderSection
-          title="音频效果"
-          description="环境音与白噪音将在后续版本开放，为写作营造更沉浸的氛围。"
-        />
-      );
+      return <AudioSection />;
     case 'sync':
       return <SyncSection />;
     case 'about':
