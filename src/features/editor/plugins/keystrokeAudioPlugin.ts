@@ -8,7 +8,7 @@ import type { EditorView } from '@milkdown/kit/prose/view';
  * 通过自定义 DOM 事件向外部通知有效的打字按键，由消费方（EditorAdapter）决定是否播放音效。
  * 这样插件本身不依赖 services 层的 AudioEngine，保持 feature ↔ service 的正确依赖方向。
  *
- * 在中文输入法组合期间（view.composing 为 true）不触发事件。
+ * 中文输入法组合期间同样触发音效，以还原真实的打字触感。
  */
 
 export const GLIMMERY_KEYSTROKE_EVENT = 'glimmery:keystroke';
@@ -64,8 +64,6 @@ export function createKeystrokeAudioPlugin() {
     view(editorView) {
       const handleKeyDown = (e: Event) => {
         if (!(e instanceof KeyboardEvent)) return;
-        // 中文输入法组合期间不触发
-        if (editorView.composing) return;
         if (!isKeystrokeKey(e)) return;
         dispatchKeystrokeEvent(editorView, e);
       };
