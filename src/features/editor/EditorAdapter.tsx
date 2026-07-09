@@ -11,7 +11,9 @@ import { activeLinePlugin } from './plugins/activeLinePlugin';
 import { blockDragFixPlugin } from './plugins/blockDragFixPlugin';
 import { comfortScrollPlugin } from './plugins/comfortScrollPlugin';
 import { titleNavigationPlugin } from './plugins/titleNavigationPlugin';
+import { keystrokeAudioPlugin } from './plugins/keystrokeAudioPlugin';
 import { blockHandleCrepeConfig } from './plugins/blockHandleConfig';
+import { useKeystrokeAudio } from './useKeystrokeAudio';
 import styles from './EditorAdapter.module.css';
 
 const MOBILE_PORTRAIT_BODY_PLACEHOLDER = '正文，输入 / 插入块类型';
@@ -66,6 +68,7 @@ function BodyEditor({
       crepe.editor.use(comfortScrollPlugin);
       crepe.editor.use(titleNavigationPlugin);
       crepe.editor.use(blockDragFixPlugin);
+      crepe.editor.use(keystrokeAudioPlugin);
       crepe.on((listener) => {
         listener.markdownUpdated((_ctx, markdown, prevMarkdown) => {
           if (markdown !== prevMarkdown) {
@@ -99,6 +102,7 @@ export function EditorAdapter({
   onContentChange,
   readOnly = false,
 }: EditorAdapterProps) {
+  useKeystrokeAudio();
   const titleInput = useComposingInput(title, onTitleChange);
 
   const focusBodyFromTitle = (input: HTMLInputElement) => {

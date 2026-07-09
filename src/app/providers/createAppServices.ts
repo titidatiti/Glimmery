@@ -1,6 +1,6 @@
 import { IndexedDBAdapter } from '@/services/storage';
 import { GoogleDriveAdapter, NoopSyncAdapter } from '@/services/sync';
-import { NoopAudioEngine } from '@/services/audio';
+import { WebAudioEngine } from '@/services/audio';
 import type { ServicesContextValue } from '@/services/context';
 
 /**
@@ -15,6 +15,6 @@ export function createAppServices(): ServicesContextValue {
   return {
     storage,
     sync,
-    audio: new NoopAudioEngine(),
+    audio: new WebAudioEngine(),
   };
 }
